@@ -1,7 +1,7 @@
 
 LIB=	crypto
 
-SSLEAYDIST= src
+SSLEAYDIST= src-patent
 
 LCRYPTO_SRC= ${.CURDIR}/../${SSLEAYDIST}/crypto
 SSLEAY_INC= ${.CURDIR}/../${SSLEAYDIST}/include

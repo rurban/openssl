@@ -1,7 +1,7 @@
 
 LIB=	ssl
 
-SSLEAYDIST= src
+SSLEAYDIST= src-patent
 
 LSSL_SRC= ${.CURDIR}/../${SSLEAYDIST}/ssl
 SSLEAY_INC= ${.CURDIR}/../${SSLEAYDIST}/include
