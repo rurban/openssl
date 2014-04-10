@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -63,31 +63,32 @@
 #include <openssl/bn.h>
 #include <openssl/fips.h>
 
-ECDSA_SIG *FIPS_ecdsa_sig_new(void)
-	{
-	ECDSA_SIG *sig;
-	sig = OPENSSL_malloc(sizeof(ECDSA_SIG));
-	if (!sig)
-		return NULL;
-	sig->r = BN_new();
-	sig->s = BN_new();
-	if (!sig->r || !sig->s)
-		{
-		FIPS_ecdsa_sig_free(sig);
-		return NULL;
-		}
-	return sig;
-	}
+ECDSA_SIG *
+FIPS_ecdsa_sig_new (void)
+{
+    ECDSA_SIG *sig;
+    sig = OPENSSL_malloc (sizeof (ECDSA_SIG));
+    if (!sig)
+        return NULL;
+    sig->r = BN_new ();
+    sig->s = BN_new ();
+    if (!sig->r || !sig->s)
+    {
+        FIPS_ecdsa_sig_free (sig);
+        return NULL;
+    }
+    return sig;
+}
 
-void FIPS_ecdsa_sig_free(ECDSA_SIG *sig)
-	{
-	if (sig)
-		{
-		if (sig->r)
-			BN_free(sig->r);
-		if (sig->s)
-			BN_free(sig->s);
-		OPENSSL_free(sig);
-		}
-	}
-
+void
+FIPS_ecdsa_sig_free (ECDSA_SIG * sig)
+{
+    if (sig)
+    {
+        if (sig->r)
+            BN_free (sig->r);
+        if (sig->s)
+            BN_free (sig->s);
+        OPENSSL_free (sig);
+    }
+}

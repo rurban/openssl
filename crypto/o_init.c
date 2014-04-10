@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -63,20 +63,20 @@
  * Currently only sets FIPS callbacks
  */
 
-void OPENSSL_init(void)
-	{
-	static int done = 0;
-	if (done)
-		return;
-	done = 1;
+void
+OPENSSL_init (void)
+{
+    static int done = 0;
+    if (done)
+        return;
+    done = 1;
 #ifdef OPENSSL_FIPS
-	FIPS_set_locking_callbacks(CRYPTO_lock, CRYPTO_add_lock);
-	FIPS_set_error_callbacks(ERR_put_error, ERR_add_error_vdata);
-	FIPS_set_malloc_callbacks(CRYPTO_malloc, CRYPTO_free);
-	RAND_init_fips();
+    FIPS_set_locking_callbacks (CRYPTO_lock, CRYPTO_add_lock);
+    FIPS_set_error_callbacks (ERR_put_error, ERR_add_error_vdata);
+    FIPS_set_malloc_callbacks (CRYPTO_malloc, CRYPTO_free);
+    RAND_init_fips ();
 #endif
 #if 0
-	fprintf(stderr, "Called OPENSSL_init\n");
+    fprintf (stderr, "Called OPENSSL_init\n");
 #endif
-	}
-
+}

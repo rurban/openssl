@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -65,50 +65,53 @@
 #include <openssl/sha.h>
 #include <openssl/bn.h>
 
-ECDSA_SIG * FIPS_ecdsa_sign_ctx(EC_KEY *key, EVP_MD_CTX *ctx)
-	{
-	ECDSA_SIG *s;
-	unsigned char dig[EVP_MAX_MD_SIZE];
-	unsigned int dlen;
-        FIPS_digestfinal(ctx, dig, &dlen);
-	s = FIPS_ecdsa_sign_digest(key, dig, dlen);
-	OPENSSL_cleanse(dig, dlen);
-	return s;
-	}
+ECDSA_SIG *
+FIPS_ecdsa_sign_ctx (EC_KEY * key, EVP_MD_CTX * ctx)
+{
+    ECDSA_SIG *s;
+    unsigned char dig[EVP_MAX_MD_SIZE];
+    unsigned int dlen;
+    FIPS_digestfinal (ctx, dig, &dlen);
+    s = FIPS_ecdsa_sign_digest (key, dig, dlen);
+    OPENSSL_cleanse (dig, dlen);
+    return s;
+}
 
-int FIPS_ecdsa_verify_ctx(EC_KEY *key, EVP_MD_CTX *ctx, ECDSA_SIG *s)
-	{
-	int ret=-1;
-	unsigned char dig[EVP_MAX_MD_SIZE];
-	unsigned int dlen;
-        FIPS_digestfinal(ctx, dig, &dlen);
-	ret = FIPS_ecdsa_verify_digest(key, dig, dlen, s);
-	OPENSSL_cleanse(dig, dlen);
-	return ret;
-	}
+int
+FIPS_ecdsa_verify_ctx (EC_KEY * key, EVP_MD_CTX * ctx, ECDSA_SIG * s)
+{
+    int ret = -1;
+    unsigned char dig[EVP_MAX_MD_SIZE];
+    unsigned int dlen;
+    FIPS_digestfinal (ctx, dig, &dlen);
+    ret = FIPS_ecdsa_verify_digest (key, dig, dlen, s);
+    OPENSSL_cleanse (dig, dlen);
+    return ret;
+}
 
-int FIPS_ecdsa_verify(EC_KEY *key, const unsigned char *msg, size_t msglen,
-			const EVP_MD *mhash, ECDSA_SIG *s)
-	{
-	int ret=-1;
-	unsigned char dig[EVP_MAX_MD_SIZE];
-	unsigned int dlen;
-        FIPS_digest(msg, msglen, dig, &dlen, mhash);
-	ret=FIPS_ecdsa_verify_digest(key, dig, dlen, s);
-	OPENSSL_cleanse(dig, dlen);
-	return ret;
-	}
+int
+FIPS_ecdsa_verify (EC_KEY * key, const unsigned char *msg, size_t msglen,
+                   const EVP_MD * mhash, ECDSA_SIG * s)
+{
+    int ret = -1;
+    unsigned char dig[EVP_MAX_MD_SIZE];
+    unsigned int dlen;
+    FIPS_digest (msg, msglen, dig, &dlen, mhash);
+    ret = FIPS_ecdsa_verify_digest (key, dig, dlen, s);
+    OPENSSL_cleanse (dig, dlen);
+    return ret;
+}
 
-ECDSA_SIG * FIPS_ecdsa_sign(EC_KEY *key,
-			const unsigned char *msg, size_t msglen,
-			const EVP_MD *mhash)
-	{
-	ECDSA_SIG *s;
-	unsigned char dig[EVP_MAX_MD_SIZE];
-	unsigned int dlen;
-        FIPS_digest(msg, msglen, dig, &dlen, mhash);
-	s = FIPS_ecdsa_sign_digest(key, dig, dlen);
-	OPENSSL_cleanse(dig, dlen);
-	return s;
-	}
-
+ECDSA_SIG *
+FIPS_ecdsa_sign (EC_KEY * key,
+                 const unsigned char *msg, size_t msglen,
+                 const EVP_MD * mhash)
+{
+    ECDSA_SIG *s;
+    unsigned char dig[EVP_MAX_MD_SIZE];
+    unsigned int dlen;
+    FIPS_digest (msg, msglen, dig, &dlen, mhash);
+    s = FIPS_ecdsa_sign_digest (key, dig, dlen);
+    OPENSSL_cleanse (dig, dlen);
+    return s;
+}

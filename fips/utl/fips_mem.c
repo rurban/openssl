@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -58,37 +58,41 @@
 
 /* Default malloc implementations */
 
-static void *fips_malloc_def(int num, const char *file, int line)
-	{
-	return malloc(num);
-	}
+static void *
+fips_malloc_def (int num, const char *file, int line)
+{
+    return malloc (num);
+}
 
-static void fips_free_def(void *x)
-	{
-	free(x);
-	}
+static void
+fips_free_def (void *x)
+{
+    free (x);
+}
 
 /* FIPS memory allocation callbacks */
 
-static void *(*fips_malloc_cb)(int num, const char *file, int line) =
-		fips_malloc_def;
-static void (*fips_free_cb)(void *) =
-		fips_free_def;
+static void *(*fips_malloc_cb) (int num, const char *file, int line) =
+    fips_malloc_def;
+static void (*fips_free_cb) (void *) = fips_free_def;
 
-void *FIPS_malloc(int num, const char *file, int line)
-	{
-	return fips_malloc_cb(num, file, line);
-	}
+void *
+FIPS_malloc (int num, const char *file, int line)
+{
+    return fips_malloc_cb (num, file, line);
+}
 
-void FIPS_free(void *x)
-	{
-	fips_free_cb(x);
-	}
+void
+FIPS_free (void *x)
+{
+    fips_free_cb (x);
+}
 
-void FIPS_set_malloc_callbacks(
-		void *(*malloc_cb)(int num, const char *file, int line),
-		void (*free_cb)(void *))
-	{
-	fips_malloc_cb = malloc_cb;
-	fips_free_cb = free_cb;
-	}
+void
+FIPS_set_malloc_callbacks (void
+                           *(*malloc_cb) (int num, const char *file,
+                                   int line), void (*free_cb) (void *))
+{
+    fips_malloc_cb = malloc_cb;
+    fips_free_cb = free_cb;
+}

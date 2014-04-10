@@ -21,25 +21,26 @@
  * compile with -DFIXBUG to remove the bug when optimising.
  */
 
-void inc(a)
+void
+inc (a)
 int *a;
-	{
-	(*a)++;
-	}
+{
+    (*a)++;
+}
 
-main()
-	{
-	int p=0;
+main ()
+{
+    int p = 0;
 #ifdef FIXBUG
-	int dummy;
+    int dummy;
 #endif
 
-	while (p<3)
-		{
-		fprintf(stderr,"%08X\n",p);
-		inc(&p);
+    while (p < 3)
+    {
+        fprintf (stderr, "%08X\n", p);
+        inc (&p);
 #ifdef FIXBUG
-		dummy+=p;
+        dummy += p;
 #endif
-		}
-	}
+    }
+}

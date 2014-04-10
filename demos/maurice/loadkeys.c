@@ -22,51 +22,51 @@
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
 
-EVP_PKEY * ReadPublicKey(const char *certfile)
+EVP_PKEY *
+ReadPublicKey (const char *certfile)
 {
-  FILE *fp = fopen (certfile, "r");   
-  X509 *x509;
-  EVP_PKEY *pkey;
+    FILE *fp = fopen (certfile, "r");
+    X509 *x509;
+    EVP_PKEY *pkey;
 
-  if (!fp) 
-     return NULL; 
+    if (!fp)
+        return NULL;
 
-  x509 = PEM_read_X509(fp, NULL, 0, NULL);
+    x509 = PEM_read_X509 (fp, NULL, 0, NULL);
 
-  if (x509 == NULL) 
-  {  
-     ERR_print_errors_fp (stderr);
-     return NULL;   
-  }
+    if (x509 == NULL)
+    {
+        ERR_print_errors_fp (stderr);
+        return NULL;
+    }
 
-  fclose (fp);
-  
-  pkey=X509_extract_key(x509);
+    fclose (fp);
 
-  X509_free(x509);
+    pkey = X509_extract_key (x509);
 
-  if (pkey == NULL) 
-     ERR_print_errors_fp (stderr);
+    X509_free (x509);
 
-  return pkey; 
+    if (pkey == NULL)
+        ERR_print_errors_fp (stderr);
+
+    return pkey;
 }
 
-EVP_PKEY *ReadPrivateKey(const char *keyfile)
+EVP_PKEY *
+ReadPrivateKey (const char *keyfile)
 {
-	FILE *fp = fopen(keyfile, "r");
-	EVP_PKEY *pkey;
+    FILE *fp = fopen (keyfile, "r");
+    EVP_PKEY *pkey;
 
-	if (!fp)
-		return NULL;
+    if (!fp)
+        return NULL;
 
-	pkey = PEM_read_PrivateKey(fp, NULL, 0, NULL);
+    pkey = PEM_read_PrivateKey (fp, NULL, 0, NULL);
 
-	fclose (fp);
+    fclose (fp);
 
-  	if (pkey == NULL) 
-		ERR_print_errors_fp (stderr);   
+    if (pkey == NULL)
+        ERR_print_errors_fp (stderr);
 
-	return pkey;
+    return pkey;
 }
-
-

@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -69,10 +69,11 @@
 
 #ifndef OPENSSL_FIPS
 
-int main(int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
-    printf("No FIPS HMAC support\n");
-    return(0);
+    printf ("No FIPS HMAC support\n");
+    return (0);
 }
 
 #else
@@ -80,245 +81,259 @@ int main(int argc, char *argv[])
 #include <openssl/fips.h>
 #include "fips_utl.h"
 
-static int hmac_test(const EVP_MD *md, FILE *out, FILE *in);
-static int print_hmac(const EVP_MD *md, FILE *out,
-		unsigned char *Key, int Klen,
-		unsigned char *Msg, int Msglen, int Tlen);
+static int hmac_test (const EVP_MD * md, FILE * out, FILE * in);
+static int print_hmac (const EVP_MD * md, FILE * out,
+                       unsigned char *Key, int Klen,
+                       unsigned char *Msg, int Msglen, int Tlen);
 
 #ifdef FIPS_ALGVS
-int fips_hmactest_main(int argc, char **argv)
+int
+fips_hmactest_main (int argc, char **argv)
 #else
-int main(int argc, char **argv)
+int
+main (int argc, char **argv)
 #endif
-	{
-	FILE *in = NULL, *out = NULL;
+{
+    FILE *in = NULL, *out = NULL;
 
-	int ret = 1;
-	fips_algtest_init();
+    int ret = 1;
+    fips_algtest_init ();
 
-	if (argc == 1)
-		in = stdin;
-	else
-		in = fopen(argv[1], "r");
+    if (argc == 1)
+        in = stdin;
+    else
+        in = fopen (argv[1], "r");
 
-	if (argc < 2)
-		out = stdout;
-	else
-		out = fopen(argv[2], "w");
+    if (argc < 2)
+        out = stdout;
+    else
+        out = fopen (argv[2], "w");
 
-	if (!in)
-		{
-		fprintf(stderr, "FATAL input initialization error\n");
-		goto end;
-		}
+    if (!in)
+    {
+        fprintf (stderr, "FATAL input initialization error\n");
+        goto end;
+    }
 
-	if (!out)
-		{
-		fprintf(stderr, "FATAL output initialization error\n");
-		goto end;
-		}
+    if (!out)
+    {
+        fprintf (stderr, "FATAL output initialization error\n");
+        goto end;
+    }
 
-	if (!hmac_test(EVP_sha1(), out, in))
-		{
-		fprintf(stderr, "FATAL hmac file processing error\n");
-		goto end;
-		}
-	else
-		ret = 0;
+    if (!hmac_test (EVP_sha1 (), out, in))
+    {
+        fprintf (stderr, "FATAL hmac file processing error\n");
+        goto end;
+    }
+    else
+        ret = 0;
 
-	end:
+end:
 
-	if (in && (in != stdin))
-		fclose(in);
-	if (out && (out != stdout))
-		fclose(out);
+    if (in && (in != stdin))
+        fclose (in);
+    if (out && (out != stdout))
+        fclose (out);
 
-	return ret;
+    return ret;
 
-	}
+}
 
 #define HMAC_TEST_MAXLINELEN	1024
 
-int hmac_test(const EVP_MD *md, FILE *out, FILE *in)
-	{
-	char *linebuf, *olinebuf, *p, *q;
-	char *keyword, *value;
-	unsigned char *Key = NULL, *Msg = NULL;
-	int Count, Klen, Tlen;
-	long Keylen, Msglen;
-	int ret = 0;
-	int lnum = 0;
+int
+hmac_test (const EVP_MD * md, FILE * out, FILE * in)
+{
+    char *linebuf, *olinebuf, *p, *q;
+    char *keyword, *value;
+    unsigned char *Key = NULL, *Msg = NULL;
+    int Count, Klen, Tlen;
+    long Keylen, Msglen;
+    int ret = 0;
+    int lnum = 0;
 
-	olinebuf = OPENSSL_malloc(HMAC_TEST_MAXLINELEN);
-	linebuf = OPENSSL_malloc(HMAC_TEST_MAXLINELEN);
+    olinebuf = OPENSSL_malloc (HMAC_TEST_MAXLINELEN);
+    linebuf = OPENSSL_malloc (HMAC_TEST_MAXLINELEN);
 
-	if (!linebuf || !olinebuf)
-		goto error;
+    if (!linebuf || !olinebuf)
+        goto error;
 
-	Count = -1;
-	Klen = -1;
-	Tlen = -1;
+    Count = -1;
+    Klen = -1;
+    Tlen = -1;
 
-	while (fgets(olinebuf, HMAC_TEST_MAXLINELEN, in))
-		{
-		lnum++;
-		strcpy(linebuf, olinebuf);
-		keyword = linebuf;
-		/* Skip leading space */
-		while (isspace((unsigned char)*keyword))
-			keyword++;
+    while (fgets (olinebuf, HMAC_TEST_MAXLINELEN, in))
+    {
+        lnum++;
+        strcpy (linebuf, olinebuf);
+        keyword = linebuf;
+        /* Skip leading space */
+        while (isspace ((unsigned char) *keyword))
+            keyword++;
 
-		/* Look for = sign */
-		p = strchr(linebuf, '=');
+        /* Look for = sign */
+        p = strchr (linebuf, '=');
 
-		/* If no = or starts with [ (for [L=20] line) just copy */
-		if (!p)
-			{
-			if (fputs(olinebuf, out) < 0)
-				goto error;
-			continue;
-			}
+        /* If no = or starts with [ (for [L=20] line) just copy */
+        if (!p)
+        {
+            if (fputs (olinebuf, out) < 0)
+                goto error;
+            continue;
+        }
 
-		q = p - 1;
+        q = p - 1;
 
-		/* Remove trailing space */
-		while (isspace((unsigned char)*q))
-			*q-- = 0;
+        /* Remove trailing space */
+        while (isspace ((unsigned char) *q))
+            *q-- = 0;
 
-		*p = 0;
-		value = p + 1;
+        *p = 0;
+        value = p + 1;
 
-		/* Remove leading space from value */
-		while (isspace((unsigned char)*value))
-			value++;
+        /* Remove leading space from value */
+        while (isspace ((unsigned char) *value))
+            value++;
 
-		/* Remove trailing space from value */
-		p = value + strlen(value) - 1;
+        /* Remove trailing space from value */
+        p = value + strlen (value) - 1;
 
-		while (*p == '\n' || isspace((unsigned char)*p))
-			*p-- = 0;
+        while (*p == '\n' || isspace ((unsigned char) *p))
+            *p-- = 0;
 
-		if (!strcmp(keyword,"[L") && *p==']')
-			{
-			switch (atoi(value))
-				{
-				case 20: md=EVP_sha1();   break;
-				case 28: md=EVP_sha224(); break;
-				case 32: md=EVP_sha256(); break;
-				case 48: md=EVP_sha384(); break;
-				case 64: md=EVP_sha512(); break;
-				default: goto parse_error;
-				}
-			}
-		else if (!strcmp(keyword, "Count"))
-			{
-			if (Count != -1)
-				goto parse_error;
-			Count = atoi(value);
-			if (Count < 0)
-				goto parse_error;
-			}
-		else if (!strcmp(keyword, "Klen"))
-			{
-			if (Klen != -1)
-				goto parse_error;
-			Klen = atoi(value);
-			if (Klen < 0)
-				goto parse_error;
-			}
-		else if (!strcmp(keyword, "Tlen"))
-			{
-			if (Tlen != -1)
-				goto parse_error;
-			Tlen = atoi(value);
-			if (Tlen < 0)
-				goto parse_error;
-			}
-		else if (!strcmp(keyword, "Msg"))
-			{
-			if (Msg)
-				goto parse_error;
-			Msg = hex2bin_m(value, &Msglen);
-			if (!Msg)
-				goto parse_error;
-			}
-		else if (!strcmp(keyword, "Key"))
-			{
-			if (Key)
-				goto parse_error;
-			Key = hex2bin_m(value, &Keylen);
-			if (!Key)
-				goto parse_error;
-			}
-		else if (!strcmp(keyword, "Mac"))
-			continue;
-		else
-			goto parse_error;
+        if (!strcmp (keyword, "[L") && *p == ']')
+        {
+            switch (atoi (value))
+            {
+            case 20:
+                md = EVP_sha1 ();
+                break;
+            case 28:
+                md = EVP_sha224 ();
+                break;
+            case 32:
+                md = EVP_sha256 ();
+                break;
+            case 48:
+                md = EVP_sha384 ();
+                break;
+            case 64:
+                md = EVP_sha512 ();
+                break;
+            default:
+                goto parse_error;
+            }
+        }
+        else if (!strcmp (keyword, "Count"))
+        {
+            if (Count != -1)
+                goto parse_error;
+            Count = atoi (value);
+            if (Count < 0)
+                goto parse_error;
+        }
+        else if (!strcmp (keyword, "Klen"))
+        {
+            if (Klen != -1)
+                goto parse_error;
+            Klen = atoi (value);
+            if (Klen < 0)
+                goto parse_error;
+        }
+        else if (!strcmp (keyword, "Tlen"))
+        {
+            if (Tlen != -1)
+                goto parse_error;
+            Tlen = atoi (value);
+            if (Tlen < 0)
+                goto parse_error;
+        }
+        else if (!strcmp (keyword, "Msg"))
+        {
+            if (Msg)
+                goto parse_error;
+            Msg = hex2bin_m (value, &Msglen);
+            if (!Msg)
+                goto parse_error;
+        }
+        else if (!strcmp (keyword, "Key"))
+        {
+            if (Key)
+                goto parse_error;
+            Key = hex2bin_m (value, &Keylen);
+            if (!Key)
+                goto parse_error;
+        }
+        else if (!strcmp (keyword, "Mac"))
+            continue;
+        else
+            goto parse_error;
 
-		fputs(olinebuf, out);
+        fputs (olinebuf, out);
 
-		if (Key && Msg && (Tlen > 0) && (Klen > 0))
-			{
-			if (!print_hmac(md, out, Key, Klen, Msg, Msglen, Tlen))
-				goto error;
-			OPENSSL_free(Key);
-			Key = NULL;
-			OPENSSL_free(Msg);
-			Msg = NULL;
-			Klen = -1;
-			Tlen = -1;
-			Count = -1;
-			}
+        if (Key && Msg && (Tlen > 0) && (Klen > 0))
+        {
+            if (!print_hmac (md, out, Key, Klen, Msg, Msglen, Tlen))
+                goto error;
+            OPENSSL_free (Key);
+            Key = NULL;
+            OPENSSL_free (Msg);
+            Msg = NULL;
+            Klen = -1;
+            Tlen = -1;
+            Count = -1;
+        }
 
-		}
-
-
-	ret = 1;
+    }
 
 
-	error:
+    ret = 1;
 
-	if (olinebuf)
-		OPENSSL_free(olinebuf);
-	if (linebuf)
-		OPENSSL_free(linebuf);
-	if (Key)
-		OPENSSL_free(Key);
-	if (Msg)
-		OPENSSL_free(Msg);
 
-	return ret;
+error:
 
-	parse_error:
+    if (olinebuf)
+        OPENSSL_free (olinebuf);
+    if (linebuf)
+        OPENSSL_free (linebuf);
+    if (Key)
+        OPENSSL_free (Key);
+    if (Msg)
+        OPENSSL_free (Msg);
 
-	fprintf(stderr, "FATAL parse error processing line %d\n", lnum);
+    return ret;
 
-	goto error;
+parse_error:
 
-	}
+    fprintf (stderr, "FATAL parse error processing line %d\n", lnum);
 
-static int print_hmac(const EVP_MD *emd, FILE *out,
-		unsigned char *Key, int Klen,
-		unsigned char *Msg, int Msglen, int Tlen)
-	{
-	int i, mdlen;
-	unsigned char md[EVP_MAX_MD_SIZE];
-	if (!HMAC(emd, Key, Klen, Msg, Msglen, md,
-						(unsigned int *)&mdlen))
-		{
-		fputs("Error calculating HMAC\n", stderr);
-		return 0;
-		}
-	if (Tlen > mdlen)
-		{
-		fputs("Parameter error, Tlen > HMAC length\n", stderr);
-		return 0;
-		}
-	fputs("Mac = ", out);
-	for (i = 0; i < Tlen; i++)
-		fprintf(out, "%02x", md[i]);
-	fputs(RESP_EOL, out);
-	return 1;
-	}
+    goto error;
+
+}
+
+static int
+print_hmac (const EVP_MD * emd, FILE * out,
+            unsigned char *Key, int Klen,
+            unsigned char *Msg, int Msglen, int Tlen)
+{
+    int i, mdlen;
+    unsigned char md[EVP_MAX_MD_SIZE];
+    if (!HMAC (emd, Key, Klen, Msg, Msglen, md, (unsigned int *) &mdlen))
+    {
+        fputs ("Error calculating HMAC\n", stderr);
+        return 0;
+    }
+    if (Tlen > mdlen)
+    {
+        fputs ("Parameter error, Tlen > HMAC length\n", stderr);
+        return 0;
+    }
+    fputs ("Mac = ", out);
+    for (i = 0; i < Tlen; i++)
+        fprintf (out, "%02x", md[i]);
+    fputs (RESP_EOL, out);
+    return 1;
+}
 
 #endif

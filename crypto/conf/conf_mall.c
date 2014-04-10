@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -69,14 +69,14 @@
 
 /* Load all OpenSSL builtin modules */
 
-void OPENSSL_load_builtin_modules(void)
-	{
-	/* Add builtin modules here */
-	ASN1_add_oid_module();
-	ASN1_add_stable_module();
+void
+OPENSSL_load_builtin_modules (void)
+{
+    /* Add builtin modules here */
+    ASN1_add_oid_module ();
+    ASN1_add_stable_module ();
 #ifndef OPENSSL_NO_ENGINE
-	ENGINE_add_conf_module();
+    ENGINE_add_conf_module ();
 #endif
-	EVP_add_alg_module();
-	}
-
+    EVP_add_alg_module ();
+}

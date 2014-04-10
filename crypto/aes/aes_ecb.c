@@ -7,7 +7,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -50,24 +50,25 @@
  */
 
 #ifndef AES_DEBUG
-# ifndef NDEBUG
-#  define NDEBUG
-# endif
+#ifndef NDEBUG
+#define NDEBUG
+#endif
 #endif
 #include <assert.h>
 
 #include <openssl/aes.h>
 #include "aes_locl.h"
 
-void AES_ecb_encrypt(const unsigned char *in, unsigned char *out,
-		     const AES_KEY *key, const int enc) {
+void
+AES_ecb_encrypt (const unsigned char *in, unsigned char *out,
+                 const AES_KEY * key, const int enc)
+{
 
-        assert(in && out && key);
-	assert((AES_ENCRYPT == enc)||(AES_DECRYPT == enc));
+    assert (in && out && key);
+    assert ((AES_ENCRYPT == enc) || (AES_DECRYPT == enc));
 
-	if (AES_ENCRYPT == enc)
-		AES_encrypt(in, out, key);
-	else
-		AES_decrypt(in, out, key);
+    if (AES_ENCRYPT == enc)
+        AES_encrypt (in, out, key);
+    else
+        AES_decrypt (in, out, key);
 }
-

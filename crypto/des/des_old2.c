@@ -26,7 +26,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -76,7 +76,8 @@
 #include <openssl/des.h>
 #include <openssl/rand.h>
 
-void _ossl_096_des_random_seed(DES_cblock *key)
-	{
-	RAND_seed(key, sizeof(DES_cblock));
-	}
+void
+_ossl_096_des_random_seed (DES_cblock * key)
+{
+    RAND_seed (key, sizeof (DES_cblock));
+}

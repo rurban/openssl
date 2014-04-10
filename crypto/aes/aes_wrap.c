@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -55,16 +55,18 @@
 #include <openssl/aes.h>
 #include <openssl/modes.h>
 
-int AES_wrap_key(AES_KEY *key, const unsigned char *iv,
-		unsigned char *out,
-		const unsigned char *in, unsigned int inlen)
-	{
-	return CRYPTO_128_wrap(key, iv, out, in, inlen, (block128_f)AES_encrypt);
-	}
+int
+AES_wrap_key (AES_KEY * key, const unsigned char *iv,
+              unsigned char *out, const unsigned char *in, unsigned int inlen)
+{
+    return CRYPTO_128_wrap (key, iv, out, in, inlen, (block128_f) AES_encrypt);
+}
 
-int AES_unwrap_key(AES_KEY *key, const unsigned char *iv,
-		unsigned char *out,
-		const unsigned char *in, unsigned int inlen)
-	{
-	return CRYPTO_128_unwrap(key, iv, out, in, inlen, (block128_f)AES_decrypt);
-	}
+int
+AES_unwrap_key (AES_KEY * key, const unsigned char *iv,
+                unsigned char *out,
+                const unsigned char *in, unsigned int inlen)
+{
+    return CRYPTO_128_unwrap (key, iv, out, in, inlen,
+                              (block128_f) AES_decrypt);
+}

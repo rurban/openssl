@@ -15,109 +15,111 @@
 
 #define STDIN     	0
 #define STDOUT    	1
-#define BUFLEN	  	512 
+#define BUFLEN	  	512
 
 static const char *usage = "Usage: example4 [-d]\n";
 
-void do_encode(void);
-void do_decode(void);
+void do_encode (void);
+void do_decode (void);
 
-int main(int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
-	if ((argc == 1))	
-	{
-		do_encode();
-	}	
-	else if ((argc == 2) && !strcmp(argv[1],"-d"))
-	{
-		do_decode();
-	}
-	else
-	{
-		fprintf(stderr,"%s", usage);
-		exit(1);
-	}
+    if ((argc == 1))
+    {
+        do_encode ();
+    }
+    else if ((argc == 2) && !strcmp (argv[1], "-d"))
+    {
+        do_decode ();
+    }
+    else
+    {
+        fprintf (stderr, "%s", usage);
+        exit (1);
+    }
 
-	return 0;		
+    return 0;
 }
 
-void do_encode()
+void
+do_encode ()
 {
-	char buf[BUFLEN];
-	char ebuf[BUFLEN+24];
-	unsigned int ebuflen;
-	EVP_ENCODE_CTX ectx;
-        
-	EVP_EncodeInit(&ectx);
+    char buf[BUFLEN];
+    char ebuf[BUFLEN + 24];
+    unsigned int ebuflen;
+    EVP_ENCODE_CTX ectx;
 
-	while(1)
-	{
-		int readlen = read(STDIN, buf, sizeof(buf));
-	
-		if (readlen <= 0)
-		{
-			if (!readlen)
-			   break;
-			else
-			{
-				perror("read");
-				exit(1);
-			}
-		}
+    EVP_EncodeInit (&ectx);
 
-		EVP_EncodeUpdate(&ectx, ebuf, &ebuflen, buf, readlen);
+    while (1)
+    {
+        int readlen = read (STDIN, buf, sizeof (buf));
 
-		write(STDOUT, ebuf, ebuflen);
-	}
+        if (readlen <= 0)
+        {
+            if (!readlen)
+                break;
+            else
+            {
+                perror ("read");
+                exit (1);
+            }
+        }
 
-        EVP_EncodeFinal(&ectx, ebuf, &ebuflen); 
+        EVP_EncodeUpdate (&ectx, ebuf, &ebuflen, buf, readlen);
 
-	write(STDOUT, ebuf, ebuflen);
+        write (STDOUT, ebuf, ebuflen);
+    }
+
+    EVP_EncodeFinal (&ectx, ebuf, &ebuflen);
+
+    write (STDOUT, ebuf, ebuflen);
 }
 
-void do_decode()
+void
+do_decode ()
 {
- 	char buf[BUFLEN];
- 	char ebuf[BUFLEN+24];
-	unsigned int ebuflen;
-	EVP_ENCODE_CTX ectx;
-        
-	EVP_DecodeInit(&ectx);
+    char buf[BUFLEN];
+    char ebuf[BUFLEN + 24];
+    unsigned int ebuflen;
+    EVP_ENCODE_CTX ectx;
 
-	while(1)
-	{
-		int readlen = read(STDIN, buf, sizeof(buf));
-		int rc;	
-	
-		if (readlen <= 0)
-		{
-			if (!readlen)
-			   break;
-			else
-			{
-				perror("read");
-				exit(1);
-			}
-		}
+    EVP_DecodeInit (&ectx);
 
-		rc = EVP_DecodeUpdate(&ectx, ebuf, &ebuflen, buf, readlen);
-		if (rc <= 0)
-		{
-			if (!rc)
-			{
-				write(STDOUT, ebuf, ebuflen);
-				break;
-			}
+    while (1)
+    {
+        int readlen = read (STDIN, buf, sizeof (buf));
+        int rc;
 
-			fprintf(stderr, "Error: decoding message\n");
-			return;
-		}
+        if (readlen <= 0)
+        {
+            if (!readlen)
+                break;
+            else
+            {
+                perror ("read");
+                exit (1);
+            }
+        }
 
-		write(STDOUT, ebuf, ebuflen);
-	}
+        rc = EVP_DecodeUpdate (&ectx, ebuf, &ebuflen, buf, readlen);
+        if (rc <= 0)
+        {
+            if (!rc)
+            {
+                write (STDOUT, ebuf, ebuflen);
+                break;
+            }
 
-        EVP_DecodeFinal(&ectx, ebuf, &ebuflen); 
+            fprintf (stderr, "Error: decoding message\n");
+            return;
+        }
 
-	write(STDOUT, ebuf, ebuflen); 
+        write (STDOUT, ebuf, ebuflen);
+    }
+
+    EVP_DecodeFinal (&ectx, ebuf, &ebuflen);
+
+    write (STDOUT, ebuf, ebuflen);
 }
-

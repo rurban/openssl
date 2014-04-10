@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -63,10 +63,10 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
 
-ASN1_SEQUENCE(AUTHORITY_KEYID) = {
-	ASN1_IMP_OPT(AUTHORITY_KEYID, keyid, ASN1_OCTET_STRING, 0),
-	ASN1_IMP_SEQUENCE_OF_OPT(AUTHORITY_KEYID, issuer, GENERAL_NAME, 1),
-	ASN1_IMP_OPT(AUTHORITY_KEYID, serial, ASN1_INTEGER, 2)
-} ASN1_SEQUENCE_END(AUTHORITY_KEYID)
-
-IMPLEMENT_ASN1_FUNCTIONS(AUTHORITY_KEYID)
+ASN1_SEQUENCE (AUTHORITY_KEYID) =
+{
+    ASN1_IMP_OPT (AUTHORITY_KEYID, keyid, ASN1_OCTET_STRING, 0),
+    ASN1_IMP_SEQUENCE_OF_OPT (AUTHORITY_KEYID, issuer, GENERAL_NAME, 1),
+    ASN1_IMP_OPT (AUTHORITY_KEYID, serial, ASN1_INTEGER, 2)
+}
+ASN1_SEQUENCE_END (AUTHORITY_KEYID) IMPLEMENT_ASN1_FUNCTIONS (AUTHORITY_KEYID)

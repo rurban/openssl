@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -69,10 +69,11 @@
 
 #ifndef OPENSSL_FIPS
 
-int main(int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
-    printf("No FIPS RSA support\n");
-    return(0);
+    printf ("No FIPS RSA support\n");
+    return (0);
 }
 
 #else
@@ -82,284 +83,285 @@ int main(int argc, char *argv[])
 
 #include "fips_utl.h"
 
-int rsa_vtest(FILE *out, FILE *in, int saltlen);
-static int rsa_printver(FILE *out,
-		BIGNUM *n, BIGNUM *e,
-		const EVP_MD *dgst,
-		unsigned char *Msg, long Msglen,
-		unsigned char *S, long Slen, int Saltlen);
+int rsa_vtest (FILE * out, FILE * in, int saltlen);
+static int rsa_printver (FILE * out,
+                         BIGNUM * n, BIGNUM * e,
+                         const EVP_MD * dgst,
+                         unsigned char *Msg, long Msglen,
+                         unsigned char *S, long Slen, int Saltlen);
 
 #ifdef FIPS_ALGVS
-int fips_rsavtest_main(int argc, char **argv)
+int
+fips_rsavtest_main (int argc, char **argv)
 #else
-int main(int argc, char **argv)
+int
+main (int argc, char **argv)
 #endif
-	{
-	FILE *in = NULL, *out = NULL;
+{
+    FILE *in = NULL, *out = NULL;
 
-	int ret = 1;
-	int Saltlen = -1;
+    int ret = 1;
+    int Saltlen = -1;
 
-	fips_algtest_init();
+    fips_algtest_init ();
 
-	if ((argc > 2) && !strcmp("-saltlen", argv[1]))
-		{
-		Saltlen = atoi(argv[2]);
-		if (Saltlen < 0)
-			{
-			fprintf(stderr, "FATAL: Invalid salt length\n");
-			goto end;
-			}
-		argc -= 2;
-		argv += 2;
-		}
-	else if ((argc > 1) && !strcmp("-x931", argv[1]))
-		{
-		Saltlen = -2;
-		argc--;
-		argv++;
-		}
+    if ((argc > 2) && !strcmp ("-saltlen", argv[1]))
+    {
+        Saltlen = atoi (argv[2]);
+        if (Saltlen < 0)
+        {
+            fprintf (stderr, "FATAL: Invalid salt length\n");
+            goto end;
+        }
+        argc -= 2;
+        argv += 2;
+    }
+    else if ((argc > 1) && !strcmp ("-x931", argv[1]))
+    {
+        Saltlen = -2;
+        argc--;
+        argv++;
+    }
 
-	if (argc == 1)
-		in = stdin;
-	else
-		in = fopen(argv[1], "r");
+    if (argc == 1)
+        in = stdin;
+    else
+        in = fopen (argv[1], "r");
 
-	if (argc < 2)
-		out = stdout;
-	else
-		out = fopen(argv[2], "w");
+    if (argc < 2)
+        out = stdout;
+    else
+        out = fopen (argv[2], "w");
 
-	if (!in)
-		{
-		fprintf(stderr, "FATAL input initialization error\n");
-		goto end;
-		}
+    if (!in)
+    {
+        fprintf (stderr, "FATAL input initialization error\n");
+        goto end;
+    }
 
-	if (!out)
-		{
-		fprintf(stderr, "FATAL output initialization error\n");
-		goto end;
-		}
+    if (!out)
+    {
+        fprintf (stderr, "FATAL output initialization error\n");
+        goto end;
+    }
 
-	if (!rsa_vtest(out, in, Saltlen))
-		{
-		fprintf(stderr, "FATAL RSAVTEST file processing error\n");
-		goto end;
-		}
-	else
-		ret = 0;
+    if (!rsa_vtest (out, in, Saltlen))
+    {
+        fprintf (stderr, "FATAL RSAVTEST file processing error\n");
+        goto end;
+    }
+    else
+        ret = 0;
 
-	end:
+end:
 
-	if (in && (in != stdin))
-		fclose(in);
-	if (out && (out != stdout))
-		fclose(out);
+    if (in && (in != stdin))
+        fclose (in);
+    if (out && (out != stdout))
+        fclose (out);
 
-	return ret;
+    return ret;
 
-	}
+}
 
 #define RSA_TEST_MAXLINELEN	10240
 
-int rsa_vtest(FILE *out, FILE *in, int Saltlen)
-	{
-	char *linebuf, *olinebuf, *p, *q;
-	char *keyword, *value;
-	const EVP_MD *dgst = NULL;
-	BIGNUM *n = NULL, *e = NULL;
-	unsigned char *Msg = NULL, *S = NULL;
-	long Msglen, Slen;
-	int ret = 0;
-	int lnum = 0;
+int
+rsa_vtest (FILE * out, FILE * in, int Saltlen)
+{
+    char *linebuf, *olinebuf, *p, *q;
+    char *keyword, *value;
+    const EVP_MD *dgst = NULL;
+    BIGNUM *n = NULL, *e = NULL;
+    unsigned char *Msg = NULL, *S = NULL;
+    long Msglen, Slen;
+    int ret = 0;
+    int lnum = 0;
 
-	olinebuf = OPENSSL_malloc(RSA_TEST_MAXLINELEN);
-	linebuf = OPENSSL_malloc(RSA_TEST_MAXLINELEN);
+    olinebuf = OPENSSL_malloc (RSA_TEST_MAXLINELEN);
+    linebuf = OPENSSL_malloc (RSA_TEST_MAXLINELEN);
 
-	if (!linebuf || !olinebuf)
-		goto error;
+    if (!linebuf || !olinebuf)
+        goto error;
 
-	while (fgets(olinebuf, RSA_TEST_MAXLINELEN, in))
-		{
-		lnum++;
-		strcpy(linebuf, olinebuf);
-		keyword = linebuf;
-		/* Skip leading space */
-		while (isspace((unsigned char)*keyword))
-			keyword++;
+    while (fgets (olinebuf, RSA_TEST_MAXLINELEN, in))
+    {
+        lnum++;
+        strcpy (linebuf, olinebuf);
+        keyword = linebuf;
+        /* Skip leading space */
+        while (isspace ((unsigned char) *keyword))
+            keyword++;
 
-		/* Look for = sign */
-		p = strchr(linebuf, '=');
+        /* Look for = sign */
+        p = strchr (linebuf, '=');
 
-		/* If no = or starts with [ (for [foo = bar] line) just copy */
-		if (!p || *keyword=='[')
-			{
-			if (fputs(olinebuf, out) < 0)
-				goto error;
-			continue;
-			}
+        /* If no = or starts with [ (for [foo = bar] line) just copy */
+        if (!p || *keyword == '[')
+        {
+            if (fputs (olinebuf, out) < 0)
+                goto error;
+            continue;
+        }
 
-		q = p - 1;
+        q = p - 1;
 
-		/* Remove trailing space */
-		while (isspace((unsigned char)*q))
-			*q-- = 0;
+        /* Remove trailing space */
+        while (isspace ((unsigned char) *q))
+            *q-- = 0;
 
-		*p = 0;
-		value = p + 1;
+        *p = 0;
+        value = p + 1;
 
-		/* Remove leading space from value */
-		while (isspace((unsigned char)*value))
-			value++;
+        /* Remove leading space from value */
+        while (isspace ((unsigned char) *value))
+            value++;
 
-		/* Remove trailing space from value */
-		p = value + strlen(value) - 1;
+        /* Remove trailing space from value */
+        p = value + strlen (value) - 1;
 
-		while (*p == '\n' || isspace((unsigned char)*p))
-			*p-- = 0;
+        while (*p == '\n' || isspace ((unsigned char) *p))
+            *p-- = 0;
 
-		if (!strcmp(keyword, "n"))
-			{
-			if (!do_hex2bn(&n,value))
-				goto parse_error;
-			}
-		else if (!strcmp(keyword, "e"))
-			{
-			if (!do_hex2bn(&e,value))
-				goto parse_error;
-			}
-		else if (!strcmp(keyword, "SHAAlg"))
-			{
-			if (!strcmp(value, "SHA1"))
-				dgst = EVP_sha1();
-			else if (!strcmp(value, "SHA224"))
-				dgst = EVP_sha224();
-			else if (!strcmp(value, "SHA256"))
-				dgst = EVP_sha256();
-			else if (!strcmp(value, "SHA384"))
-				dgst = EVP_sha384();
-			else if (!strcmp(value, "SHA512"))
-				dgst = EVP_sha512();
-			else
-				{
-				fprintf(stderr,
-					"FATAL: unsupported algorithm \"%s\"\n",
-								value);
-				goto parse_error;
-				}
-			}
-		else if (!strcmp(keyword, "Msg"))
-			{
-			if (Msg)
-				goto parse_error;
-			if (strlen(value) & 1)
-				*(--value) = '0';
-			Msg = hex2bin_m(value, &Msglen);
-			if (!Msg)
-				goto parse_error;
-			}
-		else if (!strcmp(keyword, "S"))
-			{
-			if (S)
-				goto parse_error;
-			if (strlen(value) & 1)
-				*(--value) = '0';
-			S = hex2bin_m(value, &Slen);
-			if (!S)
-				goto parse_error;
-			}
-		else if (!strcmp(keyword, "Result"))
-			continue;
-		else
-			goto parse_error;
+        if (!strcmp (keyword, "n"))
+        {
+            if (!do_hex2bn (&n, value))
+                goto parse_error;
+        }
+        else if (!strcmp (keyword, "e"))
+        {
+            if (!do_hex2bn (&e, value))
+                goto parse_error;
+        }
+        else if (!strcmp (keyword, "SHAAlg"))
+        {
+            if (!strcmp (value, "SHA1"))
+                dgst = EVP_sha1 ();
+            else if (!strcmp (value, "SHA224"))
+                dgst = EVP_sha224 ();
+            else if (!strcmp (value, "SHA256"))
+                dgst = EVP_sha256 ();
+            else if (!strcmp (value, "SHA384"))
+                dgst = EVP_sha384 ();
+            else if (!strcmp (value, "SHA512"))
+                dgst = EVP_sha512 ();
+            else
+            {
+                fprintf (stderr, "FATAL: unsupported algorithm \"%s\"\n", value);
+                goto parse_error;
+            }
+        }
+        else if (!strcmp (keyword, "Msg"))
+        {
+            if (Msg)
+                goto parse_error;
+            if (strlen (value) & 1)
+                *(--value) = '0';
+            Msg = hex2bin_m (value, &Msglen);
+            if (!Msg)
+                goto parse_error;
+        }
+        else if (!strcmp (keyword, "S"))
+        {
+            if (S)
+                goto parse_error;
+            if (strlen (value) & 1)
+                *(--value) = '0';
+            S = hex2bin_m (value, &Slen);
+            if (!S)
+                goto parse_error;
+        }
+        else if (!strcmp (keyword, "Result"))
+            continue;
+        else
+            goto parse_error;
 
-		fputs(olinebuf, out);
+        fputs (olinebuf, out);
 
-		if (n && e && Msg && S && dgst)
-			{
-			if (!rsa_printver(out, n, e, dgst,
-					Msg, Msglen, S, Slen, Saltlen))
-				goto error;
-			OPENSSL_free(Msg);
-			Msg = NULL;
-			OPENSSL_free(S);
-			S = NULL;
-			}
+        if (n && e && Msg && S && dgst)
+        {
+            if (!rsa_printver (out, n, e, dgst, Msg, Msglen, S, Slen, Saltlen))
+                goto error;
+            OPENSSL_free (Msg);
+            Msg = NULL;
+            OPENSSL_free (S);
+            S = NULL;
+        }
 
-		}
+    }
 
 
-	ret = 1;
+    ret = 1;
 
 
-	error:
+error:
 
-	if (olinebuf)
-		OPENSSL_free(olinebuf);
-	if (linebuf)
-		OPENSSL_free(linebuf);
-	if (n)
-		BN_free(n);
-	if (e)
-		BN_free(e);
+    if (olinebuf)
+        OPENSSL_free (olinebuf);
+    if (linebuf)
+        OPENSSL_free (linebuf);
+    if (n)
+        BN_free (n);
+    if (e)
+        BN_free (e);
 
-	return ret;
+    return ret;
 
-	parse_error:
+parse_error:
 
-	fprintf(stderr, "FATAL parse error processing line %d\n", lnum);
+    fprintf (stderr, "FATAL parse error processing line %d\n", lnum);
 
-	goto error;
+    goto error;
 
-	}
+}
 
-static int rsa_printver(FILE *out,
-		BIGNUM *n, BIGNUM *e,
-		const EVP_MD *dgst,
-		unsigned char *Msg, long Msglen,
-		unsigned char *S, long Slen, int Saltlen)
-	{
-	int ret = 0, r, pad_mode;
-	/* Setup RSA and EVP_PKEY structures */
-	RSA *rsa_pubkey = NULL;
-	unsigned char *buf = NULL;
-	rsa_pubkey = FIPS_rsa_new();
-	if (!rsa_pubkey)
-		goto error;
-	rsa_pubkey->n = BN_dup(n);
-	rsa_pubkey->e = BN_dup(e);
-	if (!rsa_pubkey->n || !rsa_pubkey->e)
-		goto error;
+static int
+rsa_printver (FILE * out,
+              BIGNUM * n, BIGNUM * e,
+              const EVP_MD * dgst,
+              unsigned char *Msg, long Msglen,
+              unsigned char *S, long Slen, int Saltlen)
+{
+    int ret = 0, r, pad_mode;
+    /* Setup RSA and EVP_PKEY structures */
+    RSA *rsa_pubkey = NULL;
+    unsigned char *buf = NULL;
+    rsa_pubkey = FIPS_rsa_new ();
+    if (!rsa_pubkey)
+        goto error;
+    rsa_pubkey->n = BN_dup (n);
+    rsa_pubkey->e = BN_dup (e);
+    if (!rsa_pubkey->n || !rsa_pubkey->e)
+        goto error;
 
-	if (Saltlen >= 0)
-		pad_mode = RSA_PKCS1_PSS_PADDING;
-	else if (Saltlen == -2)
-		pad_mode = RSA_X931_PADDING;
-	else
-		pad_mode = RSA_PKCS1_PADDING;
+    if (Saltlen >= 0)
+        pad_mode = RSA_PKCS1_PSS_PADDING;
+    else if (Saltlen == -2)
+        pad_mode = RSA_X931_PADDING;
+    else
+        pad_mode = RSA_PKCS1_PADDING;
 
-	no_err = 1;
-	r = FIPS_rsa_verify(rsa_pubkey, Msg, Msglen, dgst,
-				pad_mode, Saltlen, NULL, S, Slen);
-	no_err = 0;
+    no_err = 1;
+    r = FIPS_rsa_verify (rsa_pubkey, Msg, Msglen, dgst,
+                         pad_mode, Saltlen, NULL, S, Slen);
+    no_err = 0;
 
-	if (r < 0)
-		goto error;
+    if (r < 0)
+        goto error;
 
-	if (r == 0)
-		fputs("Result = F" RESP_EOL, out);
-	else
-		fputs("Result = P" RESP_EOL, out);
+    if (r == 0)
+        fputs ("Result = F" RESP_EOL, out);
+    else
+        fputs ("Result = P" RESP_EOL, out);
 
-	ret = 1;
+    ret = 1;
 
-	error:
-	if (rsa_pubkey)
-		FIPS_rsa_free(rsa_pubkey);
-	if (buf)
-		OPENSSL_free(buf);
+error:
+    if (rsa_pubkey)
+        FIPS_rsa_free (rsa_pubkey);
+    if (buf)
+        OPENSSL_free (buf);
 
-	return ret;
-	}
+    return ret;
+}
 #endif

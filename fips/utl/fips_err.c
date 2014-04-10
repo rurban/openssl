@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -58,32 +58,35 @@
 
 /* FIPS error callbacks */
 
-static void (*fips_put_error_cb)(int lib, int func,int reason,const char *file,int line) = 0;
-static void (*fips_add_error_vdata)(int num, va_list args) = 0;
+static void (*fips_put_error_cb) (int lib, int func, int reason,
+                                  const char *file, int line) = 0;
+static void (*fips_add_error_vdata) (int num, va_list args) = 0;
 
-void FIPS_put_error(int lib, int func,int reason,const char *file,int line)
-	{
-	if (fips_put_error_cb)
-		fips_put_error_cb(lib, func, reason, file, line);
-	}
+void
+FIPS_put_error (int lib, int func, int reason, const char *file, int line)
+{
+    if (fips_put_error_cb)
+        fips_put_error_cb (lib, func, reason, file, line);
+}
 
-void FIPS_add_error_data(int num, ...)
-	{
-	if (fips_add_error_vdata)
-		{
-		va_list args;
-		va_start(args, num);
-		fips_add_error_vdata(num, args);
-		va_end(args);
-		}
-	}
+void
+FIPS_add_error_data (int num, ...)
+{
+    if (fips_add_error_vdata)
+    {
+        va_list args;
+        va_start (args, num);
+        fips_add_error_vdata (num, args);
+        va_end (args);
+    }
+}
 
-void FIPS_set_error_callbacks(
-	void (*put_cb)(int lib, int func,int reason,const char *file,int line),
-	void (*add_cb)(int num, va_list args) )
-	{
-	fips_put_error_cb = put_cb;
-	fips_add_error_vdata = add_cb;
-	}
+void
+FIPS_set_error_callbacks (void (*put_cb)
 
-
+                          (int lib, int func, int reason, const char *file,
+                           int line), void (*add_cb) (int num, va_list args))
+{
+    fips_put_error_cb = put_cb;
+    fips_add_error_vdata = add_cb;
+}

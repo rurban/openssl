@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -64,58 +64,68 @@
 #include <openssl/fips.h>
 
 /* Minimal FIPS versions of FIPS_dsa_new() and FIPS_dsa_free: to
- * reduce external dependencies. 
+ * reduce external dependencies.
  */
 
-DSA *FIPS_dsa_new(void)
-	{
-	DSA *ret;
-	ret = OPENSSL_malloc(sizeof(DSA));
-	if (!ret)
-		return NULL;
-	memset(ret, 0, sizeof(DSA));
-	ret->meth = DSA_OpenSSL();
-	if (ret->meth->init)
-		ret->meth->init(ret);
-	return ret;
-	}
+DSA *
+FIPS_dsa_new (void)
+{
+    DSA *ret;
+    ret = OPENSSL_malloc (sizeof (DSA));
+    if (!ret)
+        return NULL;
+    memset (ret, 0, sizeof (DSA));
+    ret->meth = DSA_OpenSSL ();
+    if (ret->meth->init)
+        ret->meth->init (ret);
+    return ret;
+}
 
-void FIPS_dsa_free(DSA *r)
-	{
-	if (!r)
-		return;
-	if (r->meth->finish)
-		r->meth->finish(r);
-	if (r->p != NULL) BN_clear_free(r->p);
-	if (r->q != NULL) BN_clear_free(r->q);
-	if (r->g != NULL) BN_clear_free(r->g);
-	if (r->pub_key != NULL) BN_clear_free(r->pub_key);
-	if (r->priv_key != NULL) BN_clear_free(r->priv_key);
-	if (r->kinv != NULL) BN_clear_free(r->kinv);
-	if (r->r != NULL) BN_clear_free(r->r);
-	OPENSSL_free(r);
-	}
+void
+FIPS_dsa_free (DSA * r)
+{
+    if (!r)
+        return;
+    if (r->meth->finish)
+        r->meth->finish (r);
+    if (r->p != NULL)
+        BN_clear_free (r->p);
+    if (r->q != NULL)
+        BN_clear_free (r->q);
+    if (r->g != NULL)
+        BN_clear_free (r->g);
+    if (r->pub_key != NULL)
+        BN_clear_free (r->pub_key);
+    if (r->priv_key != NULL)
+        BN_clear_free (r->priv_key);
+    if (r->kinv != NULL)
+        BN_clear_free (r->kinv);
+    if (r->r != NULL)
+        BN_clear_free (r->r);
+    OPENSSL_free (r);
+}
 
-DSA_SIG *FIPS_dsa_sig_new(void)
-	{
-	DSA_SIG *sig;
-	sig = OPENSSL_malloc(sizeof(DSA_SIG));
-	if (!sig)
-		return NULL;
-	sig->r = NULL;
-	sig->s = NULL;
-	return sig;
-	}
+DSA_SIG *
+FIPS_dsa_sig_new (void)
+{
+    DSA_SIG *sig;
+    sig = OPENSSL_malloc (sizeof (DSA_SIG));
+    if (!sig)
+        return NULL;
+    sig->r = NULL;
+    sig->s = NULL;
+    return sig;
+}
 
-void FIPS_dsa_sig_free(DSA_SIG *sig)
-	{
-	if (sig)
-		{
-		if (sig->r)
-			BN_free(sig->r);
-		if (sig->s)
-			BN_free(sig->s);
-		OPENSSL_free(sig);
-		}
-	}
-
+void
+FIPS_dsa_sig_free (DSA_SIG * sig)
+{
+    if (sig)
+    {
+        if (sig->r)
+            BN_free (sig->r);
+        if (sig->s)
+            BN_free (sig->s);
+        OPENSSL_free (sig);
+    }
+}

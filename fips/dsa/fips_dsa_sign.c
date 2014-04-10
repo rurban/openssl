@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -71,71 +71,77 @@
  * Handle DSA_SIG structures to avoid need to handle ASN1.
  */
 
-DSA_SIG * FIPS_dsa_sign_ctx(DSA *dsa, EVP_MD_CTX *ctx)
-	{
-	DSA_SIG *s;
-	unsigned char dig[EVP_MAX_MD_SIZE];
-	unsigned int dlen;
-        FIPS_digestfinal(ctx, dig, &dlen);
-	s = dsa->meth->dsa_do_sign(dig,dlen,dsa);
-	OPENSSL_cleanse(dig, dlen);
-	return s;
-	}
+DSA_SIG *
+FIPS_dsa_sign_ctx (DSA * dsa, EVP_MD_CTX * ctx)
+{
+    DSA_SIG *s;
+    unsigned char dig[EVP_MAX_MD_SIZE];
+    unsigned int dlen;
+    FIPS_digestfinal (ctx, dig, &dlen);
+    s = dsa->meth->dsa_do_sign (dig, dlen, dsa);
+    OPENSSL_cleanse (dig, dlen);
+    return s;
+}
 
-DSA_SIG * FIPS_dsa_sign_digest(DSA *dsa, const unsigned char *dig, int dlen)
-	{
-	if (FIPS_selftest_failed())
-		{
-		FIPSerr(FIPS_F_FIPS_DSA_SIGN_DIGEST, FIPS_R_SELFTEST_FAILED);
-		return NULL;
-		}
-	return dsa->meth->dsa_do_sign(dig, dlen, dsa);
-	}
+DSA_SIG *
+FIPS_dsa_sign_digest (DSA * dsa, const unsigned char *dig, int dlen)
+{
+    if (FIPS_selftest_failed ())
+    {
+        FIPSerr (FIPS_F_FIPS_DSA_SIGN_DIGEST, FIPS_R_SELFTEST_FAILED);
+        return NULL;
+    }
+    return dsa->meth->dsa_do_sign (dig, dlen, dsa);
+}
 
-int FIPS_dsa_verify_ctx(DSA *dsa, EVP_MD_CTX *ctx, DSA_SIG *s)
-	{
-	int ret=-1;
-	unsigned char dig[EVP_MAX_MD_SIZE];
-	unsigned int dlen;
-        FIPS_digestfinal(ctx, dig, &dlen);
-	ret=dsa->meth->dsa_do_verify(dig,dlen,s,dsa);
-	OPENSSL_cleanse(dig, dlen);
-	return ret;
-	}
+int
+FIPS_dsa_verify_ctx (DSA * dsa, EVP_MD_CTX * ctx, DSA_SIG * s)
+{
+    int ret = -1;
+    unsigned char dig[EVP_MAX_MD_SIZE];
+    unsigned int dlen;
+    FIPS_digestfinal (ctx, dig, &dlen);
+    ret = dsa->meth->dsa_do_verify (dig, dlen, s, dsa);
+    OPENSSL_cleanse (dig, dlen);
+    return ret;
+}
 
-int FIPS_dsa_verify_digest(DSA *dsa,
-				const unsigned char *dig, int dlen, DSA_SIG *s)
-	{
-	if (FIPS_selftest_failed())
-		{
-		FIPSerr(FIPS_F_FIPS_DSA_VERIFY_DIGEST, FIPS_R_SELFTEST_FAILED);
-		return -1;
-		}
-	return dsa->meth->dsa_do_verify(dig,dlen,s,dsa);
-	}
+int
+FIPS_dsa_verify_digest (DSA * dsa,
+                        const unsigned char *dig, int dlen, DSA_SIG * s)
+{
+    if (FIPS_selftest_failed ())
+    {
+        FIPSerr (FIPS_F_FIPS_DSA_VERIFY_DIGEST, FIPS_R_SELFTEST_FAILED);
+        return -1;
+    }
+    return dsa->meth->dsa_do_verify (dig, dlen, s, dsa);
+}
 
-int FIPS_dsa_verify(DSA *dsa, const unsigned char *msg, size_t msglen,
-			const EVP_MD *mhash, DSA_SIG *s)
-	{
-	int ret=-1;
-	unsigned char dig[EVP_MAX_MD_SIZE];
-	unsigned int dlen;
-        FIPS_digest(msg, msglen, dig, &dlen, mhash);
-	ret=FIPS_dsa_verify_digest(dsa, dig, dlen, s);
-	OPENSSL_cleanse(dig, dlen);
-	return ret;
-	}
+int
+FIPS_dsa_verify (DSA * dsa, const unsigned char *msg, size_t msglen,
+                 const EVP_MD * mhash, DSA_SIG * s)
+{
+    int ret = -1;
+    unsigned char dig[EVP_MAX_MD_SIZE];
+    unsigned int dlen;
+    FIPS_digest (msg, msglen, dig, &dlen, mhash);
+    ret = FIPS_dsa_verify_digest (dsa, dig, dlen, s);
+    OPENSSL_cleanse (dig, dlen);
+    return ret;
+}
 
-DSA_SIG * FIPS_dsa_sign(DSA *dsa, const unsigned char *msg, size_t msglen,
-			const EVP_MD *mhash)
-	{
-	DSA_SIG *s;
-	unsigned char dig[EVP_MAX_MD_SIZE];
-	unsigned int dlen;
-        FIPS_digest(msg, msglen, dig, &dlen, mhash);
-	s = FIPS_dsa_sign_digest(dsa, dig, dlen);
-	OPENSSL_cleanse(dig, dlen);
-	return s;
-	}
+DSA_SIG *
+FIPS_dsa_sign (DSA * dsa, const unsigned char *msg, size_t msglen,
+               const EVP_MD * mhash)
+{
+    DSA_SIG *s;
+    unsigned char dig[EVP_MAX_MD_SIZE];
+    unsigned int dlen;
+    FIPS_digest (msg, msglen, dig, &dlen, mhash);
+    s = FIPS_dsa_sign_digest (dsa, dig, dlen);
+    OPENSSL_cleanse (dig, dlen);
+    return s;
+}
 
 #endif

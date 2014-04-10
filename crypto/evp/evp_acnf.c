@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -66,8 +66,9 @@
  * OPENSSL_LOAD_CONF is set.
  */
 
-void OPENSSL_add_all_algorithms_conf(void)
-	{
-	OPENSSL_add_all_algorithms_noconf();
-	OPENSSL_config(NULL);
-	}
+void
+OPENSSL_add_all_algorithms_conf (void)
+{
+    OPENSSL_add_all_algorithms_noconf ();
+    OPENSSL_config (NULL);
+}
