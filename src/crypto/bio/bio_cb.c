@@ -1,4 +1,4 @@
-/* e_os.h */
+/* crypto/bio/bio_cb.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,101 +56,88 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef HEADER_E_OS_H
-#define HEADER_E_OS_H
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include "cryptlib.h"
+#include <openssl/bio.h>
+#include <openssl/err.h>
 
-#include <openssl/opensslconf.h>
+long BIO_debug_callback(BIO *bio, int cmd, const char *argp,
+	     int argi, long argl, long ret)
+	{
+	BIO *b;
+	char buf[256];
+	char *p;
+	long r=1;
+	size_t p_maxlen;
 
-#include <openssl/e_os2.h>
-/* <openssl/e_os2.h> contains what we can justify to make visible
- * to the outside; this file e_os.h is not part of the exported
- * interface. */
+	if (BIO_CB_RETURN & cmd)
+		r=ret;
 
-#ifdef  __cplusplus
-extern "C" {
+	BIO_snprintf(buf,sizeof buf,"BIO[%08lX]:",(unsigned long)bio);
+	p= &(buf[14]);
+	p_maxlen = sizeof buf - 14;
+	switch (cmd)
+		{
+	case BIO_CB_FREE:
+		BIO_snprintf(p,p_maxlen,"Free - %s\n",bio->method->name);
+		break;
+	case BIO_CB_READ:
+		if (bio->method->type & BIO_TYPE_DESCRIPTOR)
+			BIO_snprintf(p,p_maxlen,"read(%d,%lu) - %s fd=%d\n",
+				 bio->num,(unsigned long)argi,
+				 bio->method->name,bio->num);
+		else
+			BIO_snprintf(p,p_maxlen,"read(%d,%lu) - %s\n",
+				 bio->num,(unsigned long)argi,
+				 bio->method->name);
+		break;
+	case BIO_CB_WRITE:
+		if (bio->method->type & BIO_TYPE_DESCRIPTOR)
+			BIO_snprintf(p,p_maxlen,"write(%d,%lu) - %s fd=%d\n",
+				 bio->num,(unsigned long)argi,
+				 bio->method->name,bio->num);
+		else
+			BIO_snprintf(p,p_maxlen,"write(%d,%lu) - %s\n",
+				 bio->num,(unsigned long)argi,
+				 bio->method->name);
+		break;
+	case BIO_CB_PUTS:
+		BIO_snprintf(p,p_maxlen,"puts() - %s\n",bio->method->name);
+		break;
+	case BIO_CB_GETS:
+		BIO_snprintf(p,p_maxlen,"gets(%lu) - %s\n",(unsigned long)argi,bio->method->name);
+		break;
+	case BIO_CB_CTRL:
+		BIO_snprintf(p,p_maxlen,"ctrl(%lu) - %s\n",(unsigned long)argi,bio->method->name);
+		break;
+	case BIO_CB_RETURN|BIO_CB_READ:
+		BIO_snprintf(p,p_maxlen,"read return %ld\n",ret);
+		break;
+	case BIO_CB_RETURN|BIO_CB_WRITE:
+		BIO_snprintf(p,p_maxlen,"write return %ld\n",ret);
+		break;
+	case BIO_CB_RETURN|BIO_CB_GETS:
+		BIO_snprintf(p,p_maxlen,"gets return %ld\n",ret);
+		break;
+	case BIO_CB_RETURN|BIO_CB_PUTS:
+		BIO_snprintf(p,p_maxlen,"puts return %ld\n",ret);
+		break;
+	case BIO_CB_RETURN|BIO_CB_CTRL:
+		BIO_snprintf(p,p_maxlen,"ctrl return %ld\n",ret);
+		break;
+	default:
+		BIO_snprintf(p,p_maxlen,"bio callback - unknown type (%d)\n",cmd);
+		break;
+		}
+
+	b=(BIO *)bio->cb_arg;
+	if (b != NULL)
+		BIO_write(b,buf,strlen(buf));
+#if !defined(OPENSSL_NO_STDIO) && !defined(OPENSSL_SYS_WIN16)
+	else
+		fputs(buf,stderr);
 #endif
-
-/* Used to checking reference counts, most while doing perl5 stuff :-) */
-#ifdef REF_PRINT
-#undef REF_PRINT
-#define REF_PRINT(a,b)	fprintf(stderr,"%08X:%4d:%s\n",(int)b,b->references,a)
-#endif
-
-#ifndef DEVRANDOM
-/* set this to a comma-separated list of 'random' device files to try out.
- * My default, we will try to read at least one of these files */
-#define DEVRANDOM "/dev/urandom","/dev/random","/dev/srandom"
-#endif
-#ifndef DEVRANDOM_EGD
-/* set this to a comma-seperated list of 'egd' sockets to try out. These
- * sockets will be tried in the order listed in case accessing the device files
- * listed in DEVRANDOM did not return enough entropy. */
-#define DEVRANDOM_EGD "/var/run/egd-pool","/dev/egd-pool","/etc/egd-pool","/etc/entropy"
-#endif
-
-#define get_last_sys_error()	errno
-#define clear_sys_error()	errno=0
-#define get_last_socket_error()	errno
-#define clear_socket_error()	errno=0
-#define ioctlsocket(a,b,c)	ioctl(a,b,c)
-#define closesocket(s)		close(s)
-#define readsocket(s,b,n)	read((s),(b),(n))
-#define writesocket(s,b,n)	write((s),(b),(n))
-
-#      include <unistd.h>
-#      include <sys/types.h>
-#    define OPENSSL_CONF	"openssl.cnf"
-#    define SSLEAY_CONF		OPENSSL_CONF
-#    define RFILE		".rnd"
-#    define LIST_SEPARATOR_CHAR ':'
-#    define NUL_DEV		"/dev/null"
-#    define EXIT(n)		exit(n)
-#  define SSLeay_getpid()	getpid()
-
-
-#ifdef USE_SOCKETS
-#      include <sys/param.h>
-#      include <sys/time.h> /* Needed under linux for FD_XXX */
-#    include <netdb.h>
-#      include <sys/socket.h>
-#      ifdef FILIO_H
-#        include <sys/filio.h> /* Added for FIONBIO under unixware */
-#      endif
-#      include <netinet/in.h>
-#        include <sys/ioctl.h>
-#    define SSLeay_Read(a,b,c)     read((a),(b),(c))
-#    define SSLeay_Write(a,b,c)    write((a),(b),(c))
-#    define SHUTDOWN(fd)    { shutdown((fd),0); closesocket((fd)); }
-#    define SHUTDOWN2(fd)   { shutdown((fd),2); closesocket((fd)); }
-#    ifndef INVALID_SOCKET
-#    define INVALID_SOCKET	(-1)
-#    endif /* INVALID_SOCKET */
-#endif
-
-/* Some IPv6 implementations are broken, disable them in known bad
- * versions.
- */
-#  if !defined(OPENSSL_USE_IPV6)
-#    if defined(AF_INET6)
-#      define OPENSSL_USE_IPV6 1
-#    else
-#      define OPENSSL_USE_IPV6 0
-#    endif
-#  endif
-
-#ifndef OPENSSL_EXIT
-# if defined(MONOLITH) && !defined(OPENSSL_C)
-#  define OPENSSL_EXIT(n) return(n)
-# else
-#  define OPENSSL_EXIT(n) do { EXIT(n); return(n); } while(0)
-# endif
-#endif
-
-/***********************************************/
-
-#ifdef  __cplusplus
-}
-#endif
-
-#endif
-
+	return(r);
+	}
