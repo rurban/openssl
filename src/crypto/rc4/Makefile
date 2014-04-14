@@ -1,36 +1,33 @@
 #
-# OpenSSL/crypto/modes/Makefile
+# OpenSSL/crypto/rc4/Makefile
 #
 
-DIR=	modes
+DIR=	rc4
 TOP=	../..
 CC=	cc
-INCLUDES= -I.. -I$(TOP) -I../../include
+CPP=    $(CC) -E
+INCLUDES=
 CFLAG=-g
-MAKEFILE=	Makefile
 AR=		ar r
 
-MODES_ASM_OBJ=
+RC4_ENC=rc4_enc.o rc4_skey.o
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 ASFLAGS= $(INCLUDES) $(ASFLAG)
 AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile
-TEST=
+TEST=rc4test.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC= cbc128.c ctr128.c cts128.c cfb128.c ofb128.c gcm128.c \
-	ccm128.c xts128.c
-LIBOBJ= cbc128.o ctr128.o cts128.o cfb128.o ofb128.o gcm128.o \
-	ccm128.o xts128.o $(MODES_ASM_OBJ)
+LIBSRC=rc4_skey.c rc4_enc.c rc4_utl.c
+LIBOBJ=$(RC4_ENC) rc4_utl.o
 
 SRC= $(LIBSRC)
 
-#EXHEADER= store.h str_compat.h
-EXHEADER= modes.h
-HEADER=	modes_lcl.h $(EXHEADER)
+EXHEADER= rc4.h
+HEADER=	$(EXHEADER) rc4_locl.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -44,23 +41,29 @@ lib:	$(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-ghash-ia64.s:	asm/ghash-ia64.pl
-	$(PERL) asm/ghash-ia64.pl $@ $(CFLAGS)
-ghash-x86.s:	asm/ghash-x86.pl
-	$(PERL) asm/ghash-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
-ghash-x86_64.s:	asm/ghash-x86_64.pl
-	$(PERL) asm/ghash-x86_64.pl $(PERLASM_SCHEME) > $@
-ghash-sparcv9.s:	asm/ghash-sparcv9.pl
-	$(PERL) asm/ghash-sparcv9.pl $@ $(CFLAGS)
-ghash-alpha.s:	asm/ghash-alpha.pl
-	$(PERL) $< | $(CC) -E - | tee $@ > /dev/null
-ghash-parisc.s:	asm/ghash-parisc.pl
-	$(PERL) asm/ghash-parisc.pl $(PERLASM_SCHEME) $@
+rc4-586.s:	asm/rc4-586.pl ../perlasm/x86asm.pl
+	$(PERL) asm/rc4-586.pl $(PERLASM_SCHEME) $(CFLAGS) > $@
+
+rc4-x86_64.s: asm/rc4-x86_64.pl
+	$(PERL) asm/rc4-x86_64.pl $(PERLASM_SCHEME) > $@
+rc4-md5-x86_64.s:	asm/rc4-md5-x86_64.pl
+	$(PERL) asm/rc4-md5-x86_64.pl $(PERLASM_SCHEME) > $@
+
+rc4-ia64.S: asm/rc4-ia64.pl
+	$(PERL) asm/rc4-ia64.pl $(CFLAGS) > $@
+
+rc4-parisc.s:	asm/rc4-parisc.pl
+	$(PERL) asm/rc4-parisc.pl $(PERLASM_SCHEME) $@
+
+rc4-ia64.s: rc4-ia64.S
+	@case `awk '/^#define RC4_INT/{print$$NF}' $(TOP)/include/openssl/opensslconf.h` in \
+	int)	set -x; $(CC) $(CFLAGS) -DSZ=4 -E rc4-ia64.S > $@ ;; \
+	char)	set -x; $(CC) $(CFLAGS) -DSZ=1 -E rc4-ia64.S > $@ ;; \
+	*)	exit 1 ;; \
+	esac
 
 # GNU make "catch all"
-ghash-%.S:	asm/ghash-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
-
-ghash-armv4.o:	ghash-armv4.S
+rc4-%.s:	asm/rc4-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
@@ -72,7 +75,7 @@ links:
 
 install:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
+	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
@@ -95,6 +98,6 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f *.s *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.

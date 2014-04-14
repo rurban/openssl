@@ -1,66 +1,54 @@
 #
-# OpenSSL/crypto/modes/Makefile
+# OpenSSL/crypto/objects/Makefile
 #
 
-DIR=	modes
+DIR=	objects
 TOP=	../..
 CC=	cc
 INCLUDES= -I.. -I$(TOP) -I../../include
 CFLAG=-g
 MAKEFILE=	Makefile
 AR=		ar r
-
-MODES_ASM_OBJ=
+PERL=		perl
 
 CFLAGS= $(INCLUDES) $(CFLAG)
-ASFLAGS= $(INCLUDES) $(ASFLAG)
-AFLAGS= $(ASFLAGS)
 
-GENERAL=Makefile
+GENERAL=Makefile README
 TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC= cbc128.c ctr128.c cts128.c cfb128.c ofb128.c gcm128.c \
-	ccm128.c xts128.c
-LIBOBJ= cbc128.o ctr128.o cts128.o cfb128.o ofb128.o gcm128.o \
-	ccm128.o xts128.o $(MODES_ASM_OBJ)
+LIBSRC=	o_names.c obj_dat.c obj_lib.c obj_err.c obj_xref.c
+LIBOBJ= o_names.o obj_dat.o obj_lib.o obj_err.o obj_xref.o
 
 SRC= $(LIBSRC)
 
-#EXHEADER= store.h str_compat.h
-EXHEADER= modes.h
-HEADER=	modes_lcl.h $(EXHEADER)
+EXHEADER= objects.h obj_mac.h
+HEADER=	$(EXHEADER) obj_dat.h obj_xref.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
 top:
 	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all:	obj_dat.h obj_xref.h lib
 
 lib:	$(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-ghash-ia64.s:	asm/ghash-ia64.pl
-	$(PERL) asm/ghash-ia64.pl $@ $(CFLAGS)
-ghash-x86.s:	asm/ghash-x86.pl
-	$(PERL) asm/ghash-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
-ghash-x86_64.s:	asm/ghash-x86_64.pl
-	$(PERL) asm/ghash-x86_64.pl $(PERLASM_SCHEME) > $@
-ghash-sparcv9.s:	asm/ghash-sparcv9.pl
-	$(PERL) asm/ghash-sparcv9.pl $@ $(CFLAGS)
-ghash-alpha.s:	asm/ghash-alpha.pl
-	$(PERL) $< | $(CC) -E - | tee $@ > /dev/null
-ghash-parisc.s:	asm/ghash-parisc.pl
-	$(PERL) asm/ghash-parisc.pl $(PERLASM_SCHEME) $@
+obj_dat.h: obj_dat.pl obj_mac.h
+	$(PERL) obj_dat.pl obj_mac.h obj_dat.h
 
-# GNU make "catch all"
-ghash-%.S:	asm/ghash-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
+# objects.pl both reads and writes obj_mac.num
+obj_mac.h: objects.pl objects.txt obj_mac.num
+	$(PERL) objects.pl objects.txt obj_mac.num obj_mac.h
+	@sleep 1; touch obj_mac.h; sleep 1
 
-ghash-armv4.o:	ghash-armv4.S
+obj_xref.h: objxref.pl obj_xref.txt obj_mac.num
+	$(PERL) objxref.pl obj_mac.num obj_xref.txt > obj_xref.h
+	@sleep 1; touch obj_xref.h; sleep 1
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
@@ -72,7 +60,7 @@ links:
 
 install:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
+	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
@@ -95,6 +83,6 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f *.s *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.

@@ -1,8 +1,8 @@
 #
-# OpenSSL/crypto/modes/Makefile
+# crypto/ec/Makefile
 #
 
-DIR=	modes
+DIR=	ec
 TOP=	../..
 CC=	cc
 INCLUDES= -I.. -I$(TOP) -I../../include
@@ -10,27 +10,29 @@ CFLAG=-g
 MAKEFILE=	Makefile
 AR=		ar r
 
-MODES_ASM_OBJ=
-
 CFLAGS= $(INCLUDES) $(CFLAG)
-ASFLAGS= $(INCLUDES) $(ASFLAG)
-AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile
-TEST=
+TEST=ectest.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC= cbc128.c ctr128.c cts128.c cfb128.c ofb128.c gcm128.c \
-	ccm128.c xts128.c
-LIBOBJ= cbc128.o ctr128.o cts128.o cfb128.o ofb128.o gcm128.o \
-	ccm128.o xts128.o $(MODES_ASM_OBJ)
+LIBSRC=	ec_lib.c ecp_smpl.c ecp_mont.c ecp_nist.c ec_cvt.c ec_mult.c\
+	ec_err.c ec_curve.c ec_check.c ec_print.c ec_asn1.c ec_key.c\
+	ec2_smpl.c ec2_mult.c ec_ameth.c ec_pmeth.c eck_prn.c \
+	ecp_nistp224.c ecp_nistp256.c ecp_nistp521.c ecp_nistputil.c \
+	ecp_oct.c ec2_oct.c ec_oct.c
+
+LIBOBJ=	ec_lib.o ecp_smpl.o ecp_mont.o ecp_nist.o ec_cvt.o ec_mult.o\
+	ec_err.o ec_curve.o ec_check.o ec_print.o ec_asn1.o ec_key.o\
+	ec2_smpl.o ec2_mult.o ec_ameth.o ec_pmeth.o eck_prn.o \
+	ecp_nistp224.o ecp_nistp256.o ecp_nistp521.o ecp_nistputil.o \
+	ecp_oct.o ec2_oct.o ec_oct.o
 
 SRC= $(LIBSRC)
 
-#EXHEADER= store.h str_compat.h
-EXHEADER= modes.h
-HEADER=	modes_lcl.h $(EXHEADER)
+EXHEADER= ec.h
+HEADER=	ec_lcl.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -44,24 +46,6 @@ lib:	$(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-ghash-ia64.s:	asm/ghash-ia64.pl
-	$(PERL) asm/ghash-ia64.pl $@ $(CFLAGS)
-ghash-x86.s:	asm/ghash-x86.pl
-	$(PERL) asm/ghash-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
-ghash-x86_64.s:	asm/ghash-x86_64.pl
-	$(PERL) asm/ghash-x86_64.pl $(PERLASM_SCHEME) > $@
-ghash-sparcv9.s:	asm/ghash-sparcv9.pl
-	$(PERL) asm/ghash-sparcv9.pl $@ $(CFLAGS)
-ghash-alpha.s:	asm/ghash-alpha.pl
-	$(PERL) $< | $(CC) -E - | tee $@ > /dev/null
-ghash-parisc.s:	asm/ghash-parisc.pl
-	$(PERL) asm/ghash-parisc.pl $(PERLASM_SCHEME) $@
-
-# GNU make "catch all"
-ghash-%.S:	asm/ghash-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
-
-ghash-armv4.o:	ghash-armv4.S
-
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 
@@ -72,7 +56,7 @@ links:
 
 install:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
+	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
@@ -95,6 +79,6 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f *.s *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.

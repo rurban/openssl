@@ -1,39 +1,39 @@
 #
-# crypto/ecdh/Makefile
+# OpenSSL/crypto/md4/Makefile
 #
 
-DIR=	ecdh
-TOP=	../..
-CC=	cc
-INCLUDES= -I.. -I$(TOP) -I../../include
-CFLAG=-g -Wall
-MAKEFILE=	Makefile
-AR=		ar r
+DIR=    md4
+TOP=    ../..
+CC=     cc
+CPP=    $(CC) -E
+INCLUDES=
+CFLAG=-g
+MAKEFILE=       Makefile
+AR=             ar r
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
-TEST=ecdhtest.c
-APPS=
+TEST=md4test.c
+APPS=md4.c
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=	ech_lib.c ech_ossl.c ech_key.c ech_err.c
-
-LIBOBJ=	ech_lib.o ech_ossl.o ech_key.o ech_err.o
+LIBSRC=md4_dgst.c md4_one.c
+LIBOBJ=md4_dgst.o md4_one.o
 
 SRC= $(LIBSRC)
 
-EXHEADER= ecdh.h
-HEADER=	ech_locl.h $(EXHEADER)
+EXHEADER= md4.h
+HEADER= md4_locl.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
 top:
 	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all:    lib
 
-lib:	$(LIBOBJ)
+lib:    $(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
@@ -48,7 +48,7 @@ links:
 
 install:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
+	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
@@ -69,8 +69,9 @@ depend:
 dclean:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
+	rm -f ../../include/openssl/$(EXHEADER) ../../test/$(TEST) ../../apps/$(APPS)
 
 clean:
-	rm -f *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f asm/mx86unix.cpp *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.

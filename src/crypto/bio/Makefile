@@ -1,8 +1,8 @@
 #
-# OpenSSL/crypto/modes/Makefile
+# OpenSSL/crypto/bio/Makefile
 #
 
-DIR=	modes
+DIR=	bio
 TOP=	../..
 CC=	cc
 INCLUDES= -I.. -I$(TOP) -I../../include
@@ -10,27 +10,32 @@ CFLAG=-g
 MAKEFILE=	Makefile
 AR=		ar r
 
-MODES_ASM_OBJ=
-
 CFLAGS= $(INCLUDES) $(CFLAG)
-ASFLAGS= $(INCLUDES) $(ASFLAG)
-AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile
 TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC= cbc128.c ctr128.c cts128.c cfb128.c ofb128.c gcm128.c \
-	ccm128.c xts128.c
-LIBOBJ= cbc128.o ctr128.o cts128.o cfb128.o ofb128.o gcm128.o \
-	ccm128.o xts128.o $(MODES_ASM_OBJ)
+LIBSRC= bio_lib.c bio_cb.c bio_err.c \
+	bss_mem.c bss_null.c bss_fd.c \
+	bss_file.c bss_sock.c bss_conn.c \
+	bf_null.c bf_buff.c b_print.c b_dump.c \
+	b_sock.c bss_acpt.c bf_nbio.c bss_log.c bss_bio.c \
+	bss_dgram.c
+#	bf_lbuf.c
+LIBOBJ= bio_lib.o bio_cb.o bio_err.o \
+	bss_mem.o bss_null.o bss_fd.o \
+	bss_file.o bss_sock.o bss_conn.o \
+	bf_null.o bf_buff.o b_print.o b_dump.o \
+	b_sock.o bss_acpt.o bf_nbio.o bss_log.o bss_bio.o \
+	bss_dgram.o
+#	bf_lbuf.o
 
 SRC= $(LIBSRC)
 
-#EXHEADER= store.h str_compat.h
-EXHEADER= modes.h
-HEADER=	modes_lcl.h $(EXHEADER)
+EXHEADER= bio.h
+HEADER=	bio_lcl.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -43,24 +48,6 @@ lib:	$(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
-
-ghash-ia64.s:	asm/ghash-ia64.pl
-	$(PERL) asm/ghash-ia64.pl $@ $(CFLAGS)
-ghash-x86.s:	asm/ghash-x86.pl
-	$(PERL) asm/ghash-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
-ghash-x86_64.s:	asm/ghash-x86_64.pl
-	$(PERL) asm/ghash-x86_64.pl $(PERLASM_SCHEME) > $@
-ghash-sparcv9.s:	asm/ghash-sparcv9.pl
-	$(PERL) asm/ghash-sparcv9.pl $@ $(CFLAGS)
-ghash-alpha.s:	asm/ghash-alpha.pl
-	$(PERL) $< | $(CC) -E - | tee $@ > /dev/null
-ghash-parisc.s:	asm/ghash-parisc.pl
-	$(PERL) asm/ghash-parisc.pl $(PERLASM_SCHEME) $@
-
-# GNU make "catch all"
-ghash-%.S:	asm/ghash-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
-
-ghash-armv4.o:	ghash-armv4.S
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
@@ -95,6 +82,6 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f *.s *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.

@@ -1,66 +1,56 @@
 #
-# OpenSSL/crypto/modes/Makefile
+# OpenSSL/crypto/md5/Makefile
 #
 
-DIR=	modes
-TOP=	../..
-CC=	cc
-INCLUDES= -I.. -I$(TOP) -I../../include
+DIR=    md5
+TOP=    ../..
+CC=     cc
+CPP=    $(CC) -E
+INCLUDES=-I.. -I$(TOP) -I../../include
 CFLAG=-g
-MAKEFILE=	Makefile
-AR=		ar r
+MAKEFILE=       Makefile
+AR=             ar r
 
-MODES_ASM_OBJ=
+MD5_ASM_OBJ=
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 ASFLAGS= $(INCLUDES) $(ASFLAG)
 AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile
-TEST=
+TEST=md5test.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC= cbc128.c ctr128.c cts128.c cfb128.c ofb128.c gcm128.c \
-	ccm128.c xts128.c
-LIBOBJ= cbc128.o ctr128.o cts128.o cfb128.o ofb128.o gcm128.o \
-	ccm128.o xts128.o $(MODES_ASM_OBJ)
+LIBSRC=md5_dgst.c md5_one.c
+LIBOBJ=md5_dgst.o md5_one.o $(MD5_ASM_OBJ)
 
 SRC= $(LIBSRC)
 
-#EXHEADER= store.h str_compat.h
-EXHEADER= modes.h
-HEADER=	modes_lcl.h $(EXHEADER)
+EXHEADER= md5.h
+HEADER= md5_locl.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
 top:
 	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all:    lib
 
-lib:	$(LIBOBJ)
+lib:    $(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-ghash-ia64.s:	asm/ghash-ia64.pl
-	$(PERL) asm/ghash-ia64.pl $@ $(CFLAGS)
-ghash-x86.s:	asm/ghash-x86.pl
-	$(PERL) asm/ghash-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
-ghash-x86_64.s:	asm/ghash-x86_64.pl
-	$(PERL) asm/ghash-x86_64.pl $(PERLASM_SCHEME) > $@
-ghash-sparcv9.s:	asm/ghash-sparcv9.pl
-	$(PERL) asm/ghash-sparcv9.pl $@ $(CFLAGS)
-ghash-alpha.s:	asm/ghash-alpha.pl
-	$(PERL) $< | $(CC) -E - | tee $@ > /dev/null
-ghash-parisc.s:	asm/ghash-parisc.pl
-	$(PERL) asm/ghash-parisc.pl $(PERLASM_SCHEME) $@
+md5-586.s:	asm/md5-586.pl ../perlasm/x86asm.pl
+	$(PERL) asm/md5-586.pl $(PERLASM_SCHEME) $(CFLAGS) > $@
 
-# GNU make "catch all"
-ghash-%.S:	asm/ghash-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
+md5-x86_64.s:	asm/md5-x86_64.pl
+	$(PERL) asm/md5-x86_64.pl $(PERLASM_SCHEME) > $@
 
-ghash-armv4.o:	ghash-armv4.S
+md5-ia64.s: asm/md5-ia64.S
+	$(CC) $(CFLAGS) -E asm/md5-ia64.S | \
+	$(PERL) -ne 's/;\s+/;\n/g; print;' > $@
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
@@ -72,7 +62,7 @@ links:
 
 install:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
+	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
@@ -95,6 +85,6 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f *.s *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.

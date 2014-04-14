@@ -1,35 +1,48 @@
 #
-# crypto/ecdh/Makefile
+# SSLeay/crypto/ts/Makefile
 #
 
-DIR=	ecdh
+DIR=	ts
 TOP=	../..
 CC=	cc
-INCLUDES= -I.. -I$(TOP) -I../../include
-CFLAG=-g -Wall
+INCLUDES= -I.. -I../../include
+CFLAG = -g
+INSTALL_PREFIX=
+OPENSSLDIR=     /usr/local/ssl
+INSTALLTOP=/usr/local/ssl
+MAKEDEPPROG=	makedepend
+MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 MAKEFILE=	Makefile
 AR=		ar r
 
+PEX_LIBS=
+EX_LIBS=
+ 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
-GENERAL=Makefile
-TEST=ecdhtest.c
+GENERAL= Makefile
+TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=	ech_lib.c ech_ossl.c ech_key.c ech_err.c
-
-LIBOBJ=	ech_lib.o ech_ossl.o ech_key.o ech_err.o
+LIBSRC=	ts_err.c ts_req_utils.c ts_req_print.c ts_rsp_utils.c ts_rsp_print.c \
+	ts_rsp_sign.c ts_rsp_verify.c ts_verify_ctx.c ts_lib.c ts_conf.c \
+	ts_asn1.c
+LIBOBJ= ts_err.o ts_req_utils.o ts_req_print.o ts_rsp_utils.o ts_rsp_print.o \
+	ts_rsp_sign.o ts_rsp_verify.o ts_verify_ctx.o ts_lib.o ts_conf.o \
+	ts_asn1.o
 
 SRC= $(LIBSRC)
 
-EXHEADER= ecdh.h
-HEADER=	ech_locl.h $(EXHEADER)
+EXHEADER= ts.h
+HEADER=	$(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
 top:
 	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
+
+test:
 
 all:	lib
 
@@ -48,7 +61,7 @@ links:
 
 install:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
+	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
@@ -57,20 +70,17 @@ install:
 tags:
 	ctags $(SRC)
 
-tests:
-
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
 depend:
-	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(LIBSRC)
 
 dclean:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff enc dec sign verify
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.

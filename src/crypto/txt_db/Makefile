@@ -1,30 +1,29 @@
 #
-# crypto/ecdh/Makefile
+# OpenSSL/crypto/txt_db/Makefile
 #
 
-DIR=	ecdh
+DIR=	txt_db
 TOP=	../..
 CC=	cc
-INCLUDES= -I.. -I$(TOP) -I../../include
-CFLAG=-g -Wall
+INCLUDES=
+CFLAG=-g
 MAKEFILE=	Makefile
 AR=		ar r
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
-TEST=ecdhtest.c
+TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=	ech_lib.c ech_ossl.c ech_key.c ech_err.c
-
-LIBOBJ=	ech_lib.o ech_ossl.o ech_key.o ech_err.o
+LIBSRC=txt_db.c
+LIBOBJ=txt_db.o
 
 SRC= $(LIBSRC)
 
-EXHEADER= ecdh.h
-HEADER=	ech_locl.h $(EXHEADER)
+EXHEADER= txt_db.h
+HEADER=	$(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -48,7 +47,7 @@ links:
 
 install:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
+	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
@@ -63,7 +62,7 @@ lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
 depend:
-	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
+	@[ -n "$(MAKEDEPEND)" ] # should be set by top Makefile...
 	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
 
 dclean:
@@ -71,6 +70,6 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
