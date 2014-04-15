@@ -1,4 +1,4 @@
-/* crypto/err/err_all.c */
+/* crypto/idea/i_skey.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,107 +56,102 @@
  * [including the GNU Public Licence.]
  */
 
-#include <stdio.h>
-#include <openssl/asn1.h>
-#include <openssl/bn.h>
-#ifndef OPENSSL_NO_EC
-#include <openssl/ec.h>
-#endif
-#include <openssl/buffer.h>
-#include <openssl/bio.h>
-#ifndef OPENSSL_NO_COMP
-#include <openssl/comp.h>
-#endif
-#ifndef OPENSSL_NO_RSA
-#include <openssl/rsa.h>
-#endif
-#ifndef OPENSSL_NO_DH
-#include <openssl/dh.h>
-#endif
-#ifndef OPENSSL_NO_DSA
-#include <openssl/dsa.h>
-#endif
-#ifndef OPENSSL_NO_ECDSA
-#include <openssl/ecdsa.h>
-#endif
-#ifndef OPENSSL_NO_ECDH
-#include <openssl/ecdh.h>
-#endif
-#include <openssl/evp.h>
-#include <openssl/objects.h>
-#include <openssl/pem2.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
-#include <openssl/conf.h>
-#include <openssl/pkcs12.h>
-#include <openssl/rand.h>
-#include <openssl/dso.h>
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
-#include <openssl/ui.h>
-#include <openssl/ocsp.h>
-#include <openssl/err.h>
-#include <openssl/ts.h>
-#ifndef OPENSSL_NO_CMS
-#include <openssl/cms.h>
-#endif
-#ifndef OPENSSL_NO_JPAKE
-#include <openssl/jpake.h>
-#endif
+#include <openssl/crypto.h>
+#include <openssl/idea.h>
+#include "idea_lcl.h"
 
-void ERR_load_crypto_strings(void)
+static IDEA_INT inverse(unsigned int xin);
+void idea_set_encrypt_key(const unsigned char *key, IDEA_KEY_SCHEDULE *ks)
 	{
-#ifndef OPENSSL_NO_ERR
-	ERR_load_ERR_strings(); /* include error strings for SYSerr */
-	ERR_load_BN_strings();
-#ifndef OPENSSL_NO_RSA
-	ERR_load_RSA_strings();
-#endif
-#ifndef OPENSSL_NO_DH
-	ERR_load_DH_strings();
-#endif
-	ERR_load_EVP_strings();
-	ERR_load_BUF_strings();
-	ERR_load_OBJ_strings();
-	ERR_load_PEM_strings();
-#ifndef OPENSSL_NO_DSA
-	ERR_load_DSA_strings();
-#endif
-	ERR_load_X509_strings();
-	ERR_load_ASN1_strings();
-	ERR_load_CONF_strings();
-	ERR_load_CRYPTO_strings();
-#ifndef OPENSSL_NO_COMP
-	ERR_load_COMP_strings();
-#endif
-#ifndef OPENSSL_NO_EC
-	ERR_load_EC_strings();
-#endif
-#ifndef OPENSSL_NO_ECDSA
-	ERR_load_ECDSA_strings();
-#endif
-#ifndef OPENSSL_NO_ECDH
-	ERR_load_ECDH_strings();
-#endif
-	/* skip ERR_load_SSL_strings() because it is not in this library */
-	ERR_load_BIO_strings();
-	ERR_load_PKCS7_strings();	
-	ERR_load_X509V3_strings();
-	ERR_load_PKCS12_strings();
-	ERR_load_RAND_strings();
-	ERR_load_DSO_strings();
-	ERR_load_TS_strings();
-#ifndef OPENSSL_NO_ENGINE
-	ERR_load_ENGINE_strings();
-#endif
-	ERR_load_OCSP_strings();
-	ERR_load_UI_strings();
-#ifndef OPENSSL_NO_CMS
-	ERR_load_CMS_strings();
-#endif
-#ifndef OPENSSL_NO_JPAKE
-	ERR_load_JPAKE_strings();
-#endif
-#endif
+	int i;
+	register IDEA_INT *kt,*kf,r0,r1,r2;
+
+	kt= &(ks->data[0][0]);
+	n2s(key,kt[0]); n2s(key,kt[1]); n2s(key,kt[2]); n2s(key,kt[3]);
+	n2s(key,kt[4]); n2s(key,kt[5]); n2s(key,kt[6]); n2s(key,kt[7]);
+
+	kf=kt;
+	kt+=8;
+	for (i=0; i<6; i++)
+		{
+		r2= kf[1];
+		r1= kf[2];
+		*(kt++)= ((r2<<9) | (r1>>7))&0xffff;
+		r0= kf[3];
+		*(kt++)= ((r1<<9) | (r0>>7))&0xffff;
+		r1= kf[4];
+		*(kt++)= ((r0<<9) | (r1>>7))&0xffff;
+		r0= kf[5];
+		*(kt++)= ((r1<<9) | (r0>>7))&0xffff;
+		r1= kf[6];
+		*(kt++)= ((r0<<9) | (r1>>7))&0xffff;
+		r0= kf[7];
+		*(kt++)= ((r1<<9) | (r0>>7))&0xffff;
+		r1= kf[0];
+		if (i >= 5) break;
+		*(kt++)= ((r0<<9) | (r1>>7))&0xffff;
+		*(kt++)= ((r1<<9) | (r2>>7))&0xffff;
+		kf+=8;
+		}
+	}
+
+void idea_set_decrypt_key(IDEA_KEY_SCHEDULE *ek, IDEA_KEY_SCHEDULE *dk)
+	{
+	int r;
+	register IDEA_INT *fp,*tp,t;
+
+	tp= &(dk->data[0][0]);
+	fp= &(ek->data[8][0]);
+	for (r=0; r<9; r++)
+		{
+		*(tp++)=inverse(fp[0]);
+		*(tp++)=((int)(0x10000L-fp[2])&0xffff);
+		*(tp++)=((int)(0x10000L-fp[1])&0xffff);
+		*(tp++)=inverse(fp[3]);
+		if (r == 8) break;
+		fp-=6;
+		*(tp++)=fp[4];
+		*(tp++)=fp[5];
+		}
+
+	tp= &(dk->data[0][0]);
+	t=tp[1];
+	tp[1]=tp[2];
+	tp[2]=t;
+
+	t=tp[49];
+	tp[49]=tp[50];
+	tp[50]=t;
+	}
+
+/* taken directly from the 'paper' I'll have a look at it later */
+static IDEA_INT inverse(unsigned int xin)
+	{
+	long n1,n2,q,r,b1,b2,t;
+
+	if (xin == 0)
+		b2=0;
+	else
+		{
+		n1=0x10001;
+		n2=xin;
+		b2=1;
+		b1=0;
+
+		do	{
+			r=(n1%n2);
+			q=(n1-r)/n2;
+			if (r == 0)
+				{ if (b2 < 0) b2=0x10001+b2; }
+			else
+				{
+				n1=n2;
+				n2=r;
+				t=b2;
+				b2=b1-q*b2;
+				b1=t;
+				}
+			} while (r != 0);
+		}
+	return((IDEA_INT)b2);
 	}

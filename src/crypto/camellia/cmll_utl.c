@@ -1,6 +1,4 @@
-/* Written by Stephen henson (steve@openssl.org) for the OpenSSL
- * project 2011.
- */
+/* crypto/camellia/cmll_utl.c -*- mode:C; c-file-style: "eay" -*- */
 /* ====================================================================
  * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
@@ -49,27 +47,15 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ====================================================================
  *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
  */
+ 
+#include <openssl/opensslv.h>
+#include <openssl/crypto.h>
+#include <openssl/camellia.h>
+#include "cmll_locl.h"
 
-#include "cryptlib.h"
-
-int
-FIPS_mode(void)
-{
-	OPENSSL_init();
-	return 0;
-}
-
-int
-FIPS_mode_set(int r)
-{
-	OPENSSL_init();
-	if (r == 0)
-		return 1;
-	CRYPTOerr(CRYPTO_F_FIPS_MODE_SET, CRYPTO_R_FIPS_MODE_NOT_SUPPORTED);
-	return 0;
-}
+int Camellia_set_key(const unsigned char *userKey, const int bits,
+	CAMELLIA_KEY *key)
+	{
+	return private_Camellia_set_key(userKey, bits, key);
+	}

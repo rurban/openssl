@@ -1,4 +1,4 @@
-/* crypto/err/err_all.c */
+/* crypto/bf/blowfish.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,107 +56,71 @@
  * [including the GNU Public Licence.]
  */
 
-#include <stdio.h>
-#include <openssl/asn1.h>
-#include <openssl/bn.h>
-#ifndef OPENSSL_NO_EC
-#include <openssl/ec.h>
-#endif
-#include <openssl/buffer.h>
-#include <openssl/bio.h>
-#ifndef OPENSSL_NO_COMP
-#include <openssl/comp.h>
-#endif
-#ifndef OPENSSL_NO_RSA
-#include <openssl/rsa.h>
-#endif
-#ifndef OPENSSL_NO_DH
-#include <openssl/dh.h>
-#endif
-#ifndef OPENSSL_NO_DSA
-#include <openssl/dsa.h>
-#endif
-#ifndef OPENSSL_NO_ECDSA
-#include <openssl/ecdsa.h>
-#endif
-#ifndef OPENSSL_NO_ECDH
-#include <openssl/ecdh.h>
-#endif
-#include <openssl/evp.h>
-#include <openssl/objects.h>
-#include <openssl/pem2.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
-#include <openssl/conf.h>
-#include <openssl/pkcs12.h>
-#include <openssl/rand.h>
-#include <openssl/dso.h>
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
-#include <openssl/ui.h>
-#include <openssl/ocsp.h>
-#include <openssl/err.h>
-#include <openssl/ts.h>
-#ifndef OPENSSL_NO_CMS
-#include <openssl/cms.h>
-#endif
-#ifndef OPENSSL_NO_JPAKE
-#include <openssl/jpake.h>
+#ifndef HEADER_BLOWFISH_H
+#define HEADER_BLOWFISH_H
+
+#include <openssl/e_os2.h>
+
+#ifdef  __cplusplus
+extern "C" {
 #endif
 
-void ERR_load_crypto_strings(void)
+#ifdef OPENSSL_NO_BF
+#error BF is disabled.
+#endif
+
+#define BF_ENCRYPT	1
+#define BF_DECRYPT	0
+
+/*
+ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ * ! BF_LONG has to be at least 32 bits wide. If it's wider, then !
+ * ! BF_LONG_LOG2 has to be defined along.                        !
+ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ */
+
+#if defined(__LP32__)
+#define BF_LONG unsigned long
+#elif defined(OPENSSL_SYS_CRAY) || defined(__ILP64__)
+#define BF_LONG unsigned long
+#define BF_LONG_LOG2 3
+/*
+ * _CRAY note. I could declare short, but I have no idea what impact
+ * does it have on performance on none-T3E machines. I could declare
+ * int, but at least on C90 sizeof(int) can be chosen at compile time.
+ * So I've chosen long...
+ *					<appro@fy.chalmers.se>
+ */
+#else
+#define BF_LONG unsigned int
+#endif
+
+#define BF_ROUNDS	16
+#define BF_BLOCK	8
+
+typedef struct bf_key_st
 	{
-#ifndef OPENSSL_NO_ERR
-	ERR_load_ERR_strings(); /* include error strings for SYSerr */
-	ERR_load_BN_strings();
-#ifndef OPENSSL_NO_RSA
-	ERR_load_RSA_strings();
+	BF_LONG P[BF_ROUNDS+2];
+	BF_LONG S[4*256];
+	} BF_KEY;
+
+void BF_set_key(BF_KEY *key, int len, const unsigned char *data);
+
+void BF_encrypt(BF_LONG *data,const BF_KEY *key);
+void BF_decrypt(BF_LONG *data,const BF_KEY *key);
+
+void BF_ecb_encrypt(const unsigned char *in, unsigned char *out,
+	const BF_KEY *key, int enc);
+void BF_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
+	const BF_KEY *schedule, unsigned char *ivec, int enc);
+void BF_cfb64_encrypt(const unsigned char *in, unsigned char *out, long length,
+	const BF_KEY *schedule, unsigned char *ivec, int *num, int enc);
+void BF_ofb64_encrypt(const unsigned char *in, unsigned char *out, long length,
+	const BF_KEY *schedule, unsigned char *ivec, int *num);
+const char *BF_options(void);
+
+#ifdef  __cplusplus
+}
 #endif
-#ifndef OPENSSL_NO_DH
-	ERR_load_DH_strings();
+
 #endif
-	ERR_load_EVP_strings();
-	ERR_load_BUF_strings();
-	ERR_load_OBJ_strings();
-	ERR_load_PEM_strings();
-#ifndef OPENSSL_NO_DSA
-	ERR_load_DSA_strings();
-#endif
-	ERR_load_X509_strings();
-	ERR_load_ASN1_strings();
-	ERR_load_CONF_strings();
-	ERR_load_CRYPTO_strings();
-#ifndef OPENSSL_NO_COMP
-	ERR_load_COMP_strings();
-#endif
-#ifndef OPENSSL_NO_EC
-	ERR_load_EC_strings();
-#endif
-#ifndef OPENSSL_NO_ECDSA
-	ERR_load_ECDSA_strings();
-#endif
-#ifndef OPENSSL_NO_ECDH
-	ERR_load_ECDH_strings();
-#endif
-	/* skip ERR_load_SSL_strings() because it is not in this library */
-	ERR_load_BIO_strings();
-	ERR_load_PKCS7_strings();	
-	ERR_load_X509V3_strings();
-	ERR_load_PKCS12_strings();
-	ERR_load_RAND_strings();
-	ERR_load_DSO_strings();
-	ERR_load_TS_strings();
-#ifndef OPENSSL_NO_ENGINE
-	ERR_load_ENGINE_strings();
-#endif
-	ERR_load_OCSP_strings();
-	ERR_load_UI_strings();
-#ifndef OPENSSL_NO_CMS
-	ERR_load_CMS_strings();
-#endif
-#ifndef OPENSSL_NO_JPAKE
-	ERR_load_JPAKE_strings();
-#endif
-#endif
-	}

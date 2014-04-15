@@ -1,6 +1,4 @@
-/* Written by Stephen henson (steve@openssl.org) for the OpenSSL
- * project 2011.
- */
+/* crypto/rc4/rc4_utl.c -*- mode:C; c-file-style: "eay" -*- */
 /* ====================================================================
  * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
@@ -49,27 +47,13 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ====================================================================
  *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
  */
 
-#include "cryptlib.h"
+#include <openssl/opensslv.h>
+#include <openssl/crypto.h>
+#include <openssl/rc4.h>
 
-int
-FIPS_mode(void)
-{
-	OPENSSL_init();
-	return 0;
-}
-
-int
-FIPS_mode_set(int r)
-{
-	OPENSSL_init();
-	if (r == 0)
-		return 1;
-	CRYPTOerr(CRYPTO_F_FIPS_MODE_SET, CRYPTO_R_FIPS_MODE_NOT_SUPPORTED);
-	return 0;
-}
+void RC4_set_key(RC4_KEY *key, int len, const unsigned char *data)
+	{
+	private_RC4_set_key(key, len, data);
+	}

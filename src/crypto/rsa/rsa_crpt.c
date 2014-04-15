@@ -1,4 +1,4 @@
-/* crypto/err/err_all.c */
+/* crypto/rsa/rsa_lib.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,106 +57,169 @@
  */
 
 #include <stdio.h>
-#include <openssl/asn1.h>
+#include <openssl/crypto.h>
+#include "cryptlib.h"
+#include <openssl/lhash.h>
 #include <openssl/bn.h>
-#ifndef OPENSSL_NO_EC
-#include <openssl/ec.h>
-#endif
-#include <openssl/buffer.h>
-#include <openssl/bio.h>
-#ifndef OPENSSL_NO_COMP
-#include <openssl/comp.h>
-#endif
-#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
-#endif
-#ifndef OPENSSL_NO_DH
-#include <openssl/dh.h>
-#endif
-#ifndef OPENSSL_NO_DSA
-#include <openssl/dsa.h>
-#endif
-#ifndef OPENSSL_NO_ECDSA
-#include <openssl/ecdsa.h>
-#endif
-#ifndef OPENSSL_NO_ECDH
-#include <openssl/ecdh.h>
-#endif
-#include <openssl/evp.h>
-#include <openssl/objects.h>
-#include <openssl/pem2.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
-#include <openssl/conf.h>
-#include <openssl/pkcs12.h>
 #include <openssl/rand.h>
-#include <openssl/dso.h>
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
-#include <openssl/ui.h>
-#include <openssl/ocsp.h>
-#include <openssl/err.h>
-#include <openssl/ts.h>
-#ifndef OPENSSL_NO_CMS
-#include <openssl/cms.h>
-#endif
-#ifndef OPENSSL_NO_JPAKE
-#include <openssl/jpake.h>
-#endif
 
-void ERR_load_crypto_strings(void)
+int RSA_size(const RSA *r)
 	{
-#ifndef OPENSSL_NO_ERR
-	ERR_load_ERR_strings(); /* include error strings for SYSerr */
-	ERR_load_BN_strings();
-#ifndef OPENSSL_NO_RSA
-	ERR_load_RSA_strings();
-#endif
-#ifndef OPENSSL_NO_DH
-	ERR_load_DH_strings();
-#endif
-	ERR_load_EVP_strings();
-	ERR_load_BUF_strings();
-	ERR_load_OBJ_strings();
-	ERR_load_PEM_strings();
-#ifndef OPENSSL_NO_DSA
-	ERR_load_DSA_strings();
-#endif
-	ERR_load_X509_strings();
-	ERR_load_ASN1_strings();
-	ERR_load_CONF_strings();
-	ERR_load_CRYPTO_strings();
-#ifndef OPENSSL_NO_COMP
-	ERR_load_COMP_strings();
-#endif
-#ifndef OPENSSL_NO_EC
-	ERR_load_EC_strings();
-#endif
-#ifndef OPENSSL_NO_ECDSA
-	ERR_load_ECDSA_strings();
-#endif
-#ifndef OPENSSL_NO_ECDH
-	ERR_load_ECDH_strings();
-#endif
-	/* skip ERR_load_SSL_strings() because it is not in this library */
-	ERR_load_BIO_strings();
-	ERR_load_PKCS7_strings();	
-	ERR_load_X509V3_strings();
-	ERR_load_PKCS12_strings();
-	ERR_load_RAND_strings();
-	ERR_load_DSO_strings();
-	ERR_load_TS_strings();
-#ifndef OPENSSL_NO_ENGINE
-	ERR_load_ENGINE_strings();
-#endif
-	ERR_load_OCSP_strings();
-	ERR_load_UI_strings();
-#ifndef OPENSSL_NO_CMS
-	ERR_load_CMS_strings();
-#endif
-#ifndef OPENSSL_NO_JPAKE
-	ERR_load_JPAKE_strings();
-#endif
-#endif
+	return(BN_num_bytes(r->n));
 	}
+
+int RSA_public_encrypt(int flen, const unsigned char *from, unsigned char *to,
+	     RSA *rsa, int padding)
+	{
+	return(rsa->meth->rsa_pub_enc(flen, from, to, rsa, padding));
+	}
+
+int RSA_private_encrypt(int flen, const unsigned char *from, unsigned char *to,
+	     RSA *rsa, int padding)
+	{
+	return(rsa->meth->rsa_priv_enc(flen, from, to, rsa, padding));
+	}
+
+int RSA_private_decrypt(int flen, const unsigned char *from, unsigned char *to,
+	     RSA *rsa, int padding)
+	{
+	return(rsa->meth->rsa_priv_dec(flen, from, to, rsa, padding));
+	}
+
+int RSA_public_decrypt(int flen, const unsigned char *from, unsigned char *to,
+	     RSA *rsa, int padding)
+	{
+	return(rsa->meth->rsa_pub_dec(flen, from, to, rsa, padding));
+	}
+
+int RSA_flags(const RSA *r)
+	{
+	return((r == NULL)?0:r->meth->flags);
+	}
+
+void RSA_blinding_off(RSA *rsa)
+	{
+	if (rsa->blinding != NULL)
+		{
+		BN_BLINDING_free(rsa->blinding);
+		rsa->blinding=NULL;
+		}
+	rsa->flags &= ~RSA_FLAG_BLINDING;
+	rsa->flags |= RSA_FLAG_NO_BLINDING;
+	}
+
+int RSA_blinding_on(RSA *rsa, BN_CTX *ctx)
+	{
+	int ret=0;
+
+	if (rsa->blinding != NULL)
+		RSA_blinding_off(rsa);
+
+	rsa->blinding = RSA_setup_blinding(rsa, ctx);
+	if (rsa->blinding == NULL)
+		goto err;
+
+	rsa->flags |= RSA_FLAG_BLINDING;
+	rsa->flags &= ~RSA_FLAG_NO_BLINDING;
+	ret=1;
+err:
+	return(ret);
+	}
+
+static BIGNUM *rsa_get_public_exp(const BIGNUM *d, const BIGNUM *p,
+	const BIGNUM *q, BN_CTX *ctx)
+{
+	BIGNUM *ret = NULL, *r0, *r1, *r2;
+
+	if (d == NULL || p == NULL || q == NULL)
+		return NULL;
+
+	BN_CTX_start(ctx);
+	r0 = BN_CTX_get(ctx);
+	r1 = BN_CTX_get(ctx);
+	r2 = BN_CTX_get(ctx);
+	if (r2 == NULL)
+		goto err;
+
+	if (!BN_sub(r1, p, BN_value_one())) goto err;
+	if (!BN_sub(r2, q, BN_value_one())) goto err;
+	if (!BN_mul(r0, r1, r2, ctx)) goto err;
+
+	ret = BN_mod_inverse(NULL, d, r0, ctx);
+err:
+	BN_CTX_end(ctx);
+	return ret;
+}
+
+BN_BLINDING *RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
+{
+	BIGNUM local_n;
+	BIGNUM *e,*n;
+	BN_CTX *ctx;
+	BN_BLINDING *ret = NULL;
+
+	if (in_ctx == NULL)
+		{
+		if ((ctx = BN_CTX_new()) == NULL) return 0;
+		}
+	else
+		ctx = in_ctx;
+
+	BN_CTX_start(ctx);
+	e  = BN_CTX_get(ctx);
+	if (e == NULL)
+		{
+		RSAerr(RSA_F_RSA_SETUP_BLINDING, ERR_R_MALLOC_FAILURE);
+		goto err;
+		}
+
+	if (rsa->e == NULL)
+		{
+		e = rsa_get_public_exp(rsa->d, rsa->p, rsa->q, ctx);
+		if (e == NULL)
+			{
+			RSAerr(RSA_F_RSA_SETUP_BLINDING, RSA_R_NO_PUBLIC_EXPONENT);
+			goto err;
+			}
+		}
+	else
+		e = rsa->e;
+
+	
+	if ((RAND_status() == 0) && rsa->d != NULL && rsa->d->d != NULL)
+		{
+		/* if PRNG is not properly seeded, resort to secret
+		 * exponent as unpredictable seed */
+		RAND_add(rsa->d->d, rsa->d->dmax * sizeof rsa->d->d[0], 0.0);
+		}
+
+	if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME))
+		{
+		/* Set BN_FLG_CONSTTIME flag */
+		n = &local_n;
+		BN_with_flags(n, rsa->n, BN_FLG_CONSTTIME);
+		}
+	else
+		n = rsa->n;
+
+	ret = BN_BLINDING_create_param(NULL, e, n, ctx,
+			rsa->meth->bn_mod_exp, rsa->_method_mod_n);
+	if (ret == NULL)
+		{
+		RSAerr(RSA_F_RSA_SETUP_BLINDING, ERR_R_BN_LIB);
+		goto err;
+		}
+	CRYPTO_THREADID_current(BN_BLINDING_thread_id(ret));
+err:
+	BN_CTX_end(ctx);
+	if (in_ctx == NULL)
+		BN_CTX_free(ctx);
+	if(rsa->e == NULL)
+		BN_free(e);
+
+	return ret;
+}
