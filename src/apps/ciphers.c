@@ -1,4 +1,4 @@
-/* ssl/s23_lib.c */
+/* apps/ciphers.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,117 +57,161 @@
  */
 
 #include <stdio.h>
-#include <openssl/objects.h>
-#include "ssl_locl.h"
+#include <stdlib.h>
+#include <string.h>
+#ifdef OPENSSL_NO_STDIO
+#define APPS_WIN16
+#endif
+#include "apps.h"
+#include <openssl/err.h>
+#include <openssl/ssl.h>
 
-long
-ssl23_default_timeout(void)
-{
-	return (300);
-}
+#undef PROG
+#define PROG	ciphers_main
 
-int
-ssl23_num_ciphers(void)
-{
-	return(ssl3_num_ciphers());
-}
+static const char *ciphers_usage[]={
+"usage: ciphers args\n",
+" -v          - verbose mode, a textual listing of the SSL/TLS ciphers in OpenSSL\n",
+" -V          - even more verbose\n",
+" -ssl2       - SSL2 mode\n",
+" -ssl3       - SSL3 mode\n",
+" -tls1       - TLS1 mode\n",
+NULL
+};
 
-const SSL_CIPHER
-*ssl23_get_cipher(unsigned int u)
-{
-	unsigned int uu = ssl3_num_ciphers();
+int MAIN(int, char **);
 
-	if (u < uu)
-		return (ssl3_get_cipher(u));
-	else
-		return (NULL);
-}
+int MAIN(int argc, char **argv)
+	{
+	int ret=1,i;
+	int verbose=0,Verbose=0;
+	const char **pp;
+	const char *p;
+	int badops=0;
+	SSL_CTX *ctx=NULL;
+	SSL *ssl=NULL;
+	char *ciphers=NULL;
+	const SSL_METHOD *meth=NULL;
+	STACK_OF(SSL_CIPHER) *sk;
+	char buf[512];
+	BIO *STDout=NULL;
 
-/* This function needs to check if the ciphers required are actually
- * available */
-const SSL_CIPHER
-*ssl23_get_cipher_by_char(const unsigned char *p)
-{
-	const SSL_CIPHER *cp;
+	meth=SSLv3_server_method();
 
-	cp = ssl3_get_cipher_by_char(p);
-	return (cp);
-}
+	apps_startup();
 
-int
-ssl23_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p)
-{
-	long l;
-
-	/* We can write SSLv2 and SSLv3 ciphers */
-	if (p != NULL) {
-		l = c->id;
-		p[0] = ((unsigned char)(l >> 16L))&0xFF;
-		p[1] = ((unsigned char)(l >> 8L))&0xFF;
-		p[2] = ((unsigned char)(l     ))&0xFF;
+	if (bio_err == NULL)
+		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
+	STDout=BIO_new_fp(stdout,BIO_NOCLOSE);
+#ifdef OPENSSL_SYS_VMS
+	{
+	BIO *tmpbio = BIO_new(BIO_f_linebuffer());
+	STDout = BIO_push(tmpbio, STDout);
 	}
-	return (3);
-}
+#endif
+	if (!load_config(bio_err, NULL))
+		goto end;
 
-int
-ssl23_read(SSL *s, void *buf, int len)
-{
-	int n;
-
-	errno = 0;
-	if (SSL_in_init(s) && (!s->in_handshake)) {
-		n = s->handshake_func(s);
-		if (n < 0)
-			return (n);
-		if (n == 0) {
-			SSLerr(SSL_F_SSL23_READ, SSL_R_SSL_HANDSHAKE_FAILURE);
-			return (-1);
+	argc--;
+	argv++;
+	while (argc >= 1)
+		{
+		if (strcmp(*argv,"-v") == 0)
+			verbose=1;
+		else if (strcmp(*argv,"-V") == 0)
+			verbose=Verbose=1;
+		else if (strcmp(*argv,"-ssl3") == 0)
+			meth=SSLv3_client_method();
+		else if (strcmp(*argv,"-tls1") == 0)
+			meth=TLSv1_client_method();
+		else if ((strncmp(*argv,"-h",2) == 0) ||
+			 (strcmp(*argv,"-?") == 0))
+			{
+			badops=1;
+			break;
+			}
+		else
+			{
+			ciphers= *argv;
+			}
+		argc--;
+		argv++;
 		}
-		return (SSL_read(s, buf, len));
-	} else {
-		ssl_undefined_function(s);
-		return (-1);
-	}
-}
 
-int
-ssl23_peek(SSL *s, void *buf, int len)
-{
-	int n;
-
-	errno = 0;
-	if (SSL_in_init(s) && (!s->in_handshake)) {
-		n = s->handshake_func(s);
-		if (n < 0)
-			return (n);
-		if (n == 0) {
-			SSLerr(SSL_F_SSL23_PEEK, SSL_R_SSL_HANDSHAKE_FAILURE);
-			return (-1);
+	if (badops)
+		{
+		for (pp=ciphers_usage; (*pp != NULL); pp++)
+			BIO_printf(bio_err,"%s",*pp);
+		goto end;
 		}
-		return (SSL_peek(s, buf, len));
-	} else {
-		ssl_undefined_function(s);
-		return (-1);
-	}
-}
 
-int
-ssl23_write(SSL *s, const void *buf, int len)
-{
-	int n;
+	OpenSSL_add_ssl_algorithms();
 
-	errno = 0;
-	if (SSL_in_init(s) && (!s->in_handshake)) {
-		n = s->handshake_func(s);
-		if (n < 0)
-			return (n);
-		if (n == 0) {
-			SSLerr(SSL_F_SSL23_WRITE, SSL_R_SSL_HANDSHAKE_FAILURE);
-			return (-1);
+	ctx=SSL_CTX_new(meth);
+	if (ctx == NULL) goto err;
+	if (ciphers != NULL) {
+		if(!SSL_CTX_set_cipher_list(ctx,ciphers)) {
+			BIO_printf(bio_err, "Error in cipher list\n");
+			goto err;
 		}
-		return (SSL_write(s, buf, len));
-	} else {
-		ssl_undefined_function(s);
-		return (-1);
 	}
-}
+	ssl=SSL_new(ctx);
+	if (ssl == NULL) goto err;
+
+
+	if (!verbose)
+		{
+		for (i=0; ; i++)
+			{
+			p=SSL_get_cipher_list(ssl,i);
+			if (p == NULL) break;
+			if (i != 0) BIO_printf(STDout,":");
+			BIO_printf(STDout,"%s",p);
+			}
+		BIO_printf(STDout,"\n");
+		}
+	else /* verbose */
+		{
+		sk=SSL_get_ciphers(ssl);
+
+		for (i=0; i<sk_SSL_CIPHER_num(sk); i++)
+			{
+			SSL_CIPHER *c;
+
+			c = sk_SSL_CIPHER_value(sk,i);
+			
+			if (Verbose)
+				{
+				unsigned long id = SSL_CIPHER_get_id(c);
+				int id0 = (int)(id >> 24);
+				int id1 = (int)((id >> 16) & 0xffL);
+				int id2 = (int)((id >> 8) & 0xffL);
+				int id3 = (int)(id & 0xffL);
+				
+				if ((id & 0xff000000L) == 0x02000000L)
+					BIO_printf(STDout, "     0x%02X,0x%02X,0x%02X - ", id1, id2, id3); /* SSL2 cipher */
+				else if ((id & 0xff000000L) == 0x03000000L)
+					BIO_printf(STDout, "          0x%02X,0x%02X - ", id2, id3); /* SSL3 cipher */
+				else
+					BIO_printf(STDout, "0x%02X,0x%02X,0x%02X,0x%02X - ", id0, id1, id2, id3); /* whatever */
+				}
+
+			BIO_puts(STDout,SSL_CIPHER_description(c,buf,sizeof buf));
+			}
+		}
+
+	ret=0;
+	if (0)
+		{
+err:
+		SSL_load_error_strings();
+		ERR_print_errors(bio_err);
+		}
+end:
+	if (ctx != NULL) SSL_CTX_free(ctx);
+	if (ssl != NULL) SSL_free(ssl);
+	if (STDout != NULL) BIO_free_all(STDout);
+	apps_shutdown();
+	OPENSSL_EXIT(ret);
+	}
+
