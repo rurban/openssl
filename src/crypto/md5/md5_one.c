@@ -1,4 +1,4 @@
-/* crypto/bio/b_dump.c */
+/* crypto/md5/md5_one.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,129 +56,22 @@
  * [including the GNU Public Licence.]
  */
 
-/* 
- * Stolen from tjh's ssl/ssl_trc.c stuff.
- */
-
 #include <stdio.h>
-#include "cryptlib.h"
-#include "bio_lcl.h"
+#include <string.h>
+#include <openssl/md5.h>
+#include <openssl/crypto.h>
 
-#define TRUNCATE
-#define DUMP_WIDTH	16
-#define DUMP_WIDTH_LESS_INDENT(i) (DUMP_WIDTH - ((i - (i > 6 ? 6 : i) + 3) / 4))
+unsigned char *MD5(const unsigned char *d, size_t n, unsigned char *md)
+	{
+	MD5_CTX c;
+	static unsigned char m[MD5_DIGEST_LENGTH];
 
-int
-BIO_dump_cb(int (*cb)(const void *data, size_t len, void *u),
-    void *u, const char *s, int len)
-{
-	return BIO_dump_indent_cb(cb, u, s, len, 0);
-}
-
-int
-BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
-    void *u, const char *s, int len, int indent)
-{
-	int ret = 0;
-	char buf[288 + 1], tmp[20], str[128 + 1];
-	int i, j, rows, trc;
-	unsigned char ch;
-	int dump_width;
-
-	trc = 0;
-
-#ifdef TRUNCATE
-	for (; (len > 0) && ((s[len - 1] == ' ') || (s[len - 1] == '\0')); len--)
-		trc++;
-#endif
-
-	if (indent < 0)
-		indent = 0;
-	if (indent) {
-		if (indent > 128)
-			indent = 128;
-		memset(str, ' ', indent);
+	if (md == NULL) md=m;
+	if (!MD5_Init(&c))
+		return NULL;
+	MD5_Update(&c,d,n);
+	MD5_Final(md,&c);
+	OPENSSL_cleanse(&c,sizeof(c)); /* security consideration */
+	return(md);
 	}
-	str[indent] = '\0';
 
-	dump_width = DUMP_WIDTH_LESS_INDENT(indent);
-	rows = (len / dump_width);
-	if ((rows * dump_width) < len)
-		rows++;
-	for (i = 0; i < rows; i++) {
-		buf[0] = '\0';	/* start with empty string */
-		BUF_strlcpy(buf, str, sizeof buf);
-		(void) snprintf(tmp, sizeof tmp, "%04x - ", i*dump_width);
-		BUF_strlcat(buf, tmp, sizeof buf);
-		for (j = 0; j < dump_width; j++) {
-			if (((i*dump_width) + j) >= len) {
-				BUF_strlcat(buf, "   ", sizeof buf);
-			} else {
-				ch = ((unsigned char)*(s + i*dump_width + j)) & 0xff;
-				(void) snprintf(tmp, sizeof tmp, "%02x%c", ch,
-				    j == 7 ? '-' : ' ');
-				BUF_strlcat(buf, tmp, sizeof buf);
-			}
-		}
-		BUF_strlcat(buf, "  ", sizeof buf);
-		for (j = 0; j < dump_width; j++) {
-			if (((i*dump_width) + j) >= len)
-				break;
-			ch = ((unsigned char)*(s + i * dump_width + j)) & 0xff;
-			(void) snprintf(tmp, sizeof tmp, "%c",
-			    ((ch >= ' ') && (ch <= '~')) ? ch : '.');
-			BUF_strlcat(buf, tmp, sizeof buf);
-		}
-		BUF_strlcat(buf, "\n", sizeof buf);
-		/* if this is the last call then update the ddt_dump thing so
-		 * that we will move the selection point in the debug window
-		 */
-		ret += cb((void *)buf, strlen(buf), u);
-	}
-#ifdef TRUNCATE
-	if (trc > 0) {
-		(void) snprintf(buf, sizeof buf, "%s%04x - <SPACES/NULS>\n",
-		    str, len + trc);
-		ret += cb((void *)buf, strlen(buf), u);
-	}
-#endif
-	return (ret);
-}
-
-#ifndef OPENSSL_NO_FP_API
-static int
-write_fp(const void *data, size_t len, void *fp)
-{
-	return UP_fwrite(data, len, 1, fp);
-}
-
-int
-BIO_dump_fp(FILE *fp, const char *s, int len)
-{
-	return BIO_dump_cb(write_fp, fp, s, len);
-}
-
-int
-BIO_dump_indent_fp(FILE *fp, const char *s, int len, int indent)
-{
-	return BIO_dump_indent_cb(write_fp, fp, s, len, indent);
-}
-#endif
-
-static int
-write_bio(const void *data, size_t len, void *bp)
-{
-	return BIO_write((BIO *)bp, (const char *)data, len);
-}
-
-int
-BIO_dump(BIO *bp, const char *s, int len)
-{
-	return BIO_dump_cb(write_bio, bp, s, len);
-}
-
-int
-BIO_dump_indent(BIO *bp, const char *s, int len, int indent)
-{
-	return BIO_dump_indent_cb(write_bio, bp, s, len, indent);
-}

@@ -1,4 +1,4 @@
-/* crypto/bio/b_dump.c */
+/* crypto/mdc2/mdc2test.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,129 +56,86 @@
  * [including the GNU Public Licence.]
  */
 
-/* 
- * Stolen from tjh's ssl/ssl_trc.c stuff.
- */
-
 #include <stdio.h>
-#include "cryptlib.h"
-#include "bio_lcl.h"
+#include <stdlib.h>
+#include <string.h>
 
-#define TRUNCATE
-#define DUMP_WIDTH	16
-#define DUMP_WIDTH_LESS_INDENT(i) (DUMP_WIDTH - ((i - (i > 6 ? 6 : i) + 3) / 4))
+#include "../e_os.h"
 
-int
-BIO_dump_cb(int (*cb)(const void *data, size_t len, void *u),
-    void *u, const char *s, int len)
-{
-	return BIO_dump_indent_cb(cb, u, s, len, 0);
-}
-
-int
-BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
-    void *u, const char *s, int len, int indent)
-{
-	int ret = 0;
-	char buf[288 + 1], tmp[20], str[128 + 1];
-	int i, j, rows, trc;
-	unsigned char ch;
-	int dump_width;
-
-	trc = 0;
-
-#ifdef TRUNCATE
-	for (; (len > 0) && ((s[len - 1] == ' ') || (s[len - 1] == '\0')); len--)
-		trc++;
+#if defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_MDC2)
+#define OPENSSL_NO_MDC2
 #endif
 
-	if (indent < 0)
-		indent = 0;
-	if (indent) {
-		if (indent > 128)
-			indent = 128;
-		memset(str, ' ', indent);
-	}
-	str[indent] = '\0';
+#ifdef OPENSSL_NO_MDC2
+int main(int argc, char *argv[])
+{
+    printf("No MDC2 support\n");
+    return(0);
+}
+#else
+#include <openssl/evp.h>
+#include <openssl/mdc2.h>
 
-	dump_width = DUMP_WIDTH_LESS_INDENT(indent);
-	rows = (len / dump_width);
-	if ((rows * dump_width) < len)
-		rows++;
-	for (i = 0; i < rows; i++) {
-		buf[0] = '\0';	/* start with empty string */
-		BUF_strlcpy(buf, str, sizeof buf);
-		(void) snprintf(tmp, sizeof tmp, "%04x - ", i*dump_width);
-		BUF_strlcat(buf, tmp, sizeof buf);
-		for (j = 0; j < dump_width; j++) {
-			if (((i*dump_width) + j) >= len) {
-				BUF_strlcat(buf, "   ", sizeof buf);
-			} else {
-				ch = ((unsigned char)*(s + i*dump_width + j)) & 0xff;
-				(void) snprintf(tmp, sizeof tmp, "%02x%c", ch,
-				    j == 7 ? '-' : ' ');
-				BUF_strlcat(buf, tmp, sizeof buf);
-			}
+static unsigned char pad1[16]={
+	0x42,0xE5,0x0C,0xD2,0x24,0xBA,0xCE,0xBA,
+	0x76,0x0B,0xDD,0x2B,0xD4,0x09,0x28,0x1A
+	};
+
+static unsigned char pad2[16]={
+	0x2E,0x46,0x79,0xB5,0xAD,0xD9,0xCA,0x75,
+	0x35,0xD8,0x7A,0xFE,0xAB,0x33,0xBE,0xE2
+	};
+
+int main(int argc, char *argv[])
+	{
+	int ret=0;
+	unsigned char md[MDC2_DIGEST_LENGTH];
+	int i;
+	EVP_MD_CTX c;
+	static char *text="Now is the time for all ";
+
+	EVP_MD_CTX_init(&c);
+	EVP_DigestInit_ex(&c,EVP_mdc2(), NULL);
+	EVP_DigestUpdate(&c,(unsigned char *)text,strlen(text));
+	EVP_DigestFinal_ex(&c,&(md[0]),NULL);
+
+	if (memcmp(md,pad1,MDC2_DIGEST_LENGTH) != 0)
+		{
+		for (i=0; i<MDC2_DIGEST_LENGTH; i++)
+			printf("%02X",md[i]);
+		printf(" <- generated\n");
+		for (i=0; i<MDC2_DIGEST_LENGTH; i++)
+			printf("%02X",pad1[i]);
+		printf(" <- correct\n");
+		ret=1;
 		}
-		BUF_strlcat(buf, "  ", sizeof buf);
-		for (j = 0; j < dump_width; j++) {
-			if (((i*dump_width) + j) >= len)
-				break;
-			ch = ((unsigned char)*(s + i * dump_width + j)) & 0xff;
-			(void) snprintf(tmp, sizeof tmp, "%c",
-			    ((ch >= ' ') && (ch <= '~')) ? ch : '.');
-			BUF_strlcat(buf, tmp, sizeof buf);
+	else
+		printf("pad1 - ok\n");
+
+	EVP_DigestInit_ex(&c,EVP_mdc2(), NULL);
+	/* FIXME: use a ctl function? */
+	((MDC2_CTX *)c.md_data)->pad_type=2;
+	EVP_DigestUpdate(&c,(unsigned char *)text,strlen(text));
+	EVP_DigestFinal_ex(&c,&(md[0]),NULL);
+
+	if (memcmp(md,pad2,MDC2_DIGEST_LENGTH) != 0)
+		{
+		for (i=0; i<MDC2_DIGEST_LENGTH; i++)
+			printf("%02X",md[i]);
+		printf(" <- generated\n");
+		for (i=0; i<MDC2_DIGEST_LENGTH; i++)
+			printf("%02X",pad2[i]);
+		printf(" <- correct\n");
+		ret=1;
 		}
-		BUF_strlcat(buf, "\n", sizeof buf);
-		/* if this is the last call then update the ddt_dump thing so
-		 * that we will move the selection point in the debug window
-		 */
-		ret += cb((void *)buf, strlen(buf), u);
-	}
-#ifdef TRUNCATE
-	if (trc > 0) {
-		(void) snprintf(buf, sizeof buf, "%s%04x - <SPACES/NULS>\n",
-		    str, len + trc);
-		ret += cb((void *)buf, strlen(buf), u);
+	else
+		printf("pad2 - ok\n");
+
+	EVP_MD_CTX_cleanup(&c);
+#ifdef OPENSSL_SYS_NETWARE
+    if (ret) printf("ERROR: %d\n", ret);
+#endif
+	EXIT(ret);
+	return(ret);
 	}
 #endif
-	return (ret);
-}
-
-#ifndef OPENSSL_NO_FP_API
-static int
-write_fp(const void *data, size_t len, void *fp)
-{
-	return UP_fwrite(data, len, 1, fp);
-}
-
-int
-BIO_dump_fp(FILE *fp, const char *s, int len)
-{
-	return BIO_dump_cb(write_fp, fp, s, len);
-}
-
-int
-BIO_dump_indent_fp(FILE *fp, const char *s, int len, int indent)
-{
-	return BIO_dump_indent_cb(write_fp, fp, s, len, indent);
-}
-#endif
-
-static int
-write_bio(const void *data, size_t len, void *bp)
-{
-	return BIO_write((BIO *)bp, (const char *)data, len);
-}
-
-int
-BIO_dump(BIO *bp, const char *s, int len)
-{
-	return BIO_dump_cb(write_bio, bp, s, len);
-}
-
-int
-BIO_dump_indent(BIO *bp, const char *s, int len, int indent)
-{
-	return BIO_dump_indent_cb(write_bio, bp, s, len, indent);
-}

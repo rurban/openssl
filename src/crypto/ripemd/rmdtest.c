@@ -1,4 +1,4 @@
-/* crypto/bio/b_dump.c */
+/* crypto/ripemd/rmdtest.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,129 +56,83 @@
  * [including the GNU Public Licence.]
  */
 
-/* 
- * Stolen from tjh's ssl/ssl_trc.c stuff.
- */
-
 #include <stdio.h>
-#include "cryptlib.h"
-#include "bio_lcl.h"
+#include <string.h>
+#include <stdlib.h>
 
-#define TRUNCATE
-#define DUMP_WIDTH	16
-#define DUMP_WIDTH_LESS_INDENT(i) (DUMP_WIDTH - ((i - (i > 6 ? 6 : i) + 3) / 4))
+#include "../e_os.h"
 
-int
-BIO_dump_cb(int (*cb)(const void *data, size_t len, void *u),
-    void *u, const char *s, int len)
+#ifdef OPENSSL_NO_RIPEMD
+int main(int argc, char *argv[])
 {
-	return BIO_dump_indent_cb(cb, u, s, len, 0);
+    printf("No ripemd support\n");
+    return(0);
 }
+#else
+#include <openssl/ripemd.h>
+#include <openssl/evp.h>
 
-int
-BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
-    void *u, const char *s, int len, int indent)
-{
-	int ret = 0;
-	char buf[288 + 1], tmp[20], str[128 + 1];
-	int i, j, rows, trc;
-	unsigned char ch;
-	int dump_width;
+static char *test[]={
+	"",
+	"a",
+	"abc",
+	"message digest",
+	"abcdefghijklmnopqrstuvwxyz",
+	"abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
+	"12345678901234567890123456789012345678901234567890123456789012345678901234567890",
+	NULL,
+	};
 
-	trc = 0;
+static char *ret[]={
+	"9c1185a5c5e9fc54612808977ee8f548b2258d31",
+	"0bdc9d2d256b3ee9daae347be6f4dc835a467ffe",
+	"8eb208f7e05d987a9b044a8e98c6b087f15a0bfc",
+	"5d0689ef49d2fae572b881b123a85ffa21595f36",
+	"f71c27109c692c1b56bbdceb5b9d2865b3708dbc",
+	"12a053384a9c0c88e405a06c27dcf49ada62eb2b",
+	"b0e20b6e3116640286ed3a87a5713079b21f5189",
+	"9b752e45573d4b39f4dbd3323cab82bf63326bfb",
+	};
 
-#ifdef TRUNCATE
-	for (; (len > 0) && ((s[len - 1] == ' ') || (s[len - 1] == '\0')); len--)
-		trc++;
-#endif
+static char *pt(unsigned char *md);
+int main(int argc, char *argv[])
+	{
+	int i,err=0;
+	char **P,**R;
+	char *p;
+	unsigned char md[RIPEMD160_DIGEST_LENGTH];
 
-	if (indent < 0)
-		indent = 0;
-	if (indent) {
-		if (indent > 128)
-			indent = 128;
-		memset(str, ' ', indent);
-	}
-	str[indent] = '\0';
-
-	dump_width = DUMP_WIDTH_LESS_INDENT(indent);
-	rows = (len / dump_width);
-	if ((rows * dump_width) < len)
-		rows++;
-	for (i = 0; i < rows; i++) {
-		buf[0] = '\0';	/* start with empty string */
-		BUF_strlcpy(buf, str, sizeof buf);
-		(void) snprintf(tmp, sizeof tmp, "%04x - ", i*dump_width);
-		BUF_strlcat(buf, tmp, sizeof buf);
-		for (j = 0; j < dump_width; j++) {
-			if (((i*dump_width) + j) >= len) {
-				BUF_strlcat(buf, "   ", sizeof buf);
-			} else {
-				ch = ((unsigned char)*(s + i*dump_width + j)) & 0xff;
-				(void) snprintf(tmp, sizeof tmp, "%02x%c", ch,
-				    j == 7 ? '-' : ' ');
-				BUF_strlcat(buf, tmp, sizeof buf);
+	P=test;
+	R=ret;
+	i=1;
+	while (*P != NULL)
+		{
+		EVP_Digest(&(P[0][0]),strlen((char *)*P),md,NULL,EVP_ripemd160(), NULL);
+		p=pt(md);
+		if (strcmp(p,(char *)*R) != 0)
+			{
+			printf("error calculating RIPEMD160 on '%s'\n",*P);
+			printf("got %s instead of %s\n",p,*R);
+			err++;
 			}
+		else
+			printf("test %d ok\n",i);
+		i++;
+		R++;
+		P++;
 		}
-		BUF_strlcat(buf, "  ", sizeof buf);
-		for (j = 0; j < dump_width; j++) {
-			if (((i*dump_width) + j) >= len)
-				break;
-			ch = ((unsigned char)*(s + i * dump_width + j)) & 0xff;
-			(void) snprintf(tmp, sizeof tmp, "%c",
-			    ((ch >= ' ') && (ch <= '~')) ? ch : '.');
-			BUF_strlcat(buf, tmp, sizeof buf);
-		}
-		BUF_strlcat(buf, "\n", sizeof buf);
-		/* if this is the last call then update the ddt_dump thing so
-		 * that we will move the selection point in the debug window
-		 */
-		ret += cb((void *)buf, strlen(buf), u);
+	EXIT(err);
+	return(0);
 	}
-#ifdef TRUNCATE
-	if (trc > 0) {
-		(void) snprintf(buf, sizeof buf, "%s%04x - <SPACES/NULS>\n",
-		    str, len + trc);
-		ret += cb((void *)buf, strlen(buf), u);
+
+static char *pt(unsigned char *md)
+	{
+	int i;
+	static char buf[80];
+
+	for (i=0; i<RIPEMD160_DIGEST_LENGTH; i++)
+		sprintf(&(buf[i*2]),"%02x",md[i]);
+	return(buf);
 	}
 #endif
-	return (ret);
-}
-
-#ifndef OPENSSL_NO_FP_API
-static int
-write_fp(const void *data, size_t len, void *fp)
-{
-	return UP_fwrite(data, len, 1, fp);
-}
-
-int
-BIO_dump_fp(FILE *fp, const char *s, int len)
-{
-	return BIO_dump_cb(write_fp, fp, s, len);
-}
-
-int
-BIO_dump_indent_fp(FILE *fp, const char *s, int len, int indent)
-{
-	return BIO_dump_indent_cb(write_fp, fp, s, len, indent);
-}
-#endif
-
-static int
-write_bio(const void *data, size_t len, void *bp)
-{
-	return BIO_write((BIO *)bp, (const char *)data, len);
-}
-
-int
-BIO_dump(BIO *bp, const char *s, int len)
-{
-	return BIO_dump_cb(write_bio, bp, s, len);
-}
-
-int
-BIO_dump_indent(BIO *bp, const char *s, int len, int indent)
-{
-	return BIO_dump_indent_cb(write_bio, bp, s, len, indent);
-}

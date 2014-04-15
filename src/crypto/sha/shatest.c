@@ -1,4 +1,4 @@
-/* crypto/bio/b_dump.c */
+/* crypto/sha/shatest.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,129 +56,111 @@
  * [including the GNU Public Licence.]
  */
 
-/* 
- * Stolen from tjh's ssl/ssl_trc.c stuff.
- */
-
 #include <stdio.h>
-#include "cryptlib.h"
-#include "bio_lcl.h"
+#include <string.h>
+#include <stdlib.h>
 
-#define TRUNCATE
-#define DUMP_WIDTH	16
-#define DUMP_WIDTH_LESS_INDENT(i) (DUMP_WIDTH - ((i - (i > 6 ? 6 : i) + 3) / 4))
+#include "../e_os.h"
 
-int
-BIO_dump_cb(int (*cb)(const void *data, size_t len, void *u),
-    void *u, const char *s, int len)
+#if defined(OPENSSL_NO_SHA) || defined(OPENSSL_NO_SHA0)
+int main(int argc, char *argv[])
 {
-	return BIO_dump_indent_cb(cb, u, s, len, 0);
+    printf("No SHA0 support\n");
+    return(0);
 }
+#else
+#include <openssl/evp.h>
+#include <openssl/sha.h>
 
-int
-BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
-    void *u, const char *s, int len, int indent)
-{
-	int ret = 0;
-	char buf[288 + 1], tmp[20], str[128 + 1];
-	int i, j, rows, trc;
-	unsigned char ch;
-	int dump_width;
+#define SHA_0 /* FIPS 180 */
+#undef  SHA_1 /* FIPS 180-1 */
 
-	trc = 0;
+static char *test[]={
+	"abc",
+	"abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
+	NULL,
+	};
 
-#ifdef TRUNCATE
-	for (; (len > 0) && ((s[len - 1] == ' ') || (s[len - 1] == '\0')); len--)
-		trc++;
+#ifdef SHA_0
+static char *ret[]={
+	"0164b8a914cd2a5e74c4f7ff082c4d97f1edf880",
+	"d2516ee1acfa5baf33dfc1c471e438449ef134c8",
+	};
+static char *bigret=
+	"3232affa48628a26653b5aaa44541fd90d690603";
+#endif
+#ifdef SHA_1
+static char *ret[]={
+	"a9993e364706816aba3e25717850c26c9cd0d89d",
+	"84983e441c3bd26ebaae4aa1f95129e5e54670f1",
+	};
+static char *bigret=
+	"34aa973cd4c4daa4f61eeb2bdbad27316534016f";
 #endif
 
-	if (indent < 0)
-		indent = 0;
-	if (indent) {
-		if (indent > 128)
-			indent = 128;
-		memset(str, ' ', indent);
-	}
-	str[indent] = '\0';
+static char *pt(unsigned char *md);
+int main(int argc, char *argv[])
+	{
+	int i,err=0;
+	char **P,**R;
+	static unsigned char buf[1000];
+	char *p,*r;
+	EVP_MD_CTX c;
+	unsigned char md[SHA_DIGEST_LENGTH];
 
-	dump_width = DUMP_WIDTH_LESS_INDENT(indent);
-	rows = (len / dump_width);
-	if ((rows * dump_width) < len)
-		rows++;
-	for (i = 0; i < rows; i++) {
-		buf[0] = '\0';	/* start with empty string */
-		BUF_strlcpy(buf, str, sizeof buf);
-		(void) snprintf(tmp, sizeof tmp, "%04x - ", i*dump_width);
-		BUF_strlcat(buf, tmp, sizeof buf);
-		for (j = 0; j < dump_width; j++) {
-			if (((i*dump_width) + j) >= len) {
-				BUF_strlcat(buf, "   ", sizeof buf);
-			} else {
-				ch = ((unsigned char)*(s + i*dump_width + j)) & 0xff;
-				(void) snprintf(tmp, sizeof tmp, "%02x%c", ch,
-				    j == 7 ? '-' : ' ');
-				BUF_strlcat(buf, tmp, sizeof buf);
+	EVP_MD_CTX_init(&c);
+	P=test;
+	R=ret;
+	i=1;
+	while (*P != NULL)
+		{
+		EVP_Digest(*P,strlen(*P),md,NULL,EVP_sha(), NULL);
+		p=pt(md);
+		if (strcmp(p,*R) != 0)
+			{
+			printf("error calculating SHA on '%s'\n",*P);
+			printf("got %s instead of %s\n",p,*R);
+			err++;
 			}
+		else
+			printf("test %d ok\n",i);
+		i++;
+		R++;
+		P++;
 		}
-		BUF_strlcat(buf, "  ", sizeof buf);
-		for (j = 0; j < dump_width; j++) {
-			if (((i*dump_width) + j) >= len)
-				break;
-			ch = ((unsigned char)*(s + i * dump_width + j)) & 0xff;
-			(void) snprintf(tmp, sizeof tmp, "%c",
-			    ((ch >= ' ') && (ch <= '~')) ? ch : '.');
-			BUF_strlcat(buf, tmp, sizeof buf);
+
+	memset(buf,'a',1000);
+	EVP_DigestInit_ex(&c,EVP_sha(), NULL);
+	for (i=0; i<1000; i++)
+		EVP_DigestUpdate(&c,buf,1000);
+	EVP_DigestFinal_ex(&c,md,NULL);
+	p=pt(md);
+
+	r=bigret;
+	if (strcmp(p,r) != 0)
+		{
+		printf("error calculating SHA on '%s'\n",p);
+		printf("got %s instead of %s\n",p,r);
+		err++;
 		}
-		BUF_strlcat(buf, "\n", sizeof buf);
-		/* if this is the last call then update the ddt_dump thing so
-		 * that we will move the selection point in the debug window
-		 */
-		ret += cb((void *)buf, strlen(buf), u);
+	else
+		printf("test 3 ok\n");
+
+#ifdef OPENSSL_SYS_NETWARE
+    if (err) printf("ERROR: %d\n", err);
+#endif
+	EVP_MD_CTX_cleanup(&c);
+	EXIT(err);
+	return(0);
 	}
-#ifdef TRUNCATE
-	if (trc > 0) {
-		(void) snprintf(buf, sizeof buf, "%s%04x - <SPACES/NULS>\n",
-		    str, len + trc);
-		ret += cb((void *)buf, strlen(buf), u);
+
+static char *pt(unsigned char *md)
+	{
+	int i;
+	static char buf[80];
+
+	for (i=0; i<SHA_DIGEST_LENGTH; i++)
+		sprintf(&(buf[i*2]),"%02x",md[i]);
+	return(buf);
 	}
 #endif
-	return (ret);
-}
-
-#ifndef OPENSSL_NO_FP_API
-static int
-write_fp(const void *data, size_t len, void *fp)
-{
-	return UP_fwrite(data, len, 1, fp);
-}
-
-int
-BIO_dump_fp(FILE *fp, const char *s, int len)
-{
-	return BIO_dump_cb(write_fp, fp, s, len);
-}
-
-int
-BIO_dump_indent_fp(FILE *fp, const char *s, int len, int indent)
-{
-	return BIO_dump_indent_cb(write_fp, fp, s, len, indent);
-}
-#endif
-
-static int
-write_bio(const void *data, size_t len, void *bp)
-{
-	return BIO_write((BIO *)bp, (const char *)data, len);
-}
-
-int
-BIO_dump(BIO *bp, const char *s, int len)
-{
-	return BIO_dump_cb(write_bio, bp, s, len);
-}
-
-int
-BIO_dump_indent(BIO *bp, const char *s, int len, int indent)
-{
-	return BIO_dump_indent_cb(write_bio, bp, s, len, indent);
-}

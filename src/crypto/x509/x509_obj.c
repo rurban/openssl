@@ -1,4 +1,4 @@
-/* crypto/bio/b_dump.c */
+/* crypto/x509/x509_obj.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,129 +56,131 @@
  * [including the GNU Public Licence.]
  */
 
-/* 
- * Stolen from tjh's ssl/ssl_trc.c stuff.
- */
-
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bio_lcl.h"
+#include <openssl/lhash.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
+#include <openssl/buffer.h>
 
-#define TRUNCATE
-#define DUMP_WIDTH	16
-#define DUMP_WIDTH_LESS_INDENT(i) (DUMP_WIDTH - ((i - (i > 6 ? 6 : i) + 3) / 4))
+char *X509_NAME_oneline(X509_NAME *a, char *buf, int len)
+	{
+	X509_NAME_ENTRY *ne;
+int i;
+	int n,lold,l,l1,l2,num,j,type;
+	const char *s;
+	char *p;
+	unsigned char *q;
+	BUF_MEM *b=NULL;
+	static const char hex[17]="0123456789ABCDEF";
+	int gs_doit[4];
+	char tmp_buf[80];
 
-int
-BIO_dump_cb(int (*cb)(const void *data, size_t len, void *u),
-    void *u, const char *s, int len)
-{
-	return BIO_dump_indent_cb(cb, u, s, len, 0);
-}
+	if (buf == NULL)
+		{
+		if ((b=BUF_MEM_new()) == NULL) goto err;
+		if (!BUF_MEM_grow(b,200)) goto err;
+		b->data[0]='\0';
+		len=200;
+		}
+	if (a == NULL)
+	    {
+	    if(b)
+		{
+		buf=b->data;
+		OPENSSL_free(b);
+		}
+	    strncpy(buf,"NO X509_NAME",len);
+	    buf[len-1]='\0';
+	    return buf;
+	    }
 
-int
-BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
-    void *u, const char *s, int len, int indent)
-{
-	int ret = 0;
-	char buf[288 + 1], tmp[20], str[128 + 1];
-	int i, j, rows, trc;
-	unsigned char ch;
-	int dump_width;
-
-	trc = 0;
-
-#ifdef TRUNCATE
-	for (; (len > 0) && ((s[len - 1] == ' ') || (s[len - 1] == '\0')); len--)
-		trc++;
-#endif
-
-	if (indent < 0)
-		indent = 0;
-	if (indent) {
-		if (indent > 128)
-			indent = 128;
-		memset(str, ' ', indent);
-	}
-	str[indent] = '\0';
-
-	dump_width = DUMP_WIDTH_LESS_INDENT(indent);
-	rows = (len / dump_width);
-	if ((rows * dump_width) < len)
-		rows++;
-	for (i = 0; i < rows; i++) {
-		buf[0] = '\0';	/* start with empty string */
-		BUF_strlcpy(buf, str, sizeof buf);
-		(void) snprintf(tmp, sizeof tmp, "%04x - ", i*dump_width);
-		BUF_strlcat(buf, tmp, sizeof buf);
-		for (j = 0; j < dump_width; j++) {
-			if (((i*dump_width) + j) >= len) {
-				BUF_strlcat(buf, "   ", sizeof buf);
-			} else {
-				ch = ((unsigned char)*(s + i*dump_width + j)) & 0xff;
-				(void) snprintf(tmp, sizeof tmp, "%02x%c", ch,
-				    j == 7 ? '-' : ' ');
-				BUF_strlcat(buf, tmp, sizeof buf);
+	len--; /* space for '\0' */
+	l=0;
+	for (i=0; i<sk_X509_NAME_ENTRY_num(a->entries); i++)
+		{
+		ne=sk_X509_NAME_ENTRY_value(a->entries,i);
+		n=OBJ_obj2nid(ne->object);
+		if ((n == NID_undef) || ((s=OBJ_nid2sn(n)) == NULL))
+			{
+			i2t_ASN1_OBJECT(tmp_buf,sizeof(tmp_buf),ne->object);
+			s=tmp_buf;
 			}
+		l1=strlen(s);
+
+		type=ne->value->type;
+		num=ne->value->length;
+		q=ne->value->data;
+		if ((type == V_ASN1_GENERALSTRING) && ((num%4) == 0))
+			{
+			gs_doit[0]=gs_doit[1]=gs_doit[2]=gs_doit[3]=0;
+			for (j=0; j<num; j++)
+				if (q[j] != 0) gs_doit[j&3]=1;
+
+			if (gs_doit[0]|gs_doit[1]|gs_doit[2])
+				gs_doit[0]=gs_doit[1]=gs_doit[2]=gs_doit[3]=1;
+			else
+				{
+				gs_doit[0]=gs_doit[1]=gs_doit[2]=0;
+				gs_doit[3]=1;
+				}
+			}
+		else
+			gs_doit[0]=gs_doit[1]=gs_doit[2]=gs_doit[3]=1;
+
+		for (l2=j=0; j<num; j++)
+			{
+			if (!gs_doit[j&3]) continue;
+			l2++;
+			if ((q[j] < ' ') || (q[j] > '~')) l2+=3;
+			}
+
+		lold=l;
+		l+=1+l1+1+l2;
+		if (b != NULL)
+			{
+			if (!BUF_MEM_grow(b,l+1)) goto err;
+			p= &(b->data[lold]);
+			}
+		else if (l > len)
+			{
+			break;
+			}
+		else
+			p= &(buf[lold]);
+		*(p++)='/';
+		memcpy(p,s,(unsigned int)l1); p+=l1;
+		*(p++)='=';
+		q=ne->value->data;
+		for (j=0; j<num; j++)
+			{
+			if (!gs_doit[j&3]) continue;
+			n=q[j];
+			if ((n < ' ') || (n > '~'))
+				{
+				*(p++)='\\';
+				*(p++)='x';
+				*(p++)=hex[(n>>4)&0x0f];
+				*(p++)=hex[n&0x0f];
+				}
+			else
+				*(p++)=n;
+			}
+		*p='\0';
 		}
-		BUF_strlcat(buf, "  ", sizeof buf);
-		for (j = 0; j < dump_width; j++) {
-			if (((i*dump_width) + j) >= len)
-				break;
-			ch = ((unsigned char)*(s + i * dump_width + j)) & 0xff;
-			(void) snprintf(tmp, sizeof tmp, "%c",
-			    ((ch >= ' ') && (ch <= '~')) ? ch : '.');
-			BUF_strlcat(buf, tmp, sizeof buf);
+	if (b != NULL)
+		{
+		p=b->data;
+		OPENSSL_free(b);
 		}
-		BUF_strlcat(buf, "\n", sizeof buf);
-		/* if this is the last call then update the ddt_dump thing so
-		 * that we will move the selection point in the debug window
-		 */
-		ret += cb((void *)buf, strlen(buf), u);
+	else
+		p=buf;
+	if (i == 0)
+		*p = '\0';
+	return(p);
+err:
+	X509err(X509_F_X509_NAME_ONELINE,ERR_R_MALLOC_FAILURE);
+	if (b != NULL) BUF_MEM_free(b);
+	return(NULL);
 	}
-#ifdef TRUNCATE
-	if (trc > 0) {
-		(void) snprintf(buf, sizeof buf, "%s%04x - <SPACES/NULS>\n",
-		    str, len + trc);
-		ret += cb((void *)buf, strlen(buf), u);
-	}
-#endif
-	return (ret);
-}
 
-#ifndef OPENSSL_NO_FP_API
-static int
-write_fp(const void *data, size_t len, void *fp)
-{
-	return UP_fwrite(data, len, 1, fp);
-}
-
-int
-BIO_dump_fp(FILE *fp, const char *s, int len)
-{
-	return BIO_dump_cb(write_fp, fp, s, len);
-}
-
-int
-BIO_dump_indent_fp(FILE *fp, const char *s, int len, int indent)
-{
-	return BIO_dump_indent_cb(write_fp, fp, s, len, indent);
-}
-#endif
-
-static int
-write_bio(const void *data, size_t len, void *bp)
-{
-	return BIO_write((BIO *)bp, (const char *)data, len);
-}
-
-int
-BIO_dump(BIO *bp, const char *s, int len)
-{
-	return BIO_dump_cb(write_bio, bp, s, len);
-}
-
-int
-BIO_dump_indent(BIO *bp, const char *s, int len, int indent)
-{
-	return BIO_dump_indent_cb(write_bio, bp, s, len, indent);
-}

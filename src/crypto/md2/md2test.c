@@ -1,4 +1,4 @@
-/* crypto/bio/b_dump.c */
+/* crypto/md2/md2test.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,129 +56,84 @@
  * [including the GNU Public Licence.]
  */
 
-/* 
- * Stolen from tjh's ssl/ssl_trc.c stuff.
- */
-
 #include <stdio.h>
-#include "cryptlib.h"
-#include "bio_lcl.h"
+#include <stdlib.h>
+#include <string.h>
 
-#define TRUNCATE
-#define DUMP_WIDTH	16
-#define DUMP_WIDTH_LESS_INDENT(i) (DUMP_WIDTH - ((i - (i > 6 ? 6 : i) + 3) / 4))
+#include "../e_os.h"
 
-int
-BIO_dump_cb(int (*cb)(const void *data, size_t len, void *u),
-    void *u, const char *s, int len)
+#ifdef OPENSSL_NO_MD2
+int main(int argc, char *argv[])
 {
-	return BIO_dump_indent_cb(cb, u, s, len, 0);
+    printf("No MD2 support\n");
+    return(0);
 }
+#else
+#include <openssl/evp.h>
+#include <openssl/md2.h>
 
-int
-BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
-    void *u, const char *s, int len, int indent)
-{
-	int ret = 0;
-	char buf[288 + 1], tmp[20], str[128 + 1];
-	int i, j, rows, trc;
-	unsigned char ch;
-	int dump_width;
+static char *test[]={
+	"",
+	"a",
+	"abc",
+	"message digest",
+	"abcdefghijklmnopqrstuvwxyz",
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
+	"12345678901234567890123456789012345678901234567890123456789012345678901234567890",
+	NULL,
+	};
 
-	trc = 0;
+static char *ret[]={
+	"8350e5a3e24c153df2275c9f80692773",
+	"32ec01ec4a6dac72c0ab96fb34c0b5d1",
+	"da853b0d3f88d99b30283a69e6ded6bb",
+	"ab4f496bfb2a530b219ff33031fe06b0",
+	"4e8ddff3650292ab5a4108c3aa47940b",
+	"da33def2a42df13975352846c30338cd",
+	"d5976f79d83d3a0dc9806c3c66f3efd8",
+	};
 
-#ifdef TRUNCATE
-	for (; (len > 0) && ((s[len - 1] == ' ') || (s[len - 1] == '\0')); len--)
-		trc++;
-#endif
+static char *pt(unsigned char *md);
+int main(int argc, char *argv[])
+	{
+	int i,err=0;
+	char **P,**R;
+	char *p;
+	unsigned char md[MD2_DIGEST_LENGTH];
 
-	if (indent < 0)
-		indent = 0;
-	if (indent) {
-		if (indent > 128)
-			indent = 128;
-		memset(str, ' ', indent);
-	}
-	str[indent] = '\0';
-
-	dump_width = DUMP_WIDTH_LESS_INDENT(indent);
-	rows = (len / dump_width);
-	if ((rows * dump_width) < len)
-		rows++;
-	for (i = 0; i < rows; i++) {
-		buf[0] = '\0';	/* start with empty string */
-		BUF_strlcpy(buf, str, sizeof buf);
-		(void) snprintf(tmp, sizeof tmp, "%04x - ", i*dump_width);
-		BUF_strlcat(buf, tmp, sizeof buf);
-		for (j = 0; j < dump_width; j++) {
-			if (((i*dump_width) + j) >= len) {
-				BUF_strlcat(buf, "   ", sizeof buf);
-			} else {
-				ch = ((unsigned char)*(s + i*dump_width + j)) & 0xff;
-				(void) snprintf(tmp, sizeof tmp, "%02x%c", ch,
-				    j == 7 ? '-' : ' ');
-				BUF_strlcat(buf, tmp, sizeof buf);
+	P=test;
+	R=ret;
+	i=1;
+	while (*P != NULL)
+		{
+		EVP_Digest((unsigned char *)*P,strlen(*P),md,NULL,EVP_md2(), NULL);
+		p=pt(md);
+		if (strcmp(p,*R) != 0)
+			{
+			printf("error calculating MD2 on '%s'\n",*P);
+			printf("got %s instead of %s\n",p,*R);
+			err++;
 			}
+		else
+			printf("test %d ok\n",i);
+		i++;
+		R++;
+		P++;
 		}
-		BUF_strlcat(buf, "  ", sizeof buf);
-		for (j = 0; j < dump_width; j++) {
-			if (((i*dump_width) + j) >= len)
-				break;
-			ch = ((unsigned char)*(s + i * dump_width + j)) & 0xff;
-			(void) snprintf(tmp, sizeof tmp, "%c",
-			    ((ch >= ' ') && (ch <= '~')) ? ch : '.');
-			BUF_strlcat(buf, tmp, sizeof buf);
-		}
-		BUF_strlcat(buf, "\n", sizeof buf);
-		/* if this is the last call then update the ddt_dump thing so
-		 * that we will move the selection point in the debug window
-		 */
-		ret += cb((void *)buf, strlen(buf), u);
+#ifdef OPENSSL_SYS_NETWARE
+    if (err) printf("ERROR: %d\n", err);
+#endif
+	EXIT(err);
+	return err;
 	}
-#ifdef TRUNCATE
-	if (trc > 0) {
-		(void) snprintf(buf, sizeof buf, "%s%04x - <SPACES/NULS>\n",
-		    str, len + trc);
-		ret += cb((void *)buf, strlen(buf), u);
+
+static char *pt(unsigned char *md)
+	{
+	int i;
+	static char buf[80];
+
+	for (i=0; i<MD2_DIGEST_LENGTH; i++)
+		sprintf(&(buf[i*2]),"%02x",md[i]);
+	return(buf);
 	}
 #endif
-	return (ret);
-}
-
-#ifndef OPENSSL_NO_FP_API
-static int
-write_fp(const void *data, size_t len, void *fp)
-{
-	return UP_fwrite(data, len, 1, fp);
-}
-
-int
-BIO_dump_fp(FILE *fp, const char *s, int len)
-{
-	return BIO_dump_cb(write_fp, fp, s, len);
-}
-
-int
-BIO_dump_indent_fp(FILE *fp, const char *s, int len, int indent)
-{
-	return BIO_dump_indent_cb(write_fp, fp, s, len, indent);
-}
-#endif
-
-static int
-write_bio(const void *data, size_t len, void *bp)
-{
-	return BIO_write((BIO *)bp, (const char *)data, len);
-}
-
-int
-BIO_dump(BIO *bp, const char *s, int len)
-{
-	return BIO_dump_cb(write_bio, bp, s, len);
-}
-
-int
-BIO_dump_indent(BIO *bp, const char *s, int len, int indent)
-{
-	return BIO_dump_indent_cb(write_bio, bp, s, len, indent);
-}

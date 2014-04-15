@@ -1,4 +1,4 @@
-/* crypto/bio/b_dump.c */
+/* crypto/hmac/hmactest.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,129 +56,109 @@
  * [including the GNU Public Licence.]
  */
 
-/* 
- * Stolen from tjh's ssl/ssl_trc.c stuff.
- */
-
 #include <stdio.h>
-#include "cryptlib.h"
-#include "bio_lcl.h"
+#include <string.h>
+#include <stdlib.h>
 
-#define TRUNCATE
-#define DUMP_WIDTH	16
-#define DUMP_WIDTH_LESS_INDENT(i) (DUMP_WIDTH - ((i - (i > 6 ? 6 : i) + 3) / 4))
+#include "../e_os.h"
 
-int
-BIO_dump_cb(int (*cb)(const void *data, size_t len, void *u),
-    void *u, const char *s, int len)
+#ifdef OPENSSL_NO_HMAC
+int main(int argc, char *argv[])
 {
-	return BIO_dump_indent_cb(cb, u, s, len, 0);
+    printf("No HMAC support\n");
+    return(0);
 }
-
-int
-BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
-    void *u, const char *s, int len, int indent)
-{
-	int ret = 0;
-	char buf[288 + 1], tmp[20], str[128 + 1];
-	int i, j, rows, trc;
-	unsigned char ch;
-	int dump_width;
-
-	trc = 0;
-
-#ifdef TRUNCATE
-	for (; (len > 0) && ((s[len - 1] == ' ') || (s[len - 1] == '\0')); len--)
-		trc++;
+#else
+#include <openssl/hmac.h>
+#ifndef OPENSSL_NO_MD5
+#include <openssl/md5.h>
 #endif
 
-	if (indent < 0)
-		indent = 0;
-	if (indent) {
-		if (indent > 128)
-			indent = 128;
-		memset(str, ' ', indent);
-	}
-	str[indent] = '\0';
 
-	dump_width = DUMP_WIDTH_LESS_INDENT(indent);
-	rows = (len / dump_width);
-	if ((rows * dump_width) < len)
-		rows++;
-	for (i = 0; i < rows; i++) {
-		buf[0] = '\0';	/* start with empty string */
-		BUF_strlcpy(buf, str, sizeof buf);
-		(void) snprintf(tmp, sizeof tmp, "%04x - ", i*dump_width);
-		BUF_strlcat(buf, tmp, sizeof buf);
-		for (j = 0; j < dump_width; j++) {
-			if (((i*dump_width) + j) >= len) {
-				BUF_strlcat(buf, "   ", sizeof buf);
-			} else {
-				ch = ((unsigned char)*(s + i*dump_width + j)) & 0xff;
-				(void) snprintf(tmp, sizeof tmp, "%02x%c", ch,
-				    j == 7 ? '-' : ' ');
-				BUF_strlcat(buf, tmp, sizeof buf);
+#ifndef OPENSSL_NO_MD5
+static struct test_st
+	{
+	unsigned char key[16];
+	int key_len;
+	unsigned char data[64];
+	int data_len;
+	unsigned char *digest;
+	} test[4]={
+	{	"",
+		0,
+		"More text test vectors to stuff up EBCDIC machines :-)",
+		54,
+		(unsigned char *)"e9139d1e6ee064ef8cf514fc7dc83e86",
+	},{	{0x0b,0x0b,0x0b,0x0b,0x0b,0x0b,0x0b,0x0b,
+		 0x0b,0x0b,0x0b,0x0b,0x0b,0x0b,0x0b,0x0b,},
+		16,
+		"Hi There",
+		8,
+		(unsigned char *)"9294727a3638bb1c13f48ef8158bfc9d",
+	},{	"Jefe",
+		4,
+		"what do ya want for nothing?",
+		28,
+		(unsigned char *)"750c783e6ab0b503eaa86e310a5db738",
+	},{
+		{0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,
+		 0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,},
+		16,
+		{0xdd,0xdd,0xdd,0xdd,0xdd,0xdd,0xdd,0xdd,
+		 0xdd,0xdd,0xdd,0xdd,0xdd,0xdd,0xdd,0xdd,
+		 0xdd,0xdd,0xdd,0xdd,0xdd,0xdd,0xdd,0xdd,
+		 0xdd,0xdd,0xdd,0xdd,0xdd,0xdd,0xdd,0xdd,
+		 0xdd,0xdd,0xdd,0xdd,0xdd,0xdd,0xdd,0xdd,
+		 0xdd,0xdd,0xdd,0xdd,0xdd,0xdd,0xdd,0xdd,
+		 0xdd,0xdd},
+		50,
+		(unsigned char *)"56be34521d144c88dbb8c733f0e8b3f6",
+	},
+	};
+#endif
+
+static char *pt(unsigned char *md);
+int main(int argc, char *argv[])
+	{
+#ifndef OPENSSL_NO_MD5
+	int i;
+	char *p;
+#endif
+	int err=0;
+
+#ifdef OPENSSL_NO_MD5
+	printf("test skipped: MD5 disabled\n");
+#else
+	for (i=0; i<4; i++)
+		{
+		p=pt(HMAC(EVP_md5(),
+			test[i].key, test[i].key_len,
+			test[i].data, test[i].data_len,
+			NULL,NULL));
+
+		if (strcmp(p,(char *)test[i].digest) != 0)
+			{
+			printf("error calculating HMAC on %d entry'\n",i);
+			printf("got %s instead of %s\n",p,test[i].digest);
+			err++;
 			}
+		else
+			printf("test %d ok\n",i);
 		}
-		BUF_strlcat(buf, "  ", sizeof buf);
-		for (j = 0; j < dump_width; j++) {
-			if (((i*dump_width) + j) >= len)
-				break;
-			ch = ((unsigned char)*(s + i * dump_width + j)) & 0xff;
-			(void) snprintf(tmp, sizeof tmp, "%c",
-			    ((ch >= ' ') && (ch <= '~')) ? ch : '.');
-			BUF_strlcat(buf, tmp, sizeof buf);
-		}
-		BUF_strlcat(buf, "\n", sizeof buf);
-		/* if this is the last call then update the ddt_dump thing so
-		 * that we will move the selection point in the debug window
-		 */
-		ret += cb((void *)buf, strlen(buf), u);
+#endif /* OPENSSL_NO_MD5 */
+	EXIT(err);
+	return(0);
 	}
-#ifdef TRUNCATE
-	if (trc > 0) {
-		(void) snprintf(buf, sizeof buf, "%s%04x - <SPACES/NULS>\n",
-		    str, len + trc);
-		ret += cb((void *)buf, strlen(buf), u);
+
+#ifndef OPENSSL_NO_MD5
+static char *pt(unsigned char *md)
+	{
+	int i;
+	static char buf[80];
+
+	for (i=0; i<MD5_DIGEST_LENGTH; i++)
+		sprintf(&(buf[i*2]),"%02x",md[i]);
+	return(buf);
 	}
 #endif
-	return (ret);
-}
-
-#ifndef OPENSSL_NO_FP_API
-static int
-write_fp(const void *data, size_t len, void *fp)
-{
-	return UP_fwrite(data, len, 1, fp);
-}
-
-int
-BIO_dump_fp(FILE *fp, const char *s, int len)
-{
-	return BIO_dump_cb(write_fp, fp, s, len);
-}
-
-int
-BIO_dump_indent_fp(FILE *fp, const char *s, int len, int indent)
-{
-	return BIO_dump_indent_cb(write_fp, fp, s, len, indent);
-}
 #endif
-
-static int
-write_bio(const void *data, size_t len, void *bp)
-{
-	return BIO_write((BIO *)bp, (const char *)data, len);
-}
-
-int
-BIO_dump(BIO *bp, const char *s, int len)
-{
-	return BIO_dump_cb(write_bio, bp, s, len);
-}
-
-int
-BIO_dump_indent(BIO *bp, const char *s, int len, int indent)
-{
-	return BIO_dump_indent_cb(write_bio, bp, s, len, indent);
-}

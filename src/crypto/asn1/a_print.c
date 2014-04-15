@@ -1,4 +1,4 @@
-/* crypto/bio/b_dump.c */
+/* crypto/asn1/a_print.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,129 +56,64 @@
  * [including the GNU Public Licence.]
  */
 
-/* 
- * Stolen from tjh's ssl/ssl_trc.c stuff.
- */
-
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bio_lcl.h"
+#include <openssl/asn1.h>
 
-#define TRUNCATE
-#define DUMP_WIDTH	16
-#define DUMP_WIDTH_LESS_INDENT(i) (DUMP_WIDTH - ((i - (i > 6 ? 6 : i) + 3) / 4))
+int ASN1_PRINTABLE_type(const unsigned char *s, int len)
+	{
+	int c;
+	int ia5=0;
+	int t61=0;
 
-int
-BIO_dump_cb(int (*cb)(const void *data, size_t len, void *u),
-    void *u, const char *s, int len)
-{
-	return BIO_dump_indent_cb(cb, u, s, len, 0);
-}
+	if (len <= 0) len= -1;
+	if (s == NULL) return(V_ASN1_PRINTABLESTRING);
 
-int
-BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
-    void *u, const char *s, int len, int indent)
-{
-	int ret = 0;
-	char buf[288 + 1], tmp[20], str[128 + 1];
-	int i, j, rows, trc;
-	unsigned char ch;
-	int dump_width;
-
-	trc = 0;
-
-#ifdef TRUNCATE
-	for (; (len > 0) && ((s[len - 1] == ' ') || (s[len - 1] == '\0')); len--)
-		trc++;
-#endif
-
-	if (indent < 0)
-		indent = 0;
-	if (indent) {
-		if (indent > 128)
-			indent = 128;
-		memset(str, ' ', indent);
-	}
-	str[indent] = '\0';
-
-	dump_width = DUMP_WIDTH_LESS_INDENT(indent);
-	rows = (len / dump_width);
-	if ((rows * dump_width) < len)
-		rows++;
-	for (i = 0; i < rows; i++) {
-		buf[0] = '\0';	/* start with empty string */
-		BUF_strlcpy(buf, str, sizeof buf);
-		(void) snprintf(tmp, sizeof tmp, "%04x - ", i*dump_width);
-		BUF_strlcat(buf, tmp, sizeof buf);
-		for (j = 0; j < dump_width; j++) {
-			if (((i*dump_width) + j) >= len) {
-				BUF_strlcat(buf, "   ", sizeof buf);
-			} else {
-				ch = ((unsigned char)*(s + i*dump_width + j)) & 0xff;
-				(void) snprintf(tmp, sizeof tmp, "%02x%c", ch,
-				    j == 7 ? '-' : ' ');
-				BUF_strlcat(buf, tmp, sizeof buf);
-			}
+	while ((*s) && (len-- != 0))
+		{
+		c= *(s++);
+		if (!(	((c >= 'a') && (c <= 'z')) ||
+			((c >= 'A') && (c <= 'Z')) ||
+			(c == ' ') ||
+			((c >= '0') && (c <= '9')) ||
+			(c == ' ') || (c == '\'') ||
+			(c == '(') || (c == ')') ||
+			(c == '+') || (c == ',') ||
+			(c == '-') || (c == '.') ||
+			(c == '/') || (c == ':') ||
+			(c == '=') || (c == '?')))
+			ia5=1;
+		if (c&0x80)
+			t61=1;
 		}
-		BUF_strlcat(buf, "  ", sizeof buf);
-		for (j = 0; j < dump_width; j++) {
-			if (((i*dump_width) + j) >= len)
-				break;
-			ch = ((unsigned char)*(s + i * dump_width + j)) & 0xff;
-			(void) snprintf(tmp, sizeof tmp, "%c",
-			    ((ch >= ' ') && (ch <= '~')) ? ch : '.');
-			BUF_strlcat(buf, tmp, sizeof buf);
+	if (t61) return(V_ASN1_T61STRING);
+	if (ia5) return(V_ASN1_IA5STRING);
+	return(V_ASN1_PRINTABLESTRING);
+	}
+
+int ASN1_UNIVERSALSTRING_to_string(ASN1_UNIVERSALSTRING *s)
+	{
+	int i;
+	unsigned char *p;
+
+	if (s->type != V_ASN1_UNIVERSALSTRING) return(0);
+	if ((s->length%4) != 0) return(0);
+	p=s->data;
+	for (i=0; i<s->length; i+=4)
+		{
+		if ((p[0] != '\0') || (p[1] != '\0') || (p[2] != '\0'))
+			break;
+		else
+			p+=4;
 		}
-		BUF_strlcat(buf, "\n", sizeof buf);
-		/* if this is the last call then update the ddt_dump thing so
-		 * that we will move the selection point in the debug window
-		 */
-		ret += cb((void *)buf, strlen(buf), u);
+	if (i < s->length) return(0);
+	p=s->data;
+	for (i=3; i<s->length; i+=4)
+		{
+		*(p++)=s->data[i];
+		}
+	*(p)='\0';
+	s->length/=4;
+	s->type=ASN1_PRINTABLE_type(s->data,s->length);
+	return(1);
 	}
-#ifdef TRUNCATE
-	if (trc > 0) {
-		(void) snprintf(buf, sizeof buf, "%s%04x - <SPACES/NULS>\n",
-		    str, len + trc);
-		ret += cb((void *)buf, strlen(buf), u);
-	}
-#endif
-	return (ret);
-}
-
-#ifndef OPENSSL_NO_FP_API
-static int
-write_fp(const void *data, size_t len, void *fp)
-{
-	return UP_fwrite(data, len, 1, fp);
-}
-
-int
-BIO_dump_fp(FILE *fp, const char *s, int len)
-{
-	return BIO_dump_cb(write_fp, fp, s, len);
-}
-
-int
-BIO_dump_indent_fp(FILE *fp, const char *s, int len, int indent)
-{
-	return BIO_dump_indent_cb(write_fp, fp, s, len, indent);
-}
-#endif
-
-static int
-write_bio(const void *data, size_t len, void *bp)
-{
-	return BIO_write((BIO *)bp, (const char *)data, len);
-}
-
-int
-BIO_dump(BIO *bp, const char *s, int len)
-{
-	return BIO_dump_cb(write_bio, bp, s, len);
-}
-
-int
-BIO_dump_indent(BIO *bp, const char *s, int len, int indent)
-{
-	return BIO_dump_indent_cb(write_bio, bp, s, len, indent);
-}

@@ -1,4 +1,4 @@
-/* crypto/bio/b_dump.c */
+/* crypto/asn1/f_string.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,129 +56,148 @@
  * [including the GNU Public Licence.]
  */
 
-/* 
- * Stolen from tjh's ssl/ssl_trc.c stuff.
- */
-
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bio_lcl.h"
+#include <openssl/buffer.h>
+#include <openssl/asn1.h>
 
-#define TRUNCATE
-#define DUMP_WIDTH	16
-#define DUMP_WIDTH_LESS_INDENT(i) (DUMP_WIDTH - ((i - (i > 6 ? 6 : i) + 3) / 4))
+int i2a_ASN1_STRING(BIO *bp, ASN1_STRING *a, int type)
+	{
+	int i,n=0;
+	static const char *h="0123456789ABCDEF";
+	char buf[2];
 
-int
-BIO_dump_cb(int (*cb)(const void *data, size_t len, void *u),
-    void *u, const char *s, int len)
-{
-	return BIO_dump_indent_cb(cb, u, s, len, 0);
-}
+	if (a == NULL) return(0);
 
-int
-BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
-    void *u, const char *s, int len, int indent)
-{
-	int ret = 0;
-	char buf[288 + 1], tmp[20], str[128 + 1];
-	int i, j, rows, trc;
-	unsigned char ch;
-	int dump_width;
-
-	trc = 0;
-
-#ifdef TRUNCATE
-	for (; (len > 0) && ((s[len - 1] == ' ') || (s[len - 1] == '\0')); len--)
-		trc++;
-#endif
-
-	if (indent < 0)
-		indent = 0;
-	if (indent) {
-		if (indent > 128)
-			indent = 128;
-		memset(str, ' ', indent);
-	}
-	str[indent] = '\0';
-
-	dump_width = DUMP_WIDTH_LESS_INDENT(indent);
-	rows = (len / dump_width);
-	if ((rows * dump_width) < len)
-		rows++;
-	for (i = 0; i < rows; i++) {
-		buf[0] = '\0';	/* start with empty string */
-		BUF_strlcpy(buf, str, sizeof buf);
-		(void) snprintf(tmp, sizeof tmp, "%04x - ", i*dump_width);
-		BUF_strlcat(buf, tmp, sizeof buf);
-		for (j = 0; j < dump_width; j++) {
-			if (((i*dump_width) + j) >= len) {
-				BUF_strlcat(buf, "   ", sizeof buf);
-			} else {
-				ch = ((unsigned char)*(s + i*dump_width + j)) & 0xff;
-				(void) snprintf(tmp, sizeof tmp, "%02x%c", ch,
-				    j == 7 ? '-' : ' ');
-				BUF_strlcat(buf, tmp, sizeof buf);
+	if (a->length == 0)
+		{
+		if (BIO_write(bp,"0",1) != 1) goto err;
+		n=1;
+		}
+	else
+		{
+		for (i=0; i<a->length; i++)
+			{
+			if ((i != 0) && (i%35 == 0))
+				{
+				if (BIO_write(bp,"\\\n",2) != 2) goto err;
+				n+=2;
+				}
+			buf[0]=h[((unsigned char)a->data[i]>>4)&0x0f];
+			buf[1]=h[((unsigned char)a->data[i]   )&0x0f];
+			if (BIO_write(bp,buf,2) != 2) goto err;
+			n+=2;
 			}
 		}
-		BUF_strlcat(buf, "  ", sizeof buf);
-		for (j = 0; j < dump_width; j++) {
-			if (((i*dump_width) + j) >= len)
+	return(n);
+err:
+	return(-1);
+	}
+
+int a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size)
+	{
+	int ret=0;
+	int i,j,k,m,n,again,bufsize;
+	unsigned char *s=NULL,*sp;
+	unsigned char *bufp;
+	int num=0,slen=0,first=1;
+
+	bufsize=BIO_gets(bp,buf,size);
+	for (;;)
+		{
+		if (bufsize < 1)
+			{
+			if (first)
 				break;
-			ch = ((unsigned char)*(s + i * dump_width + j)) & 0xff;
-			(void) snprintf(tmp, sizeof tmp, "%c",
-			    ((ch >= ' ') && (ch <= '~')) ? ch : '.');
-			BUF_strlcat(buf, tmp, sizeof buf);
+			else
+				goto err_sl;
+			}
+		first=0;
+
+		i=bufsize;
+		if (buf[i-1] == '\n') buf[--i]='\0';
+		if (i == 0) goto err_sl;
+		if (buf[i-1] == '\r') buf[--i]='\0';
+		if (i == 0) goto err_sl;
+		again=(buf[i-1] == '\\');
+
+		for (j=i-1; j>0; j--)
+			{
+			if (!(	((buf[j] >= '0') && (buf[j] <= '9')) ||
+				((buf[j] >= 'a') && (buf[j] <= 'f')) ||
+				((buf[j] >= 'A') && (buf[j] <= 'F'))))
+				{
+				i=j;
+				break;
+				}
+			}
+		buf[i]='\0';
+		/* We have now cleared all the crap off the end of the
+		 * line */
+		if (i < 2) goto err_sl;
+
+		bufp=(unsigned char *)buf;
+
+		k=0;
+		i-=again;
+		if (i%2 != 0)
+			{
+			ASN1err(ASN1_F_A2I_ASN1_STRING,ASN1_R_ODD_NUMBER_OF_CHARS);
+			goto err;
+			}
+		i/=2;
+		if (num+i > slen)
+			{
+			if (s == NULL)
+				sp=(unsigned char *)OPENSSL_malloc(
+					(unsigned int)num+i*2);
+			else
+				sp=(unsigned char *)OPENSSL_realloc(s,
+					(unsigned int)num+i*2);
+			if (sp == NULL)
+				{
+				ASN1err(ASN1_F_A2I_ASN1_STRING,ERR_R_MALLOC_FAILURE);
+				if (s != NULL) OPENSSL_free(s);
+				goto err;
+				}
+			s=sp;
+			slen=num+i*2;
+			}
+		for (j=0; j<i; j++,k+=2)
+			{
+			for (n=0; n<2; n++)
+				{
+				m=bufp[k+n];
+				if ((m >= '0') && (m <= '9'))
+					m-='0';
+				else if ((m >= 'a') && (m <= 'f'))
+					m=m-'a'+10;
+				else if ((m >= 'A') && (m <= 'F'))
+					m=m-'A'+10;
+				else
+					{
+					ASN1err(ASN1_F_A2I_ASN1_STRING,ASN1_R_NON_HEX_CHARACTERS);
+					goto err;
+					}
+				s[num+j]<<=4;
+				s[num+j]|=m;
+				}
+			}
+		num+=i;
+		if (again)
+			bufsize=BIO_gets(bp,buf,size);
+		else
+			break;
 		}
-		BUF_strlcat(buf, "\n", sizeof buf);
-		/* if this is the last call then update the ddt_dump thing so
-		 * that we will move the selection point in the debug window
-		 */
-		ret += cb((void *)buf, strlen(buf), u);
+	bs->length=num;
+	bs->data=s;
+	ret=1;
+err:
+	if (0)
+		{
+err_sl:
+		ASN1err(ASN1_F_A2I_ASN1_STRING,ASN1_R_SHORT_LINE);
+		}
+	return(ret);
 	}
-#ifdef TRUNCATE
-	if (trc > 0) {
-		(void) snprintf(buf, sizeof buf, "%s%04x - <SPACES/NULS>\n",
-		    str, len + trc);
-		ret += cb((void *)buf, strlen(buf), u);
-	}
-#endif
-	return (ret);
-}
 
-#ifndef OPENSSL_NO_FP_API
-static int
-write_fp(const void *data, size_t len, void *fp)
-{
-	return UP_fwrite(data, len, 1, fp);
-}
-
-int
-BIO_dump_fp(FILE *fp, const char *s, int len)
-{
-	return BIO_dump_cb(write_fp, fp, s, len);
-}
-
-int
-BIO_dump_indent_fp(FILE *fp, const char *s, int len, int indent)
-{
-	return BIO_dump_indent_cb(write_fp, fp, s, len, indent);
-}
-#endif
-
-static int
-write_bio(const void *data, size_t len, void *bp)
-{
-	return BIO_write((BIO *)bp, (const char *)data, len);
-}
-
-int
-BIO_dump(BIO *bp, const char *s, int len)
-{
-	return BIO_dump_cb(write_bio, bp, s, len);
-}
-
-int
-BIO_dump_indent(BIO *bp, const char *s, int len, int indent)
-{
-	return BIO_dump_indent_cb(write_bio, bp, s, len, indent);
-}
