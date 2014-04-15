@@ -1,4 +1,4 @@
-/* crypto/bio/bio_cb.c */
+/* crypto/bio/bss_null.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,91 +57,102 @@
  */
 
 #include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+#include <errno.h>
 #include "cryptlib.h"
 #include <openssl/bio.h>
-#include <openssl/err.h>
 
-long
-BIO_debug_callback(BIO *bio, int cmd, const char *argp, int argi, long argl,
-    long ret)
+static int null_write(BIO *h, const char *buf, int num);
+static int null_read(BIO *h, char *buf, int size);
+static int null_puts(BIO *h, const char *str);
+static int null_gets(BIO *h, char *str, int size);
+static long null_ctrl(BIO *h, int cmd, long arg1, void *arg2);
+static int null_new(BIO *h);
+static int null_free(BIO *data);
+
+static BIO_METHOD null_method = {
+	BIO_TYPE_NULL,
+	"NULL",
+	null_write,
+	null_read,
+	null_puts,
+	null_gets,
+	null_ctrl,
+	null_new,
+	null_free,
+	NULL,
+};
+
+BIO_METHOD
+*BIO_s_null(void)
 {
-	BIO *b;
-	char buf[256];
-	char *p;
-	long r = 1;
-	size_t p_maxlen;
+	return (&null_method);
+}
 
-	if (BIO_CB_RETURN & cmd)
-		r = ret;
+static int
+null_new(BIO *bi)
+{
+	bi->init = 1;
+	bi->num = 0;
+	bi->ptr = (NULL);
+	return (1);
+}
 
-	(void) snprintf(buf, sizeof buf, "BIO[%08lX]:", (unsigned long)bio);
-	p = &(buf[14]);
-	p_maxlen = sizeof buf - 14;
+static int
+null_free(BIO *a)
+{
+	if (a == NULL)
+		return (0);
+	return (1);
+}
+
+static int
+null_read(BIO *b, char *out, int outl)
+{
+	return (0);
+}
+
+static int
+null_write(BIO *b, const char *in, int inl)
+{
+	return (inl);
+}
+
+static long
+null_ctrl(BIO *b, int cmd, long num, void *ptr)
+{
+	long ret = 1;
+
 	switch (cmd) {
-	case BIO_CB_FREE:
-		(void) snprintf(p, p_maxlen, "Free - %s\n", bio->method->name);
+	case BIO_CTRL_RESET:
+	case BIO_CTRL_EOF:
+	case BIO_CTRL_SET:
+	case BIO_CTRL_SET_CLOSE:
+	case BIO_CTRL_FLUSH:
+	case BIO_CTRL_DUP:
+		ret = 1;
 		break;
-	case BIO_CB_READ:
-		if (bio->method->type & BIO_TYPE_DESCRIPTOR)
-			(void) snprintf(p, p_maxlen,
-			    "read(%d,%lu) - %s fd=%d\n",
-			    bio->num,(unsigned long)argi,
-			    bio->method->name, bio->num);
-		else
-			(void) snprintf(p, p_maxlen, "read(%d,%lu) - %s\n",
-			    bio->num, (unsigned long)argi, bio->method->name);
-		break;
-	case BIO_CB_WRITE:
-		if (bio->method->type & BIO_TYPE_DESCRIPTOR)
-			(void) snprintf(p, p_maxlen,
-			    "write(%d,%lu) - %s fd=%d\n",
-			    bio->num, (unsigned long)argi,
-			    bio->method->name, bio->num);
-		else
-			(void) snprintf(p, p_maxlen, "write(%d,%lu) - %s\n",
-			    bio->num, (unsigned long)argi, bio->method->name);
-		break;
-	case BIO_CB_PUTS:
-		(void) snprintf(p, p_maxlen,
-		    "puts() - %s\n", bio->method->name);
-		break;
-	case BIO_CB_GETS:
-		(void) snprintf(p, p_maxlen, "gets(%lu) - %s\n",
-		    (unsigned long)argi, bio->method->name);
-		break;
-	case BIO_CB_CTRL:
-		(void) snprintf(p, p_maxlen, "ctrl(%lu) - %s\n",
-		    (unsigned long)argi, bio->method->name);
-		break;
-	case BIO_CB_RETURN|BIO_CB_READ:
-		(void) snprintf(p, p_maxlen, "read return %ld\n", ret);
-		break;
-	case BIO_CB_RETURN|BIO_CB_WRITE:
-		(void) snprintf(p, p_maxlen, "write return %ld\n", ret);
-		break;
-	case BIO_CB_RETURN|BIO_CB_GETS:
-		(void) snprintf(p, p_maxlen, "gets return %ld\n", ret);
-		break;
-	case BIO_CB_RETURN|BIO_CB_PUTS:
-		(void) snprintf(p, p_maxlen, "puts return %ld\n", ret);
-		break;
-	case BIO_CB_RETURN|BIO_CB_CTRL:
-		(void) snprintf(p, p_maxlen, "ctrl return %ld\n", ret);
-		break;
+	case BIO_CTRL_GET_CLOSE:
+	case BIO_CTRL_INFO:
+	case BIO_CTRL_GET:
+	case BIO_CTRL_PENDING:
+	case BIO_CTRL_WPENDING:
 	default:
-		(void) snprintf(p, p_maxlen,
-		    "bio callback - unknown type (%d)\n", cmd);
+		ret = 0;
 		break;
 	}
+	return (ret);
+}
 
-	b = (BIO *)bio->cb_arg;
-	if (b != NULL)
-		BIO_write(b, buf, strlen(buf));
-#if !defined(OPENSSL_NO_STDIO) && !defined(OPENSSL_SYS_WIN16)
-	else
-		fputs(buf, stderr);
-#endif
-	return (r);
+static int
+null_gets(BIO *bp, char *buf, int size)
+{
+	return (0);
+}
+
+static int
+null_puts(BIO *bp, const char *str)
+{
+	if (str == NULL)
+		return (0);
+	return (strlen(str));
 }
