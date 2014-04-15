@@ -1,4 +1,4 @@
-/* crypto/cversion.c */
+/* crypto/err/err_prn.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,59 +56,59 @@
  * [including the GNU Public Licence.]
  */
 
+#include <stdio.h>
 #include "cryptlib.h"
+#include <openssl/lhash.h>
+#include <openssl/crypto.h>
+#include <openssl/buffer.h>
+#include <openssl/err.h>
 
-#ifndef NO_WINDOWS_BRAINDEATH
-#include "buildinf.h"
-#endif
+void ERR_print_errors_cb(int (*cb)(const char *str, size_t len, void *u),
+			 void *u)
+	{
+	unsigned long l;
+	char buf[256];
+	char buf2[4096];
+	const char *file,*data;
+	int line,flags;
+	unsigned long es;
+	CRYPTO_THREADID cur;
 
-const char
-*SSLeay_version(int t)
-{
-	if (t == SSLEAY_VERSION)
-		return OPENSSL_VERSION_TEXT;
-	if (t == SSLEAY_BUILT_ON) {
-#ifdef DATE
-		static char buf[sizeof(DATE) + 11];
-
-		(void) snprintf(buf, sizeof buf, "built on: %s", DATE);
-		return (buf);
-#else
-		return("built on: date not available");
-#endif
+	CRYPTO_THREADID_current(&cur);
+	es=CRYPTO_THREADID_hash(&cur);
+	while ((l=ERR_get_error_line_data(&file,&line,&data,&flags)) != 0)
+		{
+		ERR_error_string_n(l, buf, sizeof buf);
+		(void) snprintf(buf2, sizeof(buf2), "%lu:%s:%s:%d:%s\n", es, buf,
+			file, line, (flags & ERR_TXT_STRING) ? data : "");
+		if (cb(buf2, strlen(buf2), u) <= 0)
+			break; /* abort outputting the error report */
+		}
 	}
-	if (t == SSLEAY_CFLAGS) {
-#ifdef CFLAGS
-		static char buf[sizeof(CFLAGS) + 11];
 
-		(void) snprintf(buf, sizeof buf, "compiler: %s", CFLAGS);
-		return (buf);
-#else
-		return("compiler: information not available");
-#endif
-	}
-	if (t == SSLEAY_PLATFORM) {
-#ifdef PLATFORM
-		static char buf[sizeof(PLATFORM) + 11];
+#ifndef OPENSSL_NO_FP_API
+static int print_fp(const char *str, size_t len, void *fp)
+	{
+	BIO bio;
 
-		(void) snprintf(buf, sizeof buf, "platform: %s", PLATFORM);
-		return (buf);
-#else
-		return("platform: information not available");
-#endif
-	}
-	if (t == SSLEAY_DIR) {
-#ifdef OPENSSLDIR
-		return "OPENSSLDIR: \"" OPENSSLDIR "\"";
-#else
-		return "OPENSSLDIR: N/A";
-#endif
-	}
-	return("not available");
-}
+	BIO_set(&bio,BIO_s_file());
+	BIO_set_fp(&bio,fp,BIO_NOCLOSE);
 
-unsigned long
-SSLeay(void)
-{
-	return (SSLEAY_VERSION_NUMBER);
-}
+	return BIO_printf(&bio, "%s", str);
+	}
+void ERR_print_errors_fp(FILE *fp)
+	{
+	ERR_print_errors_cb(print_fp, fp);
+	}
+#endif
+
+static int print_bio(const char *str, size_t len, void *bp)
+	{
+	return BIO_write((BIO *)bp, str, len);
+	}
+void ERR_print_errors(BIO *bp)
+	{
+	ERR_print_errors_cb(print_bio, bp);
+	}
+
+	
