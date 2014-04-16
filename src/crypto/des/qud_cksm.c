@@ -1,4 +1,4 @@
-/* crypto/bf/blowfish.h */
+/* crypto/des/qud_cksm.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,64 +56,70 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef HEADER_BLOWFISH_H
-#define HEADER_BLOWFISH_H
-
-#include <openssl/e_os2.h>
-
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
-#ifdef OPENSSL_NO_BF
-#error BF is disabled.
-#endif
-
-#define BF_ENCRYPT	1
-#define BF_DECRYPT	0
-
-/*
- * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- * ! BF_LONG has to be at least 32 bits wide. If it's wider, then !
- * ! BF_LONG_LOG2 has to be defined along.                        !
- * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+/* From "Message Authentication"  R.R. Jueneman, S.M. Matyas, C.H. Meyer
+ * IEEE Communications Magazine Sept 1985 Vol. 23 No. 9 p 29-40
+ * This module in only based on the code in this paper and is
+ * almost definitely not the same as the MIT implementation.
  */
+#include "des_locl.h"
 
-#if defined(__LP32__)
-#define BF_LONG unsigned long
-#elif defined(__ILP64__)
-#define BF_LONG unsigned long
-#define BF_LONG_LOG2 3
-#else
-#define BF_LONG unsigned int
-#endif
+/* bug fix for dos - 7/6/91 - Larry hughes@logos.ucs.indiana.edu */
+#define Q_B0(a)	(((DES_LONG)(a)))
+#define Q_B1(a)	(((DES_LONG)(a))<<8)
+#define Q_B2(a)	(((DES_LONG)(a))<<16)
+#define Q_B3(a)	(((DES_LONG)(a))<<24)
 
-#define BF_ROUNDS	16
-#define BF_BLOCK	8
+/* used to scramble things a bit */
+/* Got the value MIT uses via brute force :-) 2/10/90 eay */
+#define NOISE	((DES_LONG)83653421L)
 
-typedef struct bf_key_st
+DES_LONG DES_quad_cksum(const unsigned char *input, DES_cblock output[],
+	     long length, int out_count, DES_cblock *seed)
 	{
-	BF_LONG P[BF_ROUNDS+2];
-	BF_LONG S[4*256];
-	} BF_KEY;
+	DES_LONG z0,z1,t0,t1;
+	int i;
+	long l;
+	const unsigned char *cp;
+	DES_LONG *lp;
 
-void BF_set_key(BF_KEY *key, int len, const unsigned char *data);
+	if (out_count < 1) out_count=1;
+	lp = (DES_LONG *) &(output[0])[0];
 
-void BF_encrypt(BF_LONG *data,const BF_KEY *key);
-void BF_decrypt(BF_LONG *data,const BF_KEY *key);
+	z0=Q_B0((*seed)[0])|Q_B1((*seed)[1])|Q_B2((*seed)[2])|Q_B3((*seed)[3]);
+	z1=Q_B0((*seed)[4])|Q_B1((*seed)[5])|Q_B2((*seed)[6])|Q_B3((*seed)[7]);
 
-void BF_ecb_encrypt(const unsigned char *in, unsigned char *out,
-	const BF_KEY *key, int enc);
-void BF_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
-	const BF_KEY *schedule, unsigned char *ivec, int enc);
-void BF_cfb64_encrypt(const unsigned char *in, unsigned char *out, long length,
-	const BF_KEY *schedule, unsigned char *ivec, int *num, int enc);
-void BF_ofb64_encrypt(const unsigned char *in, unsigned char *out, long length,
-	const BF_KEY *schedule, unsigned char *ivec, int *num);
-const char *BF_options(void);
+	for (i=0; ((i<4)&&(i<out_count)); i++)
+		{
+		cp=input;
+		l=length;
+		while (l > 0)
+			{
+			if (l > 1)
+				{
+				t0= (DES_LONG)(*(cp++));
+				t0|=(DES_LONG)Q_B1(*(cp++));
+				l--;
+				}
+			else
+				t0= (DES_LONG)(*(cp++));
+			l--;
+			/* add */
+			t0+=z0;
+			t0&=0xffffffffL;
+			t1=z1;
+			/* square, well sort of square */
+			z0=((((t0*t0)&0xffffffffL)+((t1*t1)&0xffffffffL))
+				&0xffffffffL)%0x7fffffffL; 
+			z1=((t0*((t1+NOISE)&0xffffffffL))&0xffffffffL)%0x7fffffffL;
+			}
+		if (lp != NULL)
+			{
+			/* The MIT library assumes that the checksum is
+			 * composed of 2*out_count 32 bit ints */
+			*lp++ = z0;
+			*lp++ = z1;
+			}
+		}
+	return(z0);
+	}
 
-#ifdef  __cplusplus
-}
-#endif
-
-#endif
