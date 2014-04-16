@@ -1,5 +1,4 @@
-/* apps/gendh.c */
-/* obsoleted by dhparam.c */
+/* apps/pkcs7.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,51 +56,45 @@
  * [including the GNU Public Licence.]
  */
 
-#include <openssl/opensslconf.h>
-/* Until the key-gen callbacks are modified to use newer prototypes, we allow
- * deprecated functions for openssl-internal code */
-#ifdef OPENSSL_NO_DEPRECATED
-#undef OPENSSL_NO_DEPRECATED
-#endif
-
-#ifndef OPENSSL_NO_DH
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <time.h>
 #include "apps.h"
-#include <openssl/bio.h>
-#include <openssl/rand.h>
 #include <openssl/err.h>
-#include <openssl/bn.h>
-#include <openssl/dh.h>
+#include <openssl/objects.h>
+#include <openssl/evp.h>
 #include <openssl/x509.h>
+#include <openssl/pkcs7.h>
 #include <openssl/pem.h>
 
-#define DEFBITS	512
 #undef PROG
-#define PROG gendh_main
+#define PROG	pkcs7_main
 
-static int dh_cb(int p, int n, BN_GENCB *cb);
+/* -inform arg	- input format - default PEM (DER or PEM)
+ * -outform arg - output format - default PEM
+ * -in arg	- input file - default stdin
+ * -out arg	- output file - default stdout
+ * -print_certs
+ */
 
 int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
-	BN_GENCB cb;
-	DH *dh=NULL;
-	int ret=1,num=DEFBITS;
-	int g=2;
-	char *outfile=NULL;
-	char *inrand=NULL;
+	PKCS7 *p7=NULL;
+	int i,badops=0;
+	BIO *in=NULL,*out=NULL;
+	int informat,outformat;
+	char *infile,*outfile,*prog;
+	int print_certs=0,text=0,noout=0,p7_print=0;
+	int ret=1;
 #ifndef OPENSSL_NO_ENGINE
 	char *engine=NULL;
 #endif
-	BIO *out=NULL;
 
 	apps_startup();
 
-	BN_GENCB_set(&cb, dh_cb, bio_err);
 	if (bio_err == NULL)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
@@ -109,22 +102,44 @@ int MAIN(int argc, char **argv)
 	if (!load_config(bio_err, NULL))
 		goto end;
 
-	argv++;
+	infile=NULL;
+	outfile=NULL;
+	informat=FORMAT_PEM;
+	outformat=FORMAT_PEM;
+
+	prog=argv[0];
 	argc--;
-	for (;;)
+	argv++;
+	while (argc >= 1)
 		{
-		if (argc <= 0) break;
-		if (strcmp(*argv,"-out") == 0)
+		if 	(strcmp(*argv,"-inform") == 0)
+			{
+			if (--argc < 1) goto bad;
+			informat=str2fmt(*(++argv));
+			}
+		else if (strcmp(*argv,"-outform") == 0)
+			{
+			if (--argc < 1) goto bad;
+			outformat=str2fmt(*(++argv));
+			}
+		else if (strcmp(*argv,"-in") == 0)
+			{
+			if (--argc < 1) goto bad;
+			infile= *(++argv);
+			}
+		else if (strcmp(*argv,"-out") == 0)
 			{
 			if (--argc < 1) goto bad;
 			outfile= *(++argv);
 			}
-		else if (strcmp(*argv,"-2") == 0)
-			g=2;
-	/*	else if (strcmp(*argv,"-3") == 0)
-			g=3; */
-		else if (strcmp(*argv,"-5") == 0)
-			g=5;
+		else if (strcmp(*argv,"-noout") == 0)
+			noout=1;
+		else if (strcmp(*argv,"-text") == 0)
+			text=1;
+		else if (strcmp(*argv,"-print") == 0)
+			p7_print=1;
+		else if (strcmp(*argv,"-print_certs") == 0)
+			print_certs=1;
 #ifndef OPENSSL_NO_ENGINE
 		else if (strcmp(*argv,"-engine") == 0)
 			{
@@ -132,40 +147,73 @@ int MAIN(int argc, char **argv)
 			engine= *(++argv);
 			}
 #endif
-		else if (strcmp(*argv,"-rand") == 0)
-			{
-			if (--argc < 1) goto bad;
-			inrand= *(++argv);
-			}
 		else
+			{
+			BIO_printf(bio_err,"unknown option %s\n",*argv);
+			badops=1;
 			break;
-		argv++;
+			}
 		argc--;
+		argv++;
 		}
-	if ((argc >= 1) && ((sscanf(*argv,"%d",&num) == 0) || (num < 0)))
+
+	if (badops)
 		{
 bad:
-		BIO_printf(bio_err,"usage: gendh [args] [numbits]\n");
-		BIO_printf(bio_err," -out file - output the key to 'file\n");
-		BIO_printf(bio_err," -2        - use 2 as the generator value\n");
-	/*	BIO_printf(bio_err," -3        - use 3 as the generator value\n"); */
-		BIO_printf(bio_err," -5        - use 5 as the generator value\n");
+		BIO_printf(bio_err,"%s [options] <infile >outfile\n",prog);
+		BIO_printf(bio_err,"where options are\n");
+		BIO_printf(bio_err," -inform arg   input format - DER or PEM\n");
+		BIO_printf(bio_err," -outform arg  output format - DER or PEM\n");
+		BIO_printf(bio_err," -in arg       input file\n");
+		BIO_printf(bio_err," -out arg      output file\n");
+		BIO_printf(bio_err," -print_certs  print any certs or crl in the input\n");
+		BIO_printf(bio_err," -text         print full details of certificates\n");
+		BIO_printf(bio_err," -noout        don't output encoded data\n");
 #ifndef OPENSSL_NO_ENGINE
-		BIO_printf(bio_err," -engine e - use engine e, possibly a hardware device.\n");
+		BIO_printf(bio_err," -engine e     use engine e, possibly a hardware device.\n");
 #endif
-		BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
-		BIO_printf(bio_err,"           - load the file (or the files in the directory) into\n");
-		BIO_printf(bio_err,"             the random number generator\n");
+		ret = 1;
 		goto end;
 		}
-		
+
+	ERR_load_crypto_strings();
+
 #ifndef OPENSSL_NO_ENGINE
         setup_engine(bio_err, engine, 0);
 #endif
 
+	in=BIO_new(BIO_s_file());
 	out=BIO_new(BIO_s_file());
-	if (out == NULL)
+	if ((in == NULL) || (out == NULL))
 		{
+		ERR_print_errors(bio_err);
+                goto end;
+                }
+
+	if (infile == NULL)
+		BIO_set_fp(in,stdin,BIO_NOCLOSE);
+	else
+		{
+		if (BIO_read_filename(in,infile) <= 0)
+		if (in == NULL)
+			{
+			perror(infile);
+			goto end;
+			}
+		}
+
+	if	(informat == FORMAT_ASN1)
+		p7=d2i_PKCS7_bio(in,NULL);
+	else if (informat == FORMAT_PEM)
+		p7=PEM_read_bio_PKCS7(in,NULL,NULL,NULL);
+	else
+		{
+		BIO_printf(bio_err,"bad input format specified for pkcs7 object\n");
+		goto end;
+		}
+	if (p7 == NULL)
+		{
+		BIO_printf(bio_err,"unable to load PKCS7 object\n");
 		ERR_print_errors(bio_err);
 		goto end;
 		}
@@ -183,53 +231,84 @@ bad:
 			}
 		}
 
-	if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL)
+	if (p7_print)
+		PKCS7_print_ctx(out, p7, 0, NULL);
+
+	if (print_certs)
 		{
-		BIO_printf(bio_err,"warning, not much extra random data, consider using the -rand option\n");
+		STACK_OF(X509) *certs=NULL;
+		STACK_OF(X509_CRL) *crls=NULL;
+
+		i=OBJ_obj2nid(p7->type);
+		switch (i)
+			{
+		case NID_pkcs7_signed:
+			certs=p7->d.sign->cert;
+			crls=p7->d.sign->crl;
+			break;
+		case NID_pkcs7_signedAndEnveloped:
+			certs=p7->d.signed_and_enveloped->cert;
+			crls=p7->d.signed_and_enveloped->crl;
+			break;
+		default:
+			break;
+			}
+
+		if (certs != NULL)
+			{
+			X509 *x;
+
+			for (i=0; i<sk_X509_num(certs); i++)
+				{
+				x=sk_X509_value(certs,i);
+				if(text) X509_print(out, x);
+				else dump_cert_text(out, x);
+
+				if(!noout) PEM_write_bio_X509(out,x);
+				BIO_puts(out,"\n");
+				}
+			}
+		if (crls != NULL)
+			{
+			X509_CRL *crl;
+
+			for (i=0; i<sk_X509_CRL_num(crls); i++)
+				{
+				crl=sk_X509_CRL_value(crls,i);
+
+				X509_CRL_print(out, crl);
+
+				if(!noout)PEM_write_bio_X509_CRL(out,crl);
+				BIO_puts(out,"\n");
+				}
+			}
+
+		ret=0;
+		goto end;
 		}
-	if (inrand != NULL)
-		BIO_printf(bio_err,"%ld semi-random bytes loaded\n",
-			app_RAND_load_files(inrand));
 
-	BIO_printf(bio_err,"Generating DH parameters, %d bit long safe prime, generator %d\n",num,g);
-	BIO_printf(bio_err,"This is going to take a long time\n");
+	if(!noout) {
+		if 	(outformat == FORMAT_ASN1)
+			i=i2d_PKCS7_bio(out,p7);
+		else if (outformat == FORMAT_PEM)
+			i=PEM_write_bio_PKCS7(out,p7);
+		else	{
+			BIO_printf(bio_err,"bad output format specified for outfile\n");
+			goto end;
+			}
 
-	if(((dh = DH_new()) == NULL) || !DH_generate_parameters_ex(dh, num, g, &cb))
-		goto end;
-		
-	app_RAND_write_file(NULL, bio_err);
-
-	if (!PEM_write_bio_DHparams(out,dh))
-		goto end;
+		if (!i)
+			{
+			BIO_printf(bio_err,"unable to write pkcs7 object\n");
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+	}
 	ret=0;
 end:
-	if (ret != 0)
-		ERR_print_errors(bio_err);
+	if (p7 != NULL) PKCS7_free(p7);
+	if (in != NULL) BIO_free(in);
 	if (out != NULL) BIO_free_all(out);
-	if (dh != NULL) DH_free(dh);
 	apps_shutdown();
 	OPENSSL_EXIT(ret);
 	}
-
-static int dh_cb(int p, int n, BN_GENCB *cb)
-	{
-	char c='*';
-
-	if (p == 0) c='.';
-	if (p == 1) c='+';
-	if (p == 2) c='*';
-	if (p == 3) c='\n';
-	BIO_write(cb->arg,&c,1);
-	(void)BIO_flush(cb->arg);
-#ifdef LINT
-	p=n;
-#endif
-	return 1;
-	}
-#else /* !OPENSSL_NO_DH */
-
-# if PEDANTIC
-static void *dummy=&dummy;
-# endif
-
-#endif
