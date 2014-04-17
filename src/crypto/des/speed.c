@@ -1,4 +1,4 @@
-/* crypto/rc5/rc5speed.c */
+/* crypto/des/speed.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -71,6 +71,7 @@ OPENSSL_DECLARE_EXIT
 
 #ifndef OPENSSL_SYS_NETWARE
 #include <signal.h>
+#define crypt(c,s) (des_crypt((c),(s)))
 #endif
 
 #ifndef _IRIX
@@ -99,15 +100,19 @@ OPENSSL_DECLARE_EXIT
 #include <sys/param.h>
 #endif
 
-#include <openssl/rc5.h>
+#include <openssl/des.h>
 
 /* The following if from times(3) man page.  It may need to be changed */
 #ifndef HZ
-#ifndef CLK_TCK
-#define HZ	100.0
-#else /* CLK_TCK */
-#define HZ ((double)CLK_TCK)
-#endif
+# ifndef CLK_TCK
+#  ifndef _BSD_CLK_TCK_ /* FreeBSD fix */
+#   define HZ	100.0
+#  else /* _BSD_CLK_TCK_ */
+#   define HZ ((double)_BSD_CLK_TCK_)
+#  endif
+# else /* CLK_TCK */
+#  define HZ ((double)CLK_TCK)
+# endif
 #endif
 
 #define BUFSIZE	((long)1024)
@@ -175,14 +180,13 @@ int main(int argc, char **argv)
 	{
 	long count;
 	static unsigned char buf[BUFSIZE];
-	static unsigned char key[] ={
-			0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,
-			0xfe,0xdc,0xba,0x98,0x76,0x54,0x32,0x10,
-			};
-	RC5_32_KEY sch;
-	double a,b,c,d;
+	static DES_cblock key ={0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0};
+	static DES_cblock key2={0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12};
+	static DES_cblock key3={0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,0x34};
+	DES_key_schedule sch,sch2,sch3;
+	double a,b,c,d,e;
 #ifndef SIGALRM
-	long ca,cb,cc;
+	long ca,cb,cc,cd,ce;
 #endif
 
 #ifndef TIMES
@@ -190,86 +194,119 @@ int main(int argc, char **argv)
 	printf("program when this computer is idle.\n");
 #endif
 
+	DES_set_key_unchecked(&key2,&sch2);
+	DES_set_key_unchecked(&key3,&sch3);
+
 #ifndef SIGALRM
 	printf("First we calculate the approximate speed ...\n");
-	RC5_32_set_key(&sch,16,key,12);
+	DES_set_key_unchecked(&key,&sch);
 	count=10;
 	do	{
 		long i;
-		unsigned long data[2];
+		DES_LONG data[2];
 
 		count*=2;
 		Time_F(START);
 		for (i=count; i; i--)
-			RC5_32_encrypt(data,&sch);
+			DES_encrypt1(data,&sch,DES_ENCRYPT);
 		d=Time_F(STOP);
 		} while (d < 3.0);
-	ca=count/512;
-	cb=count;
-	cc=count*8/BUFSIZE+1;
-	printf("Doing RC5_32_set_key %ld times\n",ca);
+	ca=count;
+	cb=count*3;
+	cc=count*3*8/BUFSIZE+1;
+	cd=count*8/BUFSIZE+1;
+	ce=count/20+1;
+	printf("Doing set_key %ld times\n",ca);
 #define COND(d)	(count != (d))
 #define COUNT(d) (d)
 #else
 #define COND(c)	(run)
 #define COUNT(d) (count)
 	signal(SIGALRM,sig_done);
-	printf("Doing RC5_32_set_key for 10 seconds\n");
+	printf("Doing set_key for 10 seconds\n");
 	alarm(10);
 #endif
 
 	Time_F(START);
-	for (count=0,run=1; COND(ca); count+=4)
-		{
-		RC5_32_set_key(&sch,16,key,12);
-		RC5_32_set_key(&sch,16,key,12);
-		RC5_32_set_key(&sch,16,key,12);
-		RC5_32_set_key(&sch,16,key,12);
-		}
+	for (count=0,run=1; COND(ca); count++)
+		DES_set_key_unchecked(&key,&sch);
 	d=Time_F(STOP);
-	printf("%ld RC5_32_set_key's in %.2f seconds\n",count,d);
+	printf("%ld set_key's in %.2f seconds\n",count,d);
 	a=((double)COUNT(ca))/d;
 
 #ifdef SIGALRM
-	printf("Doing RC5_32_encrypt's for 10 seconds\n");
+	printf("Doing DES_encrypt's for 10 seconds\n");
 	alarm(10);
 #else
-	printf("Doing RC5_32_encrypt %ld times\n",cb);
+	printf("Doing DES_encrypt %ld times\n",cb);
 #endif
 	Time_F(START);
-	for (count=0,run=1; COND(cb); count+=4)
+	for (count=0,run=1; COND(cb); count++)
 		{
-		unsigned long data[2];
+		DES_LONG data[2];
 
-		RC5_32_encrypt(data,&sch);
-		RC5_32_encrypt(data,&sch);
-		RC5_32_encrypt(data,&sch);
-		RC5_32_encrypt(data,&sch);
+		DES_encrypt1(data,&sch,DES_ENCRYPT);
 		}
 	d=Time_F(STOP);
-	printf("%ld RC5_32_encrypt's in %.2f second\n",count,d);
+	printf("%ld DES_encrypt's in %.2f second\n",count,d);
 	b=((double)COUNT(cb)*8)/d;
 
 #ifdef SIGALRM
-	printf("Doing RC5_32_cbc_encrypt on %ld byte blocks for 10 seconds\n",
+	printf("Doing DES_cbc_encrypt on %ld byte blocks for 10 seconds\n",
 		BUFSIZE);
 	alarm(10);
 #else
-	printf("Doing RC5_32_cbc_encrypt %ld times on %ld byte blocks\n",cc,
+	printf("Doing DES_cbc_encrypt %ld times on %ld byte blocks\n",cc,
 		BUFSIZE);
 #endif
 	Time_F(START);
 	for (count=0,run=1; COND(cc); count++)
-		RC5_32_cbc_encrypt(buf,buf,BUFSIZE,&sch,
-			&(key[0]),RC5_ENCRYPT);
+		DES_ncbc_encrypt(buf,buf,BUFSIZE,&sch,
+			&key,DES_ENCRYPT);
 	d=Time_F(STOP);
-	printf("%ld RC5_32_cbc_encrypt's of %ld byte blocks in %.2f second\n",
+	printf("%ld DES_cbc_encrypt's of %ld byte blocks in %.2f second\n",
 		count,BUFSIZE,d);
 	c=((double)COUNT(cc)*BUFSIZE)/d;
 
-	printf("RC5_32/12/16 set_key       per sec = %12.2f (%9.3fuS)\n",a,1.0e6/a);
-	printf("RC5_32/12/16 raw ecb bytes per sec = %12.2f (%9.3fuS)\n",b,8.0e6/b);
-	printf("RC5_32/12/16 cbc     bytes per sec = %12.2f (%9.3fuS)\n",c,8.0e6/c);
+#ifdef SIGALRM
+	printf("Doing DES_ede_cbc_encrypt on %ld byte blocks for 10 seconds\n",
+		BUFSIZE);
+	alarm(10);
+#else
+	printf("Doing DES_ede_cbc_encrypt %ld times on %ld byte blocks\n",cd,
+		BUFSIZE);
+#endif
+	Time_F(START);
+	for (count=0,run=1; COND(cd); count++)
+		DES_ede3_cbc_encrypt(buf,buf,BUFSIZE,
+			&sch,
+			&sch2,
+			&sch3,
+			&key,
+			DES_ENCRYPT);
+	d=Time_F(STOP);
+	printf("%ld DES_ede_cbc_encrypt's of %ld byte blocks in %.2f second\n",
+		count,BUFSIZE,d);
+	d=((double)COUNT(cd)*BUFSIZE)/d;
+
+#ifdef SIGALRM
+	printf("Doing crypt for 10 seconds\n");
+	alarm(10);
+#else
+	printf("Doing crypt %ld times\n",ce);
+#endif
+	Time_F(START);
+	for (count=0,run=1; COND(ce); count++)
+		crypt("testing1","ef");
+	e=Time_F(STOP);
+	printf("%ld crypts in %.2f second\n",count,e);
+	e=((double)COUNT(ce))/e;
+
+	printf("set_key            per sec = %12.2f (%9.3fuS)\n",a,1.0e6/a);
+	printf("DES raw ecb bytes  per sec = %12.2f (%9.3fuS)\n",b,8.0e6/b);
+	printf("DES cbc bytes      per sec = %12.2f (%9.3fuS)\n",c,8.0e6/c);
+	printf("DES ede cbc bytes  per sec = %12.2f (%9.3fuS)\n",d,8.0e6/d);
+	printf("crypt              per sec = %12.2f (%9.3fuS)\n",e,1.0e6/e);
 	exit(0);
 #if defined(LINT) || defined(OPENSSL_SYS_MSDOS)
 	return(0);
