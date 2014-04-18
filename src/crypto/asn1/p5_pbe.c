@@ -1,4 +1,4 @@
-/* t_crl.c */
+/* p5_pbe.c */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -58,75 +58,91 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include <openssl/buffer.h>
-#include <openssl/bn.h>
-#include <openssl/objects.h>
+#include <openssl/asn1t.h>
 #include <openssl/x509.h>
-#include <openssl/x509v3.h>
+#include <openssl/rand.h>
 
-#ifndef OPENSSL_NO_FP_API
-int X509_CRL_print_fp(FILE *fp, X509_CRL *x)
+/* PKCS#5 password based encryption structure */
+
+ASN1_SEQUENCE(PBEPARAM) = {
+	ASN1_SIMPLE(PBEPARAM, salt, ASN1_OCTET_STRING),
+	ASN1_SIMPLE(PBEPARAM, iter, ASN1_INTEGER)
+} ASN1_SEQUENCE_END(PBEPARAM)
+
+IMPLEMENT_ASN1_FUNCTIONS(PBEPARAM)
+
+
+/* Set an algorithm identifier for a PKCS#5 PBE algorithm */
+
+int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
+				const unsigned char *salt, int saltlen)
 {
-        BIO *b;
-        int ret;
+	PBEPARAM *pbe=NULL;
+	ASN1_STRING *pbe_str=NULL;
+	unsigned char *sstr;
 
-        if ((b=BIO_new(BIO_s_file())) == NULL)
+	pbe = PBEPARAM_new();
+	if (!pbe)
 	{
-		X509err(X509_F_X509_CRL_PRINT_FP,ERR_R_BUF_LIB);
-                return(0);
+		ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR,ERR_R_MALLOC_FAILURE);
+		goto err;
 	}
-        BIO_set_fp(b,fp,BIO_NOCLOSE);
-        ret=X509_CRL_print(b, x);
-        BIO_free(b);
-        return(ret);
+	if(iter <= 0)
+		iter = PKCS5_DEFAULT_ITER;
+	if (!ASN1_INTEGER_set(pbe->iter, iter))
+	{
+		ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR,ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+	if (!saltlen)
+		saltlen = PKCS5_SALT_LEN;
+	if (!ASN1_STRING_set(pbe->salt, NULL, saltlen))
+	{
+		ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR,ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+	sstr = ASN1_STRING_data(pbe->salt);
+	if (salt)
+		memcpy(sstr, salt, saltlen);
+	else if (RAND_pseudo_bytes(sstr, saltlen) < 0)
+		goto err;
+
+	if(!ASN1_item_pack(pbe, ASN1_ITEM_rptr(PBEPARAM), &pbe_str))
+	{
+		ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR,ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+
+	PBEPARAM_free(pbe);
+	pbe = NULL;
+
+	if (X509_ALGOR_set0(algor, OBJ_nid2obj(alg), V_ASN1_SEQUENCE, pbe_str))
+		return 1;
+
+err:
+	if (pbe != NULL)
+		PBEPARAM_free(pbe);
+	if (pbe_str != NULL)
+		ASN1_STRING_free(pbe_str);
+	return 0;
 }
-#endif
 
-int X509_CRL_print(BIO *out, X509_CRL *x)
+/* Return an algorithm identifier for a PKCS#5 PBE algorithm */
+
+X509_ALGOR *PKCS5_pbe_set(int alg, int iter,
+				const unsigned char *salt, int saltlen)
 {
-	STACK_OF(X509_REVOKED) *rev;
-	X509_REVOKED *r;
-	long l;
-	int i;
-	char *p;
-
-	BIO_printf(out, "Certificate Revocation List (CRL):\n");
-	l = X509_CRL_get_version(x);
-	BIO_printf(out, "%8sVersion %lu (0x%lx)\n", "", l+1, l);
-	i = OBJ_obj2nid(x->sig_alg->algorithm);
-	X509_signature_print(out, x->sig_alg, NULL);
-	p=X509_NAME_oneline(X509_CRL_get_issuer(x),NULL,0);
-	BIO_printf(out,"%8sIssuer: %s\n","",p);
-	free(p);
-	BIO_printf(out,"%8sLast Update: ","");
-	ASN1_TIME_print(out,X509_CRL_get_lastUpdate(x));
-	BIO_printf(out,"\n%8sNext Update: ","");
-	if (X509_CRL_get_nextUpdate(x))
-		 ASN1_TIME_print(out,X509_CRL_get_nextUpdate(x));
-	else BIO_printf(out,"NONE");
-	BIO_printf(out,"\n");
-
-	X509V3_extensions_print(out, "CRL extensions",
-						x->crl->extensions, 0, 8);
-
-	rev = X509_CRL_get_REVOKED(x);
-
-	if(sk_X509_REVOKED_num(rev) > 0)
-	    BIO_printf(out, "Revoked Certificates:\n");
-	else BIO_printf(out, "No Revoked Certificates.\n");
-
-	for(i = 0; i < sk_X509_REVOKED_num(rev); i++) {
-		r = sk_X509_REVOKED_value(rev, i);
-		BIO_printf(out,"    Serial Number: ");
-		i2a_ASN1_INTEGER(out,r->serialNumber);
-		BIO_printf(out,"\n        Revocation Date: ");
-		ASN1_TIME_print(out,r->revocationDate);
-		BIO_printf(out,"\n");
-		X509V3_extensions_print(out, "CRL entry extensions",
-						r->extensions, 0, 8);
+	X509_ALGOR *ret;
+	ret = X509_ALGOR_new();
+	if (!ret)
+	{
+		ASN1err(ASN1_F_PKCS5_PBE_SET,ERR_R_MALLOC_FAILURE);
+		return NULL;
 	}
-	X509_signature_print(out, x->sig_alg, x->signature);
 
-	return 1;
+	if (PKCS5_pbe_set0_algor(ret, alg, iter, salt, saltlen)) 
+		return ret;
 
+	X509_ALGOR_free(ret);
+	return NULL;
 }

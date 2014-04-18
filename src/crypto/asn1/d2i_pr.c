@@ -1,4 +1,4 @@
-/* crypto/asn1/x_pkey.c */
+/* crypto/asn1/d2i_pr.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,84 +58,113 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
+#include <openssl/bn.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
-#include <openssl/asn1_mac.h>
+#ifndef OPENSSL_NO_ENGINE
+#include <openssl/engine.h>
+#endif
 #include <openssl/x509.h>
+#include <openssl/asn1.h>
+#include "asn1_locl.h"
 
-/* need to implement */
-int i2d_X509_PKEY(X509_PKEY *a, unsigned char **pp)
+EVP_PKEY *d2i_PrivateKey(int type, EVP_PKEY **a, const unsigned char **pp,
+	     long length)
 {
-	return(0);
-}
+	EVP_PKEY *ret;
 
-X509_PKEY *d2i_X509_PKEY(X509_PKEY **a, const unsigned char **pp, long length)
-{
-	int i;
-	M_ASN1_D2I_vars(a,X509_PKEY *,X509_PKEY_new);
-
-	M_ASN1_D2I_Init();
-	M_ASN1_D2I_start_sequence();
-	M_ASN1_D2I_get_x(X509_ALGOR,ret->enc_algor,d2i_X509_ALGOR);
-	M_ASN1_D2I_get_x(ASN1_OCTET_STRING,ret->enc_pkey,d2i_ASN1_OCTET_STRING);
-
-	ret->cipher.cipher=EVP_get_cipherbyname(
-		OBJ_nid2ln(OBJ_obj2nid(ret->enc_algor->algorithm)));
-	if (ret->cipher.cipher == NULL)
+	if ((a == NULL) || (*a == NULL))
 	{
-		c.error=ASN1_R_UNSUPPORTED_CIPHER;
-		c.line=__LINE__;
-		goto err;
-	}
-	if (ret->enc_algor->parameter->type == V_ASN1_OCTET_STRING) 
-	{
-		i=ret->enc_algor->parameter->value.octet_string->length;
-		if (i > EVP_MAX_IV_LENGTH)
+		if ((ret=EVP_PKEY_new()) == NULL)
 		{
-			c.error=ASN1_R_IV_TOO_LARGE;
-			c.line=__LINE__;
-			goto err;
+			ASN1err(ASN1_F_D2I_PRIVATEKEY,ERR_R_EVP_LIB);
+			return(NULL);
 		}
-		memcpy(ret->cipher.iv,
-			ret->enc_algor->parameter->value.octet_string->data,i);
 	}
 	else
-		memset(ret->cipher.iv,0,EVP_MAX_IV_LENGTH);
-	M_ASN1_D2I_Finish(a,X509_PKEY_free,ASN1_F_D2I_X509_PKEY);
-}
+	{
+		ret= *a;
+#ifndef OPENSSL_NO_ENGINE
+		if (ret->engine)
+		{
+			ENGINE_finish(ret->engine);
+			ret->engine = NULL;
+		}
+#endif
+	}
 
-X509_PKEY *X509_PKEY_new(void)
-{
-	X509_PKEY *ret=NULL;
-	ASN1_CTX c;
+	if (!EVP_PKEY_set_type(ret, type))
+	{
+		ASN1err(ASN1_F_D2I_PRIVATEKEY,ASN1_R_UNKNOWN_PUBLIC_KEY_TYPE);
+		goto err;
+	}
 
-	M_ASN1_New_Malloc(ret,X509_PKEY);
-	ret->version=0;
-	M_ASN1_New(ret->enc_algor,X509_ALGOR_new);
-	M_ASN1_New(ret->enc_pkey,M_ASN1_OCTET_STRING_new);
-	ret->dec_pkey=NULL;
-	ret->key_length=0;
-	ret->key_data=NULL;
-	ret->key_free=0;
-	ret->cipher.cipher=NULL;
-	memset(ret->cipher.iv,0,EVP_MAX_IV_LENGTH);
-	ret->references=1;
+	if (!ret->ameth->old_priv_decode ||
+			!ret->ameth->old_priv_decode(ret, pp, length))
+	{
+		if (ret->ameth->priv_decode) 
+		{
+			PKCS8_PRIV_KEY_INFO *p8=NULL;
+			p8=d2i_PKCS8_PRIV_KEY_INFO(NULL,pp,length);
+			if (!p8) goto err;
+			EVP_PKEY_free(ret);
+			ret = EVP_PKCS82PKEY(p8);
+			PKCS8_PRIV_KEY_INFO_free(p8);
+
+		} 
+		else 
+		{
+			ASN1err(ASN1_F_D2I_PRIVATEKEY,ERR_R_ASN1_LIB);
+			goto err;
+		}
+	}	
+	if (a != NULL) (*a)=ret;
 	return(ret);
-	M_ASN1_New_Error(ASN1_F_X509_PKEY_NEW);
+err:
+	if ((ret != NULL) && ((a == NULL) || (*a != ret))) EVP_PKEY_free(ret);
+	return(NULL);
 }
 
-void X509_PKEY_free(X509_PKEY *x)
+/* This works like d2i_PrivateKey() except it automatically works out the type */
+
+EVP_PKEY *d2i_AutoPrivateKey(EVP_PKEY **a, const unsigned char **pp,
+	     long length)
 {
-	int i;
+	STACK_OF(ASN1_TYPE) *inkey;
+	const unsigned char *p;
+	int keytype;
+	p = *pp;
+	/* Dirty trick: read in the ASN1 data into a STACK_OF(ASN1_TYPE):
+	 * by analyzing it we can determine the passed structure: this
+	 * assumes the input is surrounded by an ASN1 SEQUENCE.
+	 */
+	inkey = d2i_ASN1_SEQUENCE_ANY(NULL, &p, length);
+	/* Since we only need to discern "traditional format" RSA and DSA
+	 * keys we can just count the elements.
+         */
+	if(sk_ASN1_TYPE_num(inkey) == 6) 
+		keytype = EVP_PKEY_DSA;
+	else if (sk_ASN1_TYPE_num(inkey) == 4)
+		keytype = EVP_PKEY_EC;
+	else if (sk_ASN1_TYPE_num(inkey) == 3)  
+	{ /* This seems to be PKCS8, not traditional format */
+			PKCS8_PRIV_KEY_INFO *p8 = d2i_PKCS8_PRIV_KEY_INFO(NULL,pp,length);
+			EVP_PKEY *ret;
 
-	if (x == NULL) return;
-
-	i=CRYPTO_add(&x->references,-1,CRYPTO_LOCK_X509_PKEY);
-	if (i > 0) return;
-
-	if (x->enc_algor != NULL) X509_ALGOR_free(x->enc_algor);
-	if (x->enc_pkey != NULL) M_ASN1_OCTET_STRING_free(x->enc_pkey);
-	if (x->dec_pkey != NULL)EVP_PKEY_free(x->dec_pkey);
-	if ((x->key_data != NULL) && (x->key_free)) free(x->key_data);
-	free(x);
+			sk_ASN1_TYPE_pop_free(inkey, ASN1_TYPE_free);
+			if (!p8) 
+			{
+				ASN1err(ASN1_F_D2I_AUTOPRIVATEKEY,ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE);
+				return NULL;
+			}
+			ret = EVP_PKCS82PKEY(p8);
+			PKCS8_PRIV_KEY_INFO_free(p8);
+			if (a) {
+				*a = ret;
+		}	
+			return ret;
+	}
+	else keytype = EVP_PKEY_RSA;
+	sk_ASN1_TYPE_pop_free(inkey, ASN1_TYPE_free);
+	return d2i_PrivateKey(keytype, a, pp, length);
 }

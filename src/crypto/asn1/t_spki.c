@@ -1,4 +1,4 @@
-/* t_crl.c */
+/* t_spki.c */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -58,75 +58,50 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include <openssl/buffer.h>
-#include <openssl/bn.h>
-#include <openssl/objects.h>
 #include <openssl/x509.h>
-#include <openssl/x509v3.h>
-
-#ifndef OPENSSL_NO_FP_API
-int X509_CRL_print_fp(FILE *fp, X509_CRL *x)
-{
-        BIO *b;
-        int ret;
-
-        if ((b=BIO_new(BIO_s_file())) == NULL)
-	{
-		X509err(X509_F_X509_CRL_PRINT_FP,ERR_R_BUF_LIB);
-                return(0);
-	}
-        BIO_set_fp(b,fp,BIO_NOCLOSE);
-        ret=X509_CRL_print(b, x);
-        BIO_free(b);
-        return(ret);
-}
+#include <openssl/asn1.h>
+#ifndef OPENSSL_NO_RSA
+#include <openssl/rsa.h>
 #endif
+#ifndef OPENSSL_NO_DSA
+#include <openssl/dsa.h>
+#endif
+#include <openssl/bn.h>
 
-int X509_CRL_print(BIO *out, X509_CRL *x)
+/* Print out an SPKI */
+
+int NETSCAPE_SPKI_print(BIO *out, NETSCAPE_SPKI *spki)
 {
-	STACK_OF(X509_REVOKED) *rev;
-	X509_REVOKED *r;
-	long l;
-	int i;
-	char *p;
-
-	BIO_printf(out, "Certificate Revocation List (CRL):\n");
-	l = X509_CRL_get_version(x);
-	BIO_printf(out, "%8sVersion %lu (0x%lx)\n", "", l+1, l);
-	i = OBJ_obj2nid(x->sig_alg->algorithm);
-	X509_signature_print(out, x->sig_alg, NULL);
-	p=X509_NAME_oneline(X509_CRL_get_issuer(x),NULL,0);
-	BIO_printf(out,"%8sIssuer: %s\n","",p);
-	free(p);
-	BIO_printf(out,"%8sLast Update: ","");
-	ASN1_TIME_print(out,X509_CRL_get_lastUpdate(x));
-	BIO_printf(out,"\n%8sNext Update: ","");
-	if (X509_CRL_get_nextUpdate(x))
-		 ASN1_TIME_print(out,X509_CRL_get_nextUpdate(x));
-	else BIO_printf(out,"NONE");
-	BIO_printf(out,"\n");
-
-	X509V3_extensions_print(out, "CRL extensions",
-						x->crl->extensions, 0, 8);
-
-	rev = X509_CRL_get_REVOKED(x);
-
-	if(sk_X509_REVOKED_num(rev) > 0)
-	    BIO_printf(out, "Revoked Certificates:\n");
-	else BIO_printf(out, "No Revoked Certificates.\n");
-
-	for(i = 0; i < sk_X509_REVOKED_num(rev); i++) {
-		r = sk_X509_REVOKED_value(rev, i);
-		BIO_printf(out,"    Serial Number: ");
-		i2a_ASN1_INTEGER(out,r->serialNumber);
-		BIO_printf(out,"\n        Revocation Date: ");
-		ASN1_TIME_print(out,r->revocationDate);
-		BIO_printf(out,"\n");
-		X509V3_extensions_print(out, "CRL entry extensions",
-						r->extensions, 0, 8);
+	EVP_PKEY *pkey;
+	ASN1_IA5STRING *chal;
+	int i, n;
+	char *s;
+	BIO_printf(out, "Netscape SPKI:\n");
+	i=OBJ_obj2nid(spki->spkac->pubkey->algor->algorithm);
+	BIO_printf(out,"  Public Key Algorithm: %s\n",
+				(i == NID_undef)?"UNKNOWN":OBJ_nid2ln(i));
+	pkey = X509_PUBKEY_get(spki->spkac->pubkey);
+	if(!pkey) BIO_printf(out, "  Unable to load public key\n");
+	else
+	{
+		EVP_PKEY_print_public(out, pkey, 4, NULL);
+		EVP_PKEY_free(pkey);
 	}
-	X509_signature_print(out, x->sig_alg, x->signature);
+	chal = spki->spkac->challenge;
+	if(chal->length)
+		BIO_printf(out, "  Challenge String: %s\n", chal->data);
+	i=OBJ_obj2nid(spki->sig_algor->algorithm);
+	BIO_printf(out,"  Signature Algorithm: %s",
+				(i == NID_undef)?"UNKNOWN":OBJ_nid2ln(i));
 
+	n=spki->signature->length;
+	s=(char *)spki->signature->data;
+	for (i=0; i<n; i++)
+	{
+		if ((i%18) == 0) BIO_write(out,"\n      ",7);
+		BIO_printf(out,"%02x%s",(unsigned char)s[i],
+						((i+1) == n)?"":":");
+	}
+	BIO_write(out,"\n",1);
 	return 1;
-
 }

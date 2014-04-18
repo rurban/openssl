@@ -1,9 +1,9 @@
-/* t_crl.c */
+/* x_algor.c */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
- * project 1999.
+ * project 2000.
  */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,77 +56,89 @@
  *
  */
 
-#include <stdio.h>
-#include "cryptlib.h"
-#include <openssl/buffer.h>
-#include <openssl/bn.h>
-#include <openssl/objects.h>
+#include <stddef.h>
 #include <openssl/x509.h>
-#include <openssl/x509v3.h>
+#include <openssl/asn1.h>
+#include <openssl/asn1t.h>
 
-#ifndef OPENSSL_NO_FP_API
-int X509_CRL_print_fp(FILE *fp, X509_CRL *x)
+ASN1_SEQUENCE(X509_ALGOR) = {
+	ASN1_SIMPLE(X509_ALGOR, algorithm, ASN1_OBJECT),
+	ASN1_OPT(X509_ALGOR, parameter, ASN1_ANY)
+} ASN1_SEQUENCE_END(X509_ALGOR)
+
+ASN1_ITEM_TEMPLATE(X509_ALGORS) = 
+	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, algorithms, X509_ALGOR)
+ASN1_ITEM_TEMPLATE_END(X509_ALGORS)
+
+IMPLEMENT_ASN1_FUNCTIONS(X509_ALGOR)
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(X509_ALGORS, X509_ALGORS, X509_ALGORS)
+IMPLEMENT_ASN1_DUP_FUNCTION(X509_ALGOR)
+
+IMPLEMENT_STACK_OF(X509_ALGOR)
+IMPLEMENT_ASN1_SET_OF(X509_ALGOR)
+
+int X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int ptype, void *pval)
 {
-        BIO *b;
-        int ret;
-
-        if ((b=BIO_new(BIO_s_file())) == NULL)
+	if (!alg)
+		return 0;
+	if (ptype != V_ASN1_UNDEF)
 	{
-		X509err(X509_F_X509_CRL_PRINT_FP,ERR_R_BUF_LIB);
-                return(0);
+		if (alg->parameter == NULL)
+			alg->parameter = ASN1_TYPE_new();
+		if (alg->parameter == NULL)
+			return 0;
 	}
-        BIO_set_fp(b,fp,BIO_NOCLOSE);
-        ret=X509_CRL_print(b, x);
-        BIO_free(b);
-        return(ret);
-}
-#endif
-
-int X509_CRL_print(BIO *out, X509_CRL *x)
-{
-	STACK_OF(X509_REVOKED) *rev;
-	X509_REVOKED *r;
-	long l;
-	int i;
-	char *p;
-
-	BIO_printf(out, "Certificate Revocation List (CRL):\n");
-	l = X509_CRL_get_version(x);
-	BIO_printf(out, "%8sVersion %lu (0x%lx)\n", "", l+1, l);
-	i = OBJ_obj2nid(x->sig_alg->algorithm);
-	X509_signature_print(out, x->sig_alg, NULL);
-	p=X509_NAME_oneline(X509_CRL_get_issuer(x),NULL,0);
-	BIO_printf(out,"%8sIssuer: %s\n","",p);
-	free(p);
-	BIO_printf(out,"%8sLast Update: ","");
-	ASN1_TIME_print(out,X509_CRL_get_lastUpdate(x));
-	BIO_printf(out,"\n%8sNext Update: ","");
-	if (X509_CRL_get_nextUpdate(x))
-		 ASN1_TIME_print(out,X509_CRL_get_nextUpdate(x));
-	else BIO_printf(out,"NONE");
-	BIO_printf(out,"\n");
-
-	X509V3_extensions_print(out, "CRL extensions",
-						x->crl->extensions, 0, 8);
-
-	rev = X509_CRL_get_REVOKED(x);
-
-	if(sk_X509_REVOKED_num(rev) > 0)
-	    BIO_printf(out, "Revoked Certificates:\n");
-	else BIO_printf(out, "No Revoked Certificates.\n");
-
-	for(i = 0; i < sk_X509_REVOKED_num(rev); i++) {
-		r = sk_X509_REVOKED_value(rev, i);
-		BIO_printf(out,"    Serial Number: ");
-		i2a_ASN1_INTEGER(out,r->serialNumber);
-		BIO_printf(out,"\n        Revocation Date: ");
-		ASN1_TIME_print(out,r->revocationDate);
-		BIO_printf(out,"\n");
-		X509V3_extensions_print(out, "CRL entry extensions",
-						r->extensions, 0, 8);
+	if (alg)
+	{
+		if (alg->algorithm)
+			ASN1_OBJECT_free(alg->algorithm);
+		alg->algorithm = aobj;
 	}
-	X509_signature_print(out, x->sig_alg, x->signature);
-
+	if (ptype == 0)
+		return 1;	
+	if (ptype == V_ASN1_UNDEF)
+	{
+		if (alg->parameter)
+		{
+			ASN1_TYPE_free(alg->parameter);
+			alg->parameter = NULL;
+		}
+	}
+	else
+		ASN1_TYPE_set(alg->parameter, ptype, pval);
 	return 1;
+}
+
+void X509_ALGOR_get0(ASN1_OBJECT **paobj, int *pptype, void **ppval,
+						X509_ALGOR *algor)
+{
+	if (paobj)
+		*paobj = algor->algorithm;
+	if (pptype)
+	{
+		if (algor->parameter == NULL)
+		{
+			*pptype = V_ASN1_UNDEF;
+			return;
+		}
+		else
+			*pptype = algor->parameter->type;
+		if (ppval)
+			*ppval = algor->parameter->value.ptr;
+	}
+}
+
+/* Set up an X509_ALGOR DigestAlgorithmIdentifier from an EVP_MD */
+
+void X509_ALGOR_set_md(X509_ALGOR *alg, const EVP_MD *md)
+{
+	int param_type;
+
+	if (md->flags & EVP_MD_FLAG_DIGALGID_ABSENT)
+		param_type = V_ASN1_UNDEF;
+	else
+		param_type = V_ASN1_NULL;
+
+	X509_ALGOR_set0(alg, OBJ_nid2obj(EVP_MD_type(md)), param_type, NULL);
 
 }
