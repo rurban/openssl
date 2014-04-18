@@ -1,4 +1,4 @@
-/* x_algor.c */
+/* x_bignum.c */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -56,83 +56,101 @@
  *
  */
 
-#include <stddef.h>
-#include <openssl/x509.h>
-#include <openssl/asn1.h>
+#include <stdio.h>
+#include "cryptlib.h"
 #include <openssl/asn1t.h>
+#include <openssl/bn.h>
 
-ASN1_SEQUENCE(X509_ALGOR) = {
-	ASN1_SIMPLE(X509_ALGOR, algorithm, ASN1_OBJECT),
-	ASN1_OPT(X509_ALGOR, parameter, ASN1_ANY)
-} ASN1_SEQUENCE_END(X509_ALGOR)
+/* Custom primitive type for BIGNUM handling. This reads in an ASN1_INTEGER as a
+ * BIGNUM directly. Currently it ignores the sign which isn't a problem since all
+ * BIGNUMs used are non negative and anything that looks negative is normally due
+ * to an encoding error.
+ */
 
-ASN1_ITEM_TEMPLATE(X509_ALGORS) =
-    ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, algorithms, X509_ALGOR)
-ASN1_ITEM_TEMPLATE_END(X509_ALGORS)
+#define BN_SENSITIVE	1
 
-IMPLEMENT_ASN1_FUNCTIONS(X509_ALGOR)
-IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(X509_ALGORS, X509_ALGORS, X509_ALGORS)
-IMPLEMENT_ASN1_DUP_FUNCTION(X509_ALGOR)
+static int bn_new(ASN1_VALUE **pval, const ASN1_ITEM *it);
+static void bn_free(ASN1_VALUE **pval, const ASN1_ITEM *it);
 
-IMPLEMENT_STACK_OF(X509_ALGOR)
-IMPLEMENT_ASN1_SET_OF(X509_ALGOR)
+static int bn_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
+    const ASN1_ITEM *it);
+static int bn_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
+    int utype, char *free_cont, const ASN1_ITEM *it);
 
-int
-X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int ptype, void *pval)
+static ASN1_PRIMITIVE_FUNCS bignum_pf = {
+	NULL,
+	0,
+	bn_new,
+	bn_free,
+	0,
+	bn_c2i,
+	bn_i2c
+};
+
+ASN1_ITEM_start(BIGNUM)
+ASN1_ITYPE_PRIMITIVE, V_ASN1_INTEGER, NULL, 0, &bignum_pf, 0, "BIGNUM"
+ASN1_ITEM_end(BIGNUM)
+
+ASN1_ITEM_start(CBIGNUM)
+ASN1_ITYPE_PRIMITIVE, V_ASN1_INTEGER, NULL, 0, &bignum_pf, BN_SENSITIVE, "BIGNUM"
+ASN1_ITEM_end(CBIGNUM)
+
+static int
+bn_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
-	if (!alg)
-		return 0;
-	if (ptype != V_ASN1_UNDEF) {
-		if (alg->parameter == NULL)
-			alg->parameter = ASN1_TYPE_new();
-		if (alg->parameter == NULL)
-			return 0;
-	}
-	if (alg) {
-		if (alg->algorithm)
-			ASN1_OBJECT_free(alg->algorithm);
-		alg->algorithm = aobj;
-	}
-	if (ptype == 0)
+	*pval = (ASN1_VALUE *)BN_new();
+	if (*pval)
 		return 1;
-	if (ptype == V_ASN1_UNDEF) {
-		if (alg->parameter) {
-			ASN1_TYPE_free(alg->parameter);
-			alg->parameter = NULL;
-		}
-	} else
-		ASN1_TYPE_set(alg->parameter, ptype, pval);
-	return 1;
-}
-
-void
-X509_ALGOR_get0(ASN1_OBJECT **paobj, int *pptype, void **ppval,
-    X509_ALGOR *algor)
-{
-	if (paobj)
-		*paobj = algor->algorithm;
-	if (pptype) {
-		if (algor->parameter == NULL) {
-			*pptype = V_ASN1_UNDEF;
-			return;
-		} else
-			*pptype = algor->parameter->type;
-		if (ppval)
-			*ppval = algor->parameter->value.ptr;
-	}
-}
-
-/* Set up an X509_ALGOR DigestAlgorithmIdentifier from an EVP_MD */
-
-void
-X509_ALGOR_set_md(X509_ALGOR *alg, const EVP_MD *md)
-{
-	int param_type;
-
-	if (md->flags & EVP_MD_FLAG_DIGALGID_ABSENT)
-		param_type = V_ASN1_UNDEF;
 	else
-		param_type = V_ASN1_NULL;
+		return 0;
+}
 
-	X509_ALGOR_set0(alg, OBJ_nid2obj(EVP_MD_type(md)), param_type, NULL);
+static void
+bn_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
+{
+	if (!*pval)
+		return;
+	if (it->size & BN_SENSITIVE)
+		BN_clear_free((BIGNUM *)*pval);
+	else
+		BN_free((BIGNUM *)*pval);
+	*pval = NULL;
+}
+
+static int
+bn_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype, const ASN1_ITEM *it)
+{
+	BIGNUM *bn;
+	int pad;
+
+	if (!*pval)
+		return -1;
+	bn = (BIGNUM *)*pval;
+	/* If MSB set in an octet we need a padding byte */
+	if (BN_num_bits(bn) & 0x7)
+		pad = 0;
+	else
+		pad = 1;
+	if (cont) {
+		if (pad)
+			*cont++ = 0;
+		BN_bn2bin(bn, cont);
+	}
+	return pad + BN_num_bytes(bn);
+}
+
+static int
+bn_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len, int utype,
+    char *free_cont, const ASN1_ITEM *it)
+{
+	BIGNUM *bn;
+
+	if (!*pval)
+		bn_new(pval, it);
+	bn = (BIGNUM *)*pval;
+	if (!BN_bin2bn(cont, len, bn)) {
+		bn_free(pval, it);
+		return 0;
+	}
+	return 1;
 }

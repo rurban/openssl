@@ -1,4 +1,4 @@
-/* crypto/asn1/x_attrib.c */
+/* crypto/asn1/x_req.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,68 +58,57 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include <openssl/objects.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 
-/* X509_ATTRIBUTE: this has the following form:
+/* X509_REQ_INFO is handled in an unusual way to get round
+ * invalid encodings. Some broken certificate requests don't
+ * encode the attributes field if it is empty. This is in
+ * violation of PKCS#10 but we need to tolerate it. We do
+ * this by making the attributes field OPTIONAL then using
+ * the callback to initialise it to an empty STACK.
  *
- * typedef struct x509_attributes_st
- *	{
- *	ASN1_OBJECT *object;
- *	int single;
- *	union	{
- *		char		*ptr;
- * 		STACK_OF(ASN1_TYPE) *set;
- * 		ASN1_TYPE	*single;
- *		} value;
- *	} X509_ATTRIBUTE;
+ * This means that the field will be correctly encoded unless
+ * we NULL out the field.
  *
- * this needs some extra thought because the CHOICE type is
- * merged with the main structure and because the value can
- * be anything at all we *must* try the SET OF first because
- * the ASN1_ANY type will swallow anything including the whole
- * SET OF structure.
+ * As a result we no longer need the req_kludge field because
+ * the information is now contained in the attributes field:
+ * 1. If it is NULL then it's the invalid omission.
+ * 2. If it is empty it is the correct encoding.
+ * 3. If it is not empty then some attributes are present.
+ *
  */
 
-ASN1_CHOICE(X509_ATTRIBUTE_SET) = {
-	ASN1_SET_OF(X509_ATTRIBUTE, value.set, ASN1_ANY),
-	ASN1_SIMPLE(X509_ATTRIBUTE, value.single, ASN1_ANY)
-} ASN1_CHOICE_END_selector(X509_ATTRIBUTE, X509_ATTRIBUTE_SET, single)
-
-ASN1_SEQUENCE(X509_ATTRIBUTE) = {
-	ASN1_SIMPLE(X509_ATTRIBUTE, object, ASN1_OBJECT),
-	/* CHOICE type merged with parent */
-	ASN1_EX_COMBINE(0, 0, X509_ATTRIBUTE_SET)
-} ASN1_SEQUENCE_END(X509_ATTRIBUTE)
-
-IMPLEMENT_ASN1_FUNCTIONS(X509_ATTRIBUTE)
-IMPLEMENT_ASN1_DUP_FUNCTION(X509_ATTRIBUTE)
-
-X509_ATTRIBUTE *
-X509_ATTRIBUTE_create(int nid, int atrtype, void *value)
+static int
+rinf_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 {
-	X509_ATTRIBUTE *ret = NULL;
-	ASN1_TYPE *val = NULL;
+	X509_REQ_INFO *rinf = (X509_REQ_INFO *)*pval;
 
-	if ((ret = X509_ATTRIBUTE_new()) == NULL)
-		return (NULL);
-	ret->object = OBJ_nid2obj(nid);
-	ret->single = 0;
-	if ((ret->value.set = sk_ASN1_TYPE_new_null()) == NULL)
-		goto err;
-	if ((val = ASN1_TYPE_new()) == NULL)
-		goto err;
-	if (!sk_ASN1_TYPE_push(ret->value.set, val))
-		goto err;
-
-	ASN1_TYPE_set(val, atrtype, value);
-	return (ret);
-
-err:
-	if (ret != NULL)
-		X509_ATTRIBUTE_free(ret);
-	if (val != NULL)
-		ASN1_TYPE_free(val);
-	return (NULL);
+	if (operation == ASN1_OP_NEW_POST) {
+		rinf->attributes = sk_X509_ATTRIBUTE_new_null();
+		if (!rinf->attributes)
+			return 0;
+	}
+	return 1;
 }
+
+ASN1_SEQUENCE_enc(X509_REQ_INFO, enc, rinf_cb) = {
+	ASN1_SIMPLE(X509_REQ_INFO, version, ASN1_INTEGER),
+	ASN1_SIMPLE(X509_REQ_INFO, subject, X509_NAME),
+	ASN1_SIMPLE(X509_REQ_INFO, pubkey, X509_PUBKEY),
+	/* This isn't really OPTIONAL but it gets round invalid
+	 * encodings
+	 */
+	ASN1_IMP_SET_OF_OPT(X509_REQ_INFO, attributes, X509_ATTRIBUTE, 0)
+} ASN1_SEQUENCE_END_enc(X509_REQ_INFO, X509_REQ_INFO)
+
+IMPLEMENT_ASN1_FUNCTIONS(X509_REQ_INFO)
+
+ASN1_SEQUENCE_ref(X509_REQ, 0, CRYPTO_LOCK_X509_REQ) = {
+	ASN1_SIMPLE(X509_REQ, req_info, X509_REQ_INFO),
+	ASN1_SIMPLE(X509_REQ, sig_alg, X509_ALGOR),
+	ASN1_SIMPLE(X509_REQ, signature, ASN1_BIT_STRING)
+} ASN1_SEQUENCE_END_ref(X509_REQ, X509_REQ)
+
+IMPLEMENT_ASN1_FUNCTIONS(X509_REQ)
+IMPLEMENT_ASN1_DUP_FUNCTION(X509_REQ)
