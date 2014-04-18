@@ -1,4 +1,4 @@
-/* t_spki.c */
+/* t_bitst.c */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -58,52 +58,54 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include <openssl/x509.h>
-#include <openssl/asn1.h>
-#ifndef OPENSSL_NO_RSA
-#include <openssl/rsa.h>
-#endif
-#ifndef OPENSSL_NO_DSA
-#include <openssl/dsa.h>
-#endif
-#include <openssl/bn.h>
-
-/* Print out an SPKI */
+#include <openssl/conf.h>
+#include <openssl/x509v3.h>
 
 int
-NETSCAPE_SPKI_print(BIO *out, NETSCAPE_SPKI *spki)
+ASN1_BIT_STRING_name_print(BIO *out, ASN1_BIT_STRING *bs,
+    BIT_STRING_BITNAME *tbl, int indent)
 {
-	EVP_PKEY *pkey;
-	ASN1_IA5STRING *chal;
-	int i, n;
-	char *s;
+	BIT_STRING_BITNAME *bnam;
+	char first = 1;
 
-	BIO_printf(out, "Netscape SPKI:\n");
-	i = OBJ_obj2nid(spki->spkac->pubkey->algor->algorithm);
-	BIO_printf(out, "  Public Key Algorithm: %s\n",
-	    (i == NID_undef) ? "UNKNOWN" : OBJ_nid2ln(i));
-	pkey = X509_PUBKEY_get(spki->spkac->pubkey);
-	if (!pkey)
-		BIO_printf(out, "  Unable to load public key\n");
-	else {
-		EVP_PKEY_print_public(out, pkey, 4, NULL);
-		EVP_PKEY_free(pkey);
+	BIO_printf(out, "%*s", indent, "");
+	for (bnam = tbl; bnam->lname; bnam++) {
+		if (ASN1_BIT_STRING_get_bit(bs, bnam->bitnum)) {
+			if (!first)
+				BIO_puts(out, ", ");
+			BIO_puts(out, bnam->lname);
+			first = 0;
+		}
 	}
-	chal = spki->spkac->challenge;
-	if (chal->length)
-		BIO_printf(out, "  Challenge String: %s\n", chal->data);
-	i = OBJ_obj2nid(spki->sig_algor->algorithm);
-	BIO_printf(out, "  Signature Algorithm: %s",
-	    (i == NID_undef) ? "UNKNOWN" : OBJ_nid2ln(i));
-
-	n = spki->signature->length;
-	s = (char *)spki->signature->data;
-	for (i = 0; i < n; i++) {
-		if ((i % 18) == 0)
-			BIO_write(out, "\n      ", 7);
-		BIO_printf(out, "%02x%s", (unsigned char)s[i],
-		    ((i + 1) == n) ? "" : ":");
-	}
-	BIO_write(out, "\n", 1);
+	BIO_puts(out, "\n");
 	return 1;
+}
+
+int
+ASN1_BIT_STRING_set_asc(ASN1_BIT_STRING *bs, char *name, int value,
+    BIT_STRING_BITNAME *tbl)
+{
+	int bitnum;
+
+	bitnum = ASN1_BIT_STRING_num_asc(name, tbl);
+	if (bitnum < 0)
+		return 0;
+	if (bs) {
+		if (!ASN1_BIT_STRING_set_bit(bs, bitnum, value))
+			return 0;
+	}
+	return 1;
+}
+
+int
+ASN1_BIT_STRING_num_asc(char *name, BIT_STRING_BITNAME *tbl)
+{
+	BIT_STRING_BITNAME *bnam;
+
+	for (bnam = tbl; bnam->lname; bnam++) {
+		if (!strcmp(bnam->sname, name) ||
+		    !strcmp(bnam->lname, name))
+			return bnam->bitnum;
+	}
+	return -1;
 }
