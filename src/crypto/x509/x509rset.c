@@ -1,4 +1,4 @@
-/* crypto/x509/x509_obj.c */
+/* crypto/x509/x509rset.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,110 +58,26 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include <openssl/lhash.h>
+#include <openssl/asn1.h>
 #include <openssl/objects.h>
+#include <openssl/evp.h>
 #include <openssl/x509.h>
-#include <openssl/buffer.h>
 
-char *X509_NAME_oneline(X509_NAME *a, char *buf, int len)
+int X509_REQ_set_version(X509_REQ *x, long version)
 {
-	X509_NAME_ENTRY *ne;
-int i;
-	int n,lold,l,l1,l2,num,j,type;
-	const char *s;
-	char *p;
-	unsigned char *q;
-	BUF_MEM *b=NULL;
-	static const char hex[17]="0123456789ABCDEF";
-	int gs_doit[4];
-	char tmp_buf[80];
+	if (x == NULL) return(0);
+	return(ASN1_INTEGER_set(x->req_info->version,version));
+}
 
-	if (buf == NULL) {
-		if ((b=BUF_MEM_new()) == NULL) goto err;
-		if (!BUF_MEM_grow(b,200)) goto err;
-		b->data[0]='\0';
-		len=200;
-	}
-	if (a == NULL) {
-		if(b) {
-			buf=b->data;
-			free(b);
-		}
-		strlcpy(buf,"NO X509_NAME",len);
-		return buf;
-	}
+int X509_REQ_set_subject_name(X509_REQ *x, X509_NAME *name)
+{
+	if ((x == NULL) || (x->req_info == NULL)) return(0);
+	return(X509_NAME_set(&x->req_info->subject,name));
+}
 
-	len--; /* space for '\0' */
-	l=0;
-	for (i=0; i<sk_X509_NAME_ENTRY_num(a->entries); i++) {
-		ne=sk_X509_NAME_ENTRY_value(a->entries,i);
-		n=OBJ_obj2nid(ne->object);
-		if ((n == NID_undef) || ((s=OBJ_nid2sn(n)) == NULL)) {
-			i2t_ASN1_OBJECT(tmp_buf,sizeof(tmp_buf),ne->object);
-			s=tmp_buf;
-		}
-		l1=strlen(s);
-
-		type=ne->value->type;
-		num=ne->value->length;
-		q=ne->value->data;
-		if ((type == V_ASN1_GENERALSTRING) && ((num%4) == 0)) {
-			gs_doit[0]=gs_doit[1]=gs_doit[2]=gs_doit[3]=0;
-			for (j=0; j<num; j++)
-				if (q[j] != 0) gs_doit[j&3]=1;
-
-			if (gs_doit[0]|gs_doit[1]|gs_doit[2])
-				gs_doit[0]=gs_doit[1]=gs_doit[2]=gs_doit[3]=1;
-			else {
-				gs_doit[0]=gs_doit[1]=gs_doit[2]=0;
-				gs_doit[3]=1;
-			}
-		} else
-			gs_doit[0]=gs_doit[1]=gs_doit[2]=gs_doit[3]=1;
-
-		for (l2=j=0; j<num; j++) {
-			if (!gs_doit[j&3]) continue;
-			l2++;
-			if ((q[j] < ' ') || (q[j] > '~')) l2+=3;
-		}
-
-		lold=l;
-		l+=1+l1+1+l2;
-		if (b != NULL) {
-			if (!BUF_MEM_grow(b,l+1)) goto err;
-			p= &(b->data[lold]);
-		} else if (l > len) {
-			break;
-		} else
-			p= &(buf[lold]);
-		*(p++)='/';
-		memcpy(p,s,(unsigned int)l1); p+=l1;
-		*(p++)='=';
-		q=ne->value->data;
-		for (j=0; j<num; j++) {
-			if (!gs_doit[j&3]) continue;
-			n=q[j];
-			if ((n < ' ') || (n > '~')) {
-				*(p++)='\\';
-				*(p++)='x';
-				*(p++)=hex[(n>>4)&0x0f];
-				*(p++)=hex[n&0x0f];
-			} else
-				*(p++)=n;
-		}
-		*p='\0';
-	}
-	if (b != NULL) {
-		p=b->data;
-		free(b);
-	} else
-		p=buf;
-	if (i == 0)
-		*p = '\0';
-	return(p);
-err:
-	X509err(X509_F_X509_NAME_ONELINE,ERR_R_MALLOC_FAILURE);
-	if (b != NULL) BUF_MEM_free(b);
-	return(NULL);
+int X509_REQ_set_pubkey(X509_REQ *x, EVP_PKEY *pkey)
+{
+	if ((x == NULL) || (x->req_info == NULL)) return(0);
+	return(X509_PUBKEY_set(&x->req_info->pubkey,pkey));
 }
 

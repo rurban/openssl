@@ -1,4 +1,4 @@
-/* crypto/x509/x509_obj.c */
+/* crypto/x509/x509_d2.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,110 +58,48 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include <openssl/lhash.h>
-#include <openssl/objects.h>
+#include <openssl/crypto.h>
 #include <openssl/x509.h>
-#include <openssl/buffer.h>
 
-char *X509_NAME_oneline(X509_NAME *a, char *buf, int len)
+#ifndef OPENSSL_NO_STDIO
+int X509_STORE_set_default_paths(X509_STORE *ctx)
 {
-	X509_NAME_ENTRY *ne;
-int i;
-	int n,lold,l,l1,l2,num,j,type;
-	const char *s;
-	char *p;
-	unsigned char *q;
-	BUF_MEM *b=NULL;
-	static const char hex[17]="0123456789ABCDEF";
-	int gs_doit[4];
-	char tmp_buf[80];
+	X509_LOOKUP *lookup;
 
-	if (buf == NULL) {
-		if ((b=BUF_MEM_new()) == NULL) goto err;
-		if (!BUF_MEM_grow(b,200)) goto err;
-		b->data[0]='\0';
-		len=200;
-	}
-	if (a == NULL) {
-		if(b) {
-			buf=b->data;
-			free(b);
-		}
-		strlcpy(buf,"NO X509_NAME",len);
-		return buf;
-	}
+	lookup=X509_STORE_add_lookup(ctx,X509_LOOKUP_file());
+	if (lookup == NULL) return(0);
+	X509_LOOKUP_load_file(lookup,NULL,X509_FILETYPE_DEFAULT);
 
-	len--; /* space for '\0' */
-	l=0;
-	for (i=0; i<sk_X509_NAME_ENTRY_num(a->entries); i++) {
-		ne=sk_X509_NAME_ENTRY_value(a->entries,i);
-		n=OBJ_obj2nid(ne->object);
-		if ((n == NID_undef) || ((s=OBJ_nid2sn(n)) == NULL)) {
-			i2t_ASN1_OBJECT(tmp_buf,sizeof(tmp_buf),ne->object);
-			s=tmp_buf;
-		}
-		l1=strlen(s);
+	lookup=X509_STORE_add_lookup(ctx,X509_LOOKUP_hash_dir());
+	if (lookup == NULL) return(0);
+	X509_LOOKUP_add_dir(lookup,NULL,X509_FILETYPE_DEFAULT);
+	
+	/* clear any errors */
+	ERR_clear_error();
 
-		type=ne->value->type;
-		num=ne->value->length;
-		q=ne->value->data;
-		if ((type == V_ASN1_GENERALSTRING) && ((num%4) == 0)) {
-			gs_doit[0]=gs_doit[1]=gs_doit[2]=gs_doit[3]=0;
-			for (j=0; j<num; j++)
-				if (q[j] != 0) gs_doit[j&3]=1;
-
-			if (gs_doit[0]|gs_doit[1]|gs_doit[2])
-				gs_doit[0]=gs_doit[1]=gs_doit[2]=gs_doit[3]=1;
-			else {
-				gs_doit[0]=gs_doit[1]=gs_doit[2]=0;
-				gs_doit[3]=1;
-			}
-		} else
-			gs_doit[0]=gs_doit[1]=gs_doit[2]=gs_doit[3]=1;
-
-		for (l2=j=0; j<num; j++) {
-			if (!gs_doit[j&3]) continue;
-			l2++;
-			if ((q[j] < ' ') || (q[j] > '~')) l2+=3;
-		}
-
-		lold=l;
-		l+=1+l1+1+l2;
-		if (b != NULL) {
-			if (!BUF_MEM_grow(b,l+1)) goto err;
-			p= &(b->data[lold]);
-		} else if (l > len) {
-			break;
-		} else
-			p= &(buf[lold]);
-		*(p++)='/';
-		memcpy(p,s,(unsigned int)l1); p+=l1;
-		*(p++)='=';
-		q=ne->value->data;
-		for (j=0; j<num; j++) {
-			if (!gs_doit[j&3]) continue;
-			n=q[j];
-			if ((n < ' ') || (n > '~')) {
-				*(p++)='\\';
-				*(p++)='x';
-				*(p++)=hex[(n>>4)&0x0f];
-				*(p++)=hex[n&0x0f];
-			} else
-				*(p++)=n;
-		}
-		*p='\0';
-	}
-	if (b != NULL) {
-		p=b->data;
-		free(b);
-	} else
-		p=buf;
-	if (i == 0)
-		*p = '\0';
-	return(p);
-err:
-	X509err(X509_F_X509_NAME_ONELINE,ERR_R_MALLOC_FAILURE);
-	if (b != NULL) BUF_MEM_free(b);
-	return(NULL);
+	return(1);
 }
 
+int X509_STORE_load_locations(X509_STORE *ctx, const char *file,
+		const char *path)
+{
+	X509_LOOKUP *lookup;
+
+	if (file != NULL) {
+		lookup=X509_STORE_add_lookup(ctx,X509_LOOKUP_file());
+		if (lookup == NULL) return(0);
+		if (X509_LOOKUP_load_file(lookup,file,X509_FILETYPE_PEM) != 1)
+		    return(0);
+	}
+	if (path != NULL) {
+		lookup=X509_STORE_add_lookup(ctx,X509_LOOKUP_hash_dir());
+		if (lookup == NULL) return(0);
+		if (X509_LOOKUP_add_dir(lookup,path,X509_FILETYPE_PEM) != 1)
+		    return(0);
+	}
+	if ((path == NULL) && (file == NULL))
+		return(0);
+	return(1);
+}
+
+#endif

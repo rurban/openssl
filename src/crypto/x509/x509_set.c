@@ -1,4 +1,4 @@
-/* crypto/x509/x509_obj.c */
+/* crypto/x509/x509_set.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,110 +58,83 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include <openssl/lhash.h>
+#include <openssl/asn1.h>
 #include <openssl/objects.h>
+#include <openssl/evp.h>
 #include <openssl/x509.h>
-#include <openssl/buffer.h>
 
-char *X509_NAME_oneline(X509_NAME *a, char *buf, int len)
+int X509_set_version(X509 *x, long version)
 {
-	X509_NAME_ENTRY *ne;
-int i;
-	int n,lold,l,l1,l2,num,j,type;
-	const char *s;
-	char *p;
-	unsigned char *q;
-	BUF_MEM *b=NULL;
-	static const char hex[17]="0123456789ABCDEF";
-	int gs_doit[4];
-	char tmp_buf[80];
-
-	if (buf == NULL) {
-		if ((b=BUF_MEM_new()) == NULL) goto err;
-		if (!BUF_MEM_grow(b,200)) goto err;
-		b->data[0]='\0';
-		len=200;
+	if (x == NULL) return(0);
+	if (x->cert_info->version == NULL) {
+		if ((x->cert_info->version=M_ASN1_INTEGER_new()) == NULL)
+			return(0);
 	}
-	if (a == NULL) {
-		if(b) {
-			buf=b->data;
-			free(b);
-		}
-		strlcpy(buf,"NO X509_NAME",len);
-		return buf;
-	}
-
-	len--; /* space for '\0' */
-	l=0;
-	for (i=0; i<sk_X509_NAME_ENTRY_num(a->entries); i++) {
-		ne=sk_X509_NAME_ENTRY_value(a->entries,i);
-		n=OBJ_obj2nid(ne->object);
-		if ((n == NID_undef) || ((s=OBJ_nid2sn(n)) == NULL)) {
-			i2t_ASN1_OBJECT(tmp_buf,sizeof(tmp_buf),ne->object);
-			s=tmp_buf;
-		}
-		l1=strlen(s);
-
-		type=ne->value->type;
-		num=ne->value->length;
-		q=ne->value->data;
-		if ((type == V_ASN1_GENERALSTRING) && ((num%4) == 0)) {
-			gs_doit[0]=gs_doit[1]=gs_doit[2]=gs_doit[3]=0;
-			for (j=0; j<num; j++)
-				if (q[j] != 0) gs_doit[j&3]=1;
-
-			if (gs_doit[0]|gs_doit[1]|gs_doit[2])
-				gs_doit[0]=gs_doit[1]=gs_doit[2]=gs_doit[3]=1;
-			else {
-				gs_doit[0]=gs_doit[1]=gs_doit[2]=0;
-				gs_doit[3]=1;
-			}
-		} else
-			gs_doit[0]=gs_doit[1]=gs_doit[2]=gs_doit[3]=1;
-
-		for (l2=j=0; j<num; j++) {
-			if (!gs_doit[j&3]) continue;
-			l2++;
-			if ((q[j] < ' ') || (q[j] > '~')) l2+=3;
-		}
-
-		lold=l;
-		l+=1+l1+1+l2;
-		if (b != NULL) {
-			if (!BUF_MEM_grow(b,l+1)) goto err;
-			p= &(b->data[lold]);
-		} else if (l > len) {
-			break;
-		} else
-			p= &(buf[lold]);
-		*(p++)='/';
-		memcpy(p,s,(unsigned int)l1); p+=l1;
-		*(p++)='=';
-		q=ne->value->data;
-		for (j=0; j<num; j++) {
-			if (!gs_doit[j&3]) continue;
-			n=q[j];
-			if ((n < ' ') || (n > '~')) {
-				*(p++)='\\';
-				*(p++)='x';
-				*(p++)=hex[(n>>4)&0x0f];
-				*(p++)=hex[n&0x0f];
-			} else
-				*(p++)=n;
-		}
-		*p='\0';
-	}
-	if (b != NULL) {
-		p=b->data;
-		free(b);
-	} else
-		p=buf;
-	if (i == 0)
-		*p = '\0';
-	return(p);
-err:
-	X509err(X509_F_X509_NAME_ONELINE,ERR_R_MALLOC_FAILURE);
-	if (b != NULL) BUF_MEM_free(b);
-	return(NULL);
+	return(ASN1_INTEGER_set(x->cert_info->version,version));
 }
 
+int X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial)
+{
+	ASN1_INTEGER *in;
+
+	if (x == NULL) return(0);
+	in=x->cert_info->serialNumber;
+	if (in != serial) {
+		in=M_ASN1_INTEGER_dup(serial);
+		if (in != NULL) {
+			M_ASN1_INTEGER_free(x->cert_info->serialNumber);
+			x->cert_info->serialNumber=in;
+		}
+	}
+	return(in != NULL);
+}
+
+int X509_set_issuer_name(X509 *x, X509_NAME *name)
+{
+	if ((x == NULL) || (x->cert_info == NULL)) return(0);
+	return(X509_NAME_set(&x->cert_info->issuer,name));
+}
+
+int X509_set_subject_name(X509 *x, X509_NAME *name)
+{
+	if ((x == NULL) || (x->cert_info == NULL)) return(0);
+	return(X509_NAME_set(&x->cert_info->subject,name));
+}
+
+int X509_set_notBefore(X509 *x, const ASN1_TIME *tm)
+{
+	ASN1_TIME *in;
+
+	if ((x == NULL) || (x->cert_info->validity == NULL)) return(0);
+	in=x->cert_info->validity->notBefore;
+	if (in != tm) {
+		in=M_ASN1_TIME_dup(tm);
+		if (in != NULL) {
+			M_ASN1_TIME_free(x->cert_info->validity->notBefore);
+			x->cert_info->validity->notBefore=in;
+		}
+	}
+	return(in != NULL);
+}
+
+int X509_set_notAfter(X509 *x, const ASN1_TIME *tm)
+{
+	ASN1_TIME *in;
+
+	if ((x == NULL) || (x->cert_info->validity == NULL)) return(0);
+	in=x->cert_info->validity->notAfter;
+	if (in != tm) {
+		in=M_ASN1_TIME_dup(tm);
+		if (in != NULL) {
+			M_ASN1_TIME_free(x->cert_info->validity->notAfter);
+			x->cert_info->validity->notAfter=in;
+		}
+	}
+	return(in != NULL);
+}
+
+int X509_set_pubkey(X509 *x, EVP_PKEY *pkey)
+{
+	if ((x == NULL) || (x->cert_info == NULL)) return(0);
+	return(X509_PUBKEY_set(&(x->cert_info->key),pkey));
+}
