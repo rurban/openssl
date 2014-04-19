@@ -1,4 +1,4 @@
-/* dso_openssl.c */
+/* dso_null.c */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -56,20 +56,35 @@
  *
  */
 
+/* This "NULL" method is provided as the fallback for systems that have
+ * no appropriate support for "shared-libraries". */
+
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/dso.h>
 
-/* We just pinch the method from an appropriate "default" method. */
+static DSO_METHOD dso_meth_null = {
+	"NULL shared library method",
+	NULL, /* load */
+	NULL, /* unload */
+	NULL, /* bind_var */
+	NULL, /* bind_func */
+/* For now, "unbind" doesn't exist */
+#if 0
+	NULL, /* unbind_var */
+	NULL, /* unbind_func */
+#endif
+	NULL, /* ctrl */
+	NULL, /* dso_name_converter */
+	NULL, /* dso_merger */
+	NULL, /* init */
+	NULL, /* finish */
+	NULL, /* pathbyaddr */
+	NULL  /* globallookup */
+};
 
 DSO_METHOD *
-DSO_METHOD_openssl(void)
+DSO_METHOD_null(void)
 {
-#ifdef DEF_DSO_METHOD
-	return (DEF_DSO_METHOD());
-#elif defined(DSO_DLFCN)
-	return (DSO_METHOD_dlfcn());
-#else
-	return (DSO_METHOD_null());
-#endif
+	return (&dso_meth_null);
 }
