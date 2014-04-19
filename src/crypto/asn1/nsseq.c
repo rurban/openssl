@@ -1,9 +1,9 @@
-/* p5_pbe.c */
+/* nsseq.c */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -57,88 +57,27 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include <stdlib.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
-#include <openssl/rand.h>
+#include <openssl/objects.h>
 
-/* PKCS#5 password based encryption structure */
-
-ASN1_SEQUENCE(PBEPARAM) = {
-	ASN1_SIMPLE(PBEPARAM, salt, ASN1_OCTET_STRING),
-	ASN1_SIMPLE(PBEPARAM, iter, ASN1_INTEGER)
-} ASN1_SEQUENCE_END(PBEPARAM)
-
-IMPLEMENT_ASN1_FUNCTIONS(PBEPARAM)
-
-
-/* Set an algorithm identifier for a PKCS#5 PBE algorithm */
-
-int
-PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
-    const unsigned char *salt, int saltlen)
+static int
+nsseq_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 {
-	PBEPARAM *pbe = NULL;
-	ASN1_STRING *pbe_str = NULL;
-	unsigned char *sstr;
-
-	pbe = PBEPARAM_new();
-	if (!pbe) {
-		ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR, ERR_R_MALLOC_FAILURE);
-		goto err;
+	if (operation == ASN1_OP_NEW_POST) {
+		NETSCAPE_CERT_SEQUENCE *nsseq;
+		nsseq = (NETSCAPE_CERT_SEQUENCE *)*pval;
+		nsseq->type = OBJ_nid2obj(NID_netscape_cert_sequence);
 	}
-	if (iter <= 0)
-		iter = PKCS5_DEFAULT_ITER;
-	if (!ASN1_INTEGER_set(pbe->iter, iter)) {
-		ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR, ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-	if (!saltlen)
-		saltlen = PKCS5_SALT_LEN;
-	if (!ASN1_STRING_set(pbe->salt, NULL, saltlen)) {
-		ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR, ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-	sstr = ASN1_STRING_data(pbe->salt);
-	if (salt)
-		memcpy(sstr, salt, saltlen);
-	else if (RAND_pseudo_bytes(sstr, saltlen) < 0)
-		goto err;
-
-	if (!ASN1_item_pack(pbe, ASN1_ITEM_rptr(PBEPARAM), &pbe_str)) {
-		ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR, ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-
-	PBEPARAM_free(pbe);
-	pbe = NULL;
-
-	if (X509_ALGOR_set0(algor, OBJ_nid2obj(alg), V_ASN1_SEQUENCE, pbe_str))
-		return 1;
-
-err:
-	if (pbe != NULL)
-		PBEPARAM_free(pbe);
-	if (pbe_str != NULL)
-		ASN1_STRING_free(pbe_str);
-	return 0;
+	return 1;
 }
 
-/* Return an algorithm identifier for a PKCS#5 PBE algorithm */
+/* Netscape certificate sequence structure */
 
-X509_ALGOR *
-PKCS5_pbe_set(int alg, int iter, const unsigned char *salt, int saltlen)
-{
-	X509_ALGOR *ret;
-	ret = X509_ALGOR_new();
-	if (!ret) {
-		ASN1err(ASN1_F_PKCS5_PBE_SET, ERR_R_MALLOC_FAILURE);
-		return NULL;
-	}
+ASN1_SEQUENCE_cb(NETSCAPE_CERT_SEQUENCE, nsseq_cb) = {
+	ASN1_SIMPLE(NETSCAPE_CERT_SEQUENCE, type, ASN1_OBJECT),
+	ASN1_EXP_SEQUENCE_OF_OPT(NETSCAPE_CERT_SEQUENCE, certs, X509, 0)
+} ASN1_SEQUENCE_END_cb(NETSCAPE_CERT_SEQUENCE, NETSCAPE_CERT_SEQUENCE)
 
-	if (PKCS5_pbe_set0_algor(ret, alg, iter, salt, saltlen))
-		return ret;
-
-	X509_ALGOR_free(ret);
-	return NULL;
-}
+IMPLEMENT_ASN1_FUNCTIONS(NETSCAPE_CERT_SEQUENCE)
