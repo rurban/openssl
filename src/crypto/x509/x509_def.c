@@ -1,4 +1,4 @@
-/* crypto/x509/x509_d2.c */
+/* crypto/x509/x509_def.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,49 +61,38 @@
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
 
-#ifndef OPENSSL_NO_STDIO
-int
-X509_STORE_set_default_paths(X509_STORE *ctx)
+const char *
+X509_get_default_private_dir(void)
 {
-	X509_LOOKUP *lookup;
-
-	lookup = X509_STORE_add_lookup(ctx, X509_LOOKUP_file());
-	if (lookup == NULL)
-		return (0);
-	X509_LOOKUP_load_file(lookup, NULL, X509_FILETYPE_DEFAULT);
-
-	lookup = X509_STORE_add_lookup(ctx, X509_LOOKUP_hash_dir());
-	if (lookup == NULL)
-		return (0);
-	X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT);
-
-	/* clear any errors */
-	ERR_clear_error();
-
-	return (1);
+	return (X509_PRIVATE_DIR);
 }
 
-int
-X509_STORE_load_locations(X509_STORE *ctx, const char *file, const char *path)
+const char *
+X509_get_default_cert_area(void)
 {
-	X509_LOOKUP *lookup;
-
-	if (file != NULL) {
-		lookup = X509_STORE_add_lookup(ctx, X509_LOOKUP_file());
-		if (lookup == NULL)
-			return (0);
-		if (X509_LOOKUP_load_file(lookup, file, X509_FILETYPE_PEM) != 1)
-			return (0);
-	}
-	if (path != NULL) {
-		lookup = X509_STORE_add_lookup(ctx, X509_LOOKUP_hash_dir());
-		if (lookup == NULL)
-			return (0);
-		if (X509_LOOKUP_add_dir(lookup, path, X509_FILETYPE_PEM) != 1)
-			return (0);
-	}
-	if ((path == NULL) && (file == NULL))
-		return (0);
-	return (1);
+	return (X509_CERT_AREA);
 }
-#endif
+
+const char *
+X509_get_default_cert_dir(void)
+{
+	return (X509_CERT_DIR);
+}
+
+const char *
+X509_get_default_cert_file(void)
+{
+	return (X509_CERT_FILE);
+}
+
+const char *
+X509_get_default_cert_dir_env(void)
+{
+	return (X509_CERT_DIR_EVP);
+}
+
+const char *
+X509_get_default_cert_file_env(void)
+{
+	return (X509_CERT_FILE_EVP);
+}
