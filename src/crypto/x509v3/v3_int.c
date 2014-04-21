@@ -1,9 +1,9 @@
-/* v3_ia5.c */
+/* v3_int.c */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2004 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,63 +56,39 @@
  *
  */
 
-
 #include <stdio.h>
 #include "cryptlib.h"
-#include <openssl/asn1.h>
-#include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
-static char *i2s_ASN1_IA5STRING(X509V3_EXT_METHOD *method, ASN1_IA5STRING *ia5);
-static ASN1_IA5STRING *s2i_ASN1_IA5STRING(X509V3_EXT_METHOD *method,
-    X509V3_CTX *ctx, char *str);
-
-const X509V3_EXT_METHOD v3_ns_ia5_list[] = {
-	EXT_IA5STRING(NID_netscape_base_url),
-	EXT_IA5STRING(NID_netscape_revocation_url),
-	EXT_IA5STRING(NID_netscape_ca_revocation_url),
-	EXT_IA5STRING(NID_netscape_renewal_url),
-	EXT_IA5STRING(NID_netscape_ca_policy_url),
-	EXT_IA5STRING(NID_netscape_ssl_server_name),
-	EXT_IA5STRING(NID_netscape_comment),
-	EXT_END
+const X509V3_EXT_METHOD v3_crl_num = {
+	NID_crl_number, 0, ASN1_ITEM_ref(ASN1_INTEGER),
+	0, 0, 0, 0,
+	(X509V3_EXT_I2S)i2s_ASN1_INTEGER,
+	0,
+	0, 0, 0, 0,
+	NULL
 };
 
-static char *
-i2s_ASN1_IA5STRING(X509V3_EXT_METHOD *method, ASN1_IA5STRING *ia5)
-{
-	char *tmp;
+const X509V3_EXT_METHOD v3_delta_crl = {
+	NID_delta_crl, 0, ASN1_ITEM_ref(ASN1_INTEGER),
+	0, 0, 0, 0,
+	(X509V3_EXT_I2S)i2s_ASN1_INTEGER,
+	0,
+	0, 0, 0, 0,
+	NULL
+};
 
-	if (!ia5 || !ia5->length)
-		return NULL;
-	if (!(tmp = malloc(ia5->length + 1))) {
-		X509V3err(X509V3_F_I2S_ASN1_IA5STRING, ERR_R_MALLOC_FAILURE);
-		return NULL;
-	}
-	memcpy(tmp, ia5->data, ia5->length);
-	tmp[ia5->length] = 0;
-	return tmp;
+static void *
+s2i_asn1_int(X509V3_EXT_METHOD *meth, X509V3_CTX *ctx, char *value)
+{
+	return s2i_ASN1_INTEGER(meth, value);
 }
 
-static ASN1_IA5STRING *
-s2i_ASN1_IA5STRING(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *str)
-{
-	ASN1_IA5STRING *ia5;
-	if (!str) {
-		X509V3err(X509V3_F_S2I_ASN1_IA5STRING,
-		    X509V3_R_INVALID_NULL_ARGUMENT);
-		return NULL;
-	}
-	if (!(ia5 = M_ASN1_IA5STRING_new()))
-		goto err;
-	if (!ASN1_STRING_set((ASN1_STRING *)ia5, (unsigned char*)str,
-	    strlen(str))) {
-		M_ASN1_IA5STRING_free(ia5);
-		goto err;
-	}
-	return ia5;
-
-err:
-	X509V3err(X509V3_F_S2I_ASN1_IA5STRING, ERR_R_MALLOC_FAILURE);
-	return NULL;
-}
+const X509V3_EXT_METHOD v3_inhibit_anyp = {
+	NID_inhibit_any_policy, 0, ASN1_ITEM_ref(ASN1_INTEGER),
+	0, 0, 0, 0,
+	(X509V3_EXT_I2S)i2s_ASN1_INTEGER,
+	(X509V3_EXT_S2I)s2i_asn1_int,
+	0, 0, 0, 0,
+	NULL
+};

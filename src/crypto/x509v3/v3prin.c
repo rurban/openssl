@@ -1,4 +1,4 @@
-/* v3_ia5.c */
+/* v3prin.c */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -56,63 +56,45 @@
  *
  */
 
-
 #include <stdio.h>
-#include "cryptlib.h"
 #include <openssl/asn1.h>
 #include <openssl/conf.h>
+#include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
-static char *i2s_ASN1_IA5STRING(X509V3_EXT_METHOD *method, ASN1_IA5STRING *ia5);
-static ASN1_IA5STRING *s2i_ASN1_IA5STRING(X509V3_EXT_METHOD *method,
-    X509V3_CTX *ctx, char *str);
-
-const X509V3_EXT_METHOD v3_ns_ia5_list[] = {
-	EXT_IA5STRING(NID_netscape_base_url),
-	EXT_IA5STRING(NID_netscape_revocation_url),
-	EXT_IA5STRING(NID_netscape_ca_revocation_url),
-	EXT_IA5STRING(NID_netscape_renewal_url),
-	EXT_IA5STRING(NID_netscape_ca_policy_url),
-	EXT_IA5STRING(NID_netscape_ssl_server_name),
-	EXT_IA5STRING(NID_netscape_comment),
-	EXT_END
-};
-
-static char *
-i2s_ASN1_IA5STRING(X509V3_EXT_METHOD *method, ASN1_IA5STRING *ia5)
+int
+main(int argc, char **argv)
 {
-	char *tmp;
+	X509 *cert;
+	FILE *inf;
+	int i, count;
+	X509_EXTENSION *ext;
 
-	if (!ia5 || !ia5->length)
-		return NULL;
-	if (!(tmp = malloc(ia5->length + 1))) {
-		X509V3err(X509V3_F_I2S_ASN1_IA5STRING, ERR_R_MALLOC_FAILURE);
-		return NULL;
+	X509V3_add_standard_extensions();
+	ERR_load_crypto_strings();
+	if (!argv[1]) {
+		fprintf(stderr, "Usage v3prin cert.pem\n");
+		exit(1);
 	}
-	memcpy(tmp, ia5->data, ia5->length);
-	tmp[ia5->length] = 0;
-	return tmp;
-}
+	if (!(inf = fopen(argv[1], "r"))) {
+		fprintf(stderr, "Can't open %s\n", argv[1]);
+		exit(1);
+	}
+	if (!(cert = PEM_read_X509(inf, NULL, NULL))) {
+		fprintf(stderr, "Can't read certificate %s\n", argv[1]);
+		ERR_print_errors_fp(stderr);
+		exit(1);
+	}
+	fclose(inf);
+	count = X509_get_ext_count(cert);
+	printf("%d extensions\n", count);
+	for (i = 0; i < count; i++) {
+		ext = X509_get_ext(cert, i);
+		printf("%s\n", OBJ_nid2ln(OBJ_obj2nid(ext->object)));
+		if (!X509V3_EXT_print_fp(stdout, ext, 0, 0))
+			ERR_print_errors_fp(stderr);
+		printf("\n");
 
-static ASN1_IA5STRING *
-s2i_ASN1_IA5STRING(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *str)
-{
-	ASN1_IA5STRING *ia5;
-	if (!str) {
-		X509V3err(X509V3_F_S2I_ASN1_IA5STRING,
-		    X509V3_R_INVALID_NULL_ARGUMENT);
-		return NULL;
 	}
-	if (!(ia5 = M_ASN1_IA5STRING_new()))
-		goto err;
-	if (!ASN1_STRING_set((ASN1_STRING *)ia5, (unsigned char*)str,
-	    strlen(str))) {
-		M_ASN1_IA5STRING_free(ia5);
-		goto err;
-	}
-	return ia5;
-
-err:
-	X509V3err(X509V3_F_S2I_ASN1_IA5STRING, ERR_R_MALLOC_FAILURE);
-	return NULL;
+	return 0;
 }
