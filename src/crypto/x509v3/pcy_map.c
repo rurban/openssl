@@ -1,4 +1,4 @@
-/* pcy_node.c */
+/* pcy_map.c */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -56,133 +56,72 @@
  *
  */
 
-#include <openssl/asn1.h>
+#include "cryptlib.h"
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
 #include "pcy_int.h"
 
-static int
-node_cmp(const X509_POLICY_NODE * const *a, const X509_POLICY_NODE * const *b)
-{
-	return OBJ_cmp((*a)->data->valid_policy, (*b)->data->valid_policy);
-}
-
-STACK_OF(X509_POLICY_NODE) *policy_node_cmp_new(void)
-{
-	return sk_X509_POLICY_NODE_new(node_cmp);
-}
-
-X509_POLICY_NODE *
-tree_find_sk(STACK_OF(X509_POLICY_NODE) *nodes, const ASN1_OBJECT *id)
-{
-	X509_POLICY_DATA n;
-	X509_POLICY_NODE l;
-	int idx;
-
-	n.valid_policy = (ASN1_OBJECT *)id;
-	l.data = &n;
-
-	idx = sk_X509_POLICY_NODE_find(nodes, &l);
-	if (idx == -1)
-		return NULL;
-
-	return sk_X509_POLICY_NODE_value(nodes, idx);
-}
-
-X509_POLICY_NODE *
-level_find_node(const X509_POLICY_LEVEL *level, const X509_POLICY_NODE *parent,
-    const ASN1_OBJECT *id)
-{
-	X509_POLICY_NODE *node;
-	int i;
-
-	for (i = 0; i < sk_X509_POLICY_NODE_num(level->nodes); i++) {
-		node = sk_X509_POLICY_NODE_value(level->nodes, i);
-		if (node->parent == parent) {
-			if (!OBJ_cmp(node->data->valid_policy, id))
-				return node;
-		}
-	}
-	return NULL;
-}
-
-X509_POLICY_NODE *
-level_add_node(X509_POLICY_LEVEL *level, const X509_POLICY_DATA *data,
-    X509_POLICY_NODE *parent, X509_POLICY_TREE *tree)
-{
-	X509_POLICY_NODE *node;
-
-	node = malloc(sizeof(X509_POLICY_NODE));
-	if (!node)
-		return NULL;
-	node->data = data;
-	node->parent = parent;
-	node->nchild = 0;
-	if (level) {
-		if (OBJ_obj2nid(data->valid_policy) == NID_any_policy) {
-			if (level->anyPolicy)
-				goto node_error;
-			level->anyPolicy = node;
-		} else {
-
-			if (!level->nodes)
-				level->nodes = policy_node_cmp_new();
-			if (!level->nodes)
-				goto node_error;
-			if (!sk_X509_POLICY_NODE_push(level->nodes, node))
-				goto node_error;
-		}
-	}
-
-	if (tree) {
-		if (!tree->extra_data)
-			tree->extra_data = sk_X509_POLICY_DATA_new_null();
-		if (!tree->extra_data)
-			goto node_error;
-		if (!sk_X509_POLICY_DATA_push(tree->extra_data, data))
-			goto node_error;
-	}
-
-	if (parent)
-		parent->nchild++;
-
-	return node;
-
-node_error:
-	policy_node_free(node);
-	return 0;
-}
-
-void
-policy_node_free(X509_POLICY_NODE *node)
-{
-	free(node);
-}
-
-/* See if a policy node matches a policy OID. If mapping enabled look through
- * expected policy set otherwise just valid policy.
+/* Set policy mapping entries in cache.
+ * Note: this modifies the passed POLICY_MAPPINGS structure
  */
 
 int
-policy_node_match(const X509_POLICY_LEVEL *lvl, const X509_POLICY_NODE *node,
-    const ASN1_OBJECT *oid)
+policy_cache_set_mapping(X509 *x, POLICY_MAPPINGS *maps)
 {
+	POLICY_MAPPING *map;
+	X509_POLICY_DATA *data;
+	X509_POLICY_CACHE *cache = x->policy_cache;
 	int i;
-	ASN1_OBJECT *policy_oid;
-	const X509_POLICY_DATA *x = node->data;
+	int ret = 0;
 
-	if ((lvl->flags & X509_V_FLAG_INHIBIT_MAP) ||
-	    !(x->flags & POLICY_DATA_FLAG_MAP_MASK)) {
-		if (!OBJ_cmp(x->valid_policy, oid))
-			return 1;
-		return 0;
+	if (sk_POLICY_MAPPING_num(maps) == 0) {
+		ret = -1;
+		goto bad_mapping;
+	}
+	for (i = 0; i < sk_POLICY_MAPPING_num(maps); i++) {
+		map = sk_POLICY_MAPPING_value(maps, i);
+		/* Reject if map to or from anyPolicy */
+		if ((OBJ_obj2nid(map->subjectDomainPolicy) == NID_any_policy) ||
+		    (OBJ_obj2nid(map->issuerDomainPolicy) == NID_any_policy)) {
+			ret = -1;
+			goto bad_mapping;
+		}
+
+		/* Attempt to find matching policy data */
+		data = policy_cache_find_data(cache, map->issuerDomainPolicy);
+		/* If we don't have anyPolicy can't map */
+		if (!data && !cache->anyPolicy)
+			continue;
+
+		/* Create a NODE from anyPolicy */
+		if (!data) {
+			data = policy_data_new(NULL, map->issuerDomainPolicy,
+			    cache->anyPolicy->flags &
+			    POLICY_DATA_FLAG_CRITICAL);
+			if (!data)
+				goto bad_mapping;
+			data->qualifier_set = cache->anyPolicy->qualifier_set;
+			/*map->issuerDomainPolicy = NULL;*/
+			data->flags |= POLICY_DATA_FLAG_MAPPED_ANY;
+			data->flags |= POLICY_DATA_FLAG_SHARED_QUALIFIERS;
+			if (!sk_X509_POLICY_DATA_push(cache->data, data)) {
+				policy_data_free(data);
+				goto bad_mapping;
+			}
+		} else
+			data->flags |= POLICY_DATA_FLAG_MAPPED;
+		if (!sk_ASN1_OBJECT_push(data->expected_policy_set,
+		    map->subjectDomainPolicy))
+			goto bad_mapping;
+		map->subjectDomainPolicy = NULL;
 	}
 
-	for (i = 0; i < sk_ASN1_OBJECT_num(x->expected_policy_set); i++) {
-		policy_oid = sk_ASN1_OBJECT_value(x->expected_policy_set, i);
-		if (!OBJ_cmp(policy_oid, oid))
-			return 1;
-	}
-	return 0;
+	ret = 1;
+
+bad_mapping:
+	if (ret == -1)
+		x->ex_flags |= EXFLAG_INVALID_POLICY;
+	sk_POLICY_MAPPING_pop_free(maps, POLICY_MAPPING_free);
+	return ret;
 }

@@ -1,9 +1,9 @@
-/* pcy_data.c */
+/* ext_dat.h */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
- * project 2004.
+ * project 1999.
  */
 /* ====================================================================
- * Copyright (c) 2004 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2004 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -55,76 +55,76 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+/* This file contains a table of "standard" extensions */
 
-#include "cryptlib.h"
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
+extern X509V3_EXT_METHOD v3_bcons, v3_nscert, v3_key_usage, v3_ext_ku;
+extern X509V3_EXT_METHOD v3_pkey_usage_period, v3_sxnet, v3_info, v3_sinfo;
+extern X509V3_EXT_METHOD v3_ns_ia5_list[], v3_alt[], v3_skey_id, v3_akey_id;
+extern X509V3_EXT_METHOD v3_crl_num, v3_crl_reason, v3_crl_invdate;
+extern X509V3_EXT_METHOD v3_delta_crl, v3_cpols, v3_crld, v3_freshest_crl;
+extern X509V3_EXT_METHOD v3_ocsp_nonce, v3_ocsp_accresp, v3_ocsp_acutoff;
+extern X509V3_EXT_METHOD v3_ocsp_crlid, v3_ocsp_nocheck, v3_ocsp_serviceloc;
+extern X509V3_EXT_METHOD v3_crl_hold, v3_pci;
+extern X509V3_EXT_METHOD v3_policy_mappings, v3_policy_constraints;
+extern X509V3_EXT_METHOD v3_name_constraints, v3_inhibit_anyp, v3_idp;
+extern X509V3_EXT_METHOD v3_addr, v3_asid;
 
-#include "pcy_int.h"
-
-/* Policy Node routines */
-
-void
-policy_data_free(X509_POLICY_DATA *data)
-{
-	ASN1_OBJECT_free(data->valid_policy);
-	/* Don't free qualifiers if shared */
-	if (!(data->flags & POLICY_DATA_FLAG_SHARED_QUALIFIERS))
-		sk_POLICYQUALINFO_pop_free(data->qualifier_set,
-		    POLICYQUALINFO_free);
-	sk_ASN1_OBJECT_pop_free(data->expected_policy_set, ASN1_OBJECT_free);
-	free(data);
-}
-
-/* Create a data based on an existing policy. If 'id' is NULL use the
- * oid in the policy, otherwise use 'id'. This behaviour covers the two
- * types of data in RFC3280: data with from a CertificatePolcies extension
- * and additional data with just the qualifiers of anyPolicy and ID from
- * another source.
+/* This table will be searched using OBJ_bsearch so it *must* kept in
+ * order of the ext_nid values.
  */
 
-X509_POLICY_DATA *
-policy_data_new(POLICYINFO *policy, const ASN1_OBJECT *cid, int crit)
-{
-	X509_POLICY_DATA *ret;
-	ASN1_OBJECT *id;
+static const X509V3_EXT_METHOD *standard_exts[] = {
+	&v3_nscert,
+	&v3_ns_ia5_list[0],
+	&v3_ns_ia5_list[1],
+	&v3_ns_ia5_list[2],
+	&v3_ns_ia5_list[3],
+	&v3_ns_ia5_list[4],
+	&v3_ns_ia5_list[5],
+	&v3_ns_ia5_list[6],
+	&v3_skey_id,
+	&v3_key_usage,
+	&v3_pkey_usage_period,
+	&v3_alt[0],
+	&v3_alt[1],
+	&v3_bcons,
+	&v3_crl_num,
+	&v3_cpols,
+	&v3_akey_id,
+	&v3_crld,
+	&v3_ext_ku,
+	&v3_delta_crl,
+	&v3_crl_reason,
+#ifndef OPENSSL_NO_OCSP
+	&v3_crl_invdate,
+#endif
+	&v3_sxnet,
+	&v3_info,
+#ifndef OPENSSL_NO_RFC3779
+	&v3_addr,
+	&v3_asid,
+#endif
+#ifndef OPENSSL_NO_OCSP
+	&v3_ocsp_nonce,
+	&v3_ocsp_crlid,
+	&v3_ocsp_accresp,
+	&v3_ocsp_nocheck,
+	&v3_ocsp_acutoff,
+	&v3_ocsp_serviceloc,
+#endif
+	&v3_sinfo,
+	&v3_policy_constraints,
+#ifndef OPENSSL_NO_OCSP
+	&v3_crl_hold,
+#endif
+	&v3_pci,
+	&v3_name_constraints,
+	&v3_policy_mappings,
+	&v3_inhibit_anyp,
+	&v3_idp,
+	&v3_alt[2],
+	&v3_freshest_crl,
+};
 
-	if (!policy && !cid)
-		return NULL;
-	if (cid) {
-		id = OBJ_dup(cid);
-		if (!id)
-			return NULL;
-	} else
-		id = NULL;
-	ret = malloc(sizeof(X509_POLICY_DATA));
-	if (!ret)
-		return NULL;
-	ret->expected_policy_set = sk_ASN1_OBJECT_new_null();
-	if (!ret->expected_policy_set) {
-		free(ret);
-		if (id)
-			ASN1_OBJECT_free(id);
-		return NULL;
-	}
-
-	if (crit)
-		ret->flags = POLICY_DATA_FLAG_CRITICAL;
-	else
-		ret->flags = 0;
-
-	if (id)
-		ret->valid_policy = id;
-	else {
-		ret->valid_policy = policy->policyid;
-		policy->policyid = NULL;
-	}
-
-	if (policy) {
-		ret->qualifier_set = policy->qualifiers;
-		policy->qualifiers = NULL;
-	} else
-		ret->qualifier_set = NULL;
-
-	return ret;
-}
+/* Number of standard extensions */
+#define STANDARD_EXTENSION_COUNT (sizeof(standard_exts)/sizeof(X509V3_EXT_METHOD *))
