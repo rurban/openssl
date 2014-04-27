@@ -1,8 +1,8 @@
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
- * project 2007.
+ * project 2010.
  */
 /* ====================================================================
- * Copyright (c) 2007 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -48,110 +48,39 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
  */
 
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/evp.h>
+#include <openssl/cmac.h>
 #include "asn1_locl.h"
 
-#define HMAC_TEST_PRIVATE_KEY_FORMAT
-
-/* HMAC "ASN1" method. This is just here to indicate the
- * maximum HMAC output length and to free up an HMAC
+/* CMAC "ASN1" method. This is just here to indicate the
+ * maximum CMAC output length and to free up a CMAC
  * key.
  */
 
-static int hmac_size(const EVP_PKEY *pkey)
+static int cmac_size(const EVP_PKEY *pkey)
 	{
-	return EVP_MAX_MD_SIZE;
+	return EVP_MAX_BLOCK_LENGTH;
 	}
 
-static void hmac_key_free(EVP_PKEY *pkey)
+static void cmac_key_free(EVP_PKEY *pkey)
 	{
-	ASN1_OCTET_STRING *os = (ASN1_OCTET_STRING *)pkey->pkey.ptr;
-	if (os)
-		{
-		if (os->data)
-			OPENSSL_cleanse(os->data, os->length);
-		ASN1_OCTET_STRING_free(os);
-		}
+	CMAC_CTX *cmctx = (CMAC_CTX *)pkey->pkey.ptr;
+	if (cmctx)
+		CMAC_CTX_free(cmctx);
 	}
 
+const EVP_PKEY_ASN1_METHOD cmac_asn1_meth = {
+	.pkey_id = EVP_PKEY_CMAC,
+	.pkey_base_id = EVP_PKEY_CMAC,
 
-static int hmac_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
-	{
-	switch (op)
-		{
-		case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
-		*(int *)arg2 = NID_sha1;
-		return 1;
+	.pem_str = "CMAC",
+	.info = "OpenSSL CMAC method",
 
-		default:
-		return -2;
-		}
-	}
-
-#ifdef HMAC_TEST_PRIVATE_KEY_FORMAT
-/* A bogus private key format for test purposes. This is simply the
- * HMAC key with "HMAC PRIVATE KEY" in the headers. When enabled the
- * genpkey utility can be used to "generate" HMAC keys.
- */
-
-static int old_hmac_decode(EVP_PKEY *pkey,
-					const unsigned char **pder, int derlen)
-	{
-	ASN1_OCTET_STRING *os;
-	os = ASN1_OCTET_STRING_new();
-	if (!os || !ASN1_OCTET_STRING_set(os, *pder, derlen))
-		return 0;
-	EVP_PKEY_assign(pkey, EVP_PKEY_HMAC, os);
-	return 1;
-	}
-
-static int old_hmac_encode(const EVP_PKEY *pkey, unsigned char **pder)
-	{
-	int inc;
-	ASN1_OCTET_STRING *os = (ASN1_OCTET_STRING *)pkey->pkey.ptr;
-	if (pder)
-		{
-		if (!*pder)
-			{
-			*pder = malloc(os->length);
-			inc = 0;
-			}
-		else inc = 1;
-
-		memcpy(*pder, os->data, os->length);
-
-		if (inc)
-			*pder += os->length;
-		}
-			
-	return os->length;
-	}
-
-#endif
-
-const EVP_PKEY_ASN1_METHOD hmac_asn1_meth = {
-	.pkey_id = EVP_PKEY_HMAC,
-	.pkey_base_id = EVP_PKEY_HMAC,
-
-	.pem_str = "HMAC",
-	.info = "OpenSSL HMAC method",
-
-	.pkey_size = hmac_size,
-
-	.pkey_free = hmac_key_free,
-	.pkey_ctrl = hmac_pkey_ctrl,
-#ifdef HMAC_TEST_PRIVATE_KEY_FORMAT
-	.old_priv_decode = old_hmac_decode,
-	.old_priv_encode = old_hmac_encode
-#endif
-	};
+	.pkey_size = cmac_size,
+	.pkey_free = cmac_key_free
+};
 

@@ -1,15 +1,12 @@
-/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
- * project 2007.
- */
 /* ====================================================================
- * Copyright (c) 2007 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -48,110 +45,95 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
  */
+
+#include <openssl/opensslconf.h>
 
 #include <stdio.h>
-#include "cryptlib.h"
-#include <openssl/evp.h>
-#include "asn1_locl.h"
+#include <string.h>
+#include <openssl/engine.h>
+#include <openssl/rand.h>
+#include <openssl/err.h>
 
-#define HMAC_TEST_PRIVATE_KEY_FORMAT
+#if (defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
+     defined(__x86_64) || defined(__x86_64__) || \
+     defined(_M_AMD64) || defined (_M_X64)) && defined(OPENSSL_CPUID_OBJ)
 
-/* HMAC "ASN1" method. This is just here to indicate the
- * maximum HMAC output length and to free up an HMAC
- * key.
- */
+size_t OPENSSL_ia32_rdrand(void);
 
-static int hmac_size(const EVP_PKEY *pkey)
+static int get_random_bytes (unsigned char *buf, int num)
 	{
-	return EVP_MAX_MD_SIZE;
+	size_t rnd;
+
+	while (num>=(int)sizeof(size_t)) {
+		if ((rnd = OPENSSL_ia32_rdrand()) == 0) return 0;
+
+		*((size_t *)buf) = rnd;
+		buf += sizeof(size_t);
+		num -= sizeof(size_t);
+	}
+	if (num) {
+		if ((rnd = OPENSSL_ia32_rdrand()) == 0) return 0;
+
+		memcpy (buf,&rnd,num);
 	}
 
-static void hmac_key_free(EVP_PKEY *pkey)
-	{
-	ASN1_OCTET_STRING *os = (ASN1_OCTET_STRING *)pkey->pkey.ptr;
-	if (os)
-		{
-		if (os->data)
-			OPENSSL_cleanse(os->data, os->length);
-		ASN1_OCTET_STRING_free(os);
-		}
-	}
-
-
-static int hmac_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
-	{
-	switch (op)
-		{
-		case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
-		*(int *)arg2 = NID_sha1;
-		return 1;
-
-		default:
-		return -2;
-		}
-	}
-
-#ifdef HMAC_TEST_PRIVATE_KEY_FORMAT
-/* A bogus private key format for test purposes. This is simply the
- * HMAC key with "HMAC PRIVATE KEY" in the headers. When enabled the
- * genpkey utility can be used to "generate" HMAC keys.
- */
-
-static int old_hmac_decode(EVP_PKEY *pkey,
-					const unsigned char **pder, int derlen)
-	{
-	ASN1_OCTET_STRING *os;
-	os = ASN1_OCTET_STRING_new();
-	if (!os || !ASN1_OCTET_STRING_set(os, *pder, derlen))
-		return 0;
-	EVP_PKEY_assign(pkey, EVP_PKEY_HMAC, os);
 	return 1;
 	}
 
-static int old_hmac_encode(const EVP_PKEY *pkey, unsigned char **pder)
+static int random_status (void)
+{	return 1;	}
+
+static RAND_METHOD rdrand_meth = {
+	.bytes = get_random_bytes,
+	.pseudorand = get_random_bytes,
+	.status = random_status
+};
+
+static int rdrand_init(ENGINE *e)
+{	return 1;	}
+
+static const char *engine_e_rdrand_id = "rdrand";
+static const char *engine_e_rdrand_name = "Intel RDRAND engine";
+
+static int bind_helper(ENGINE *e)
 	{
-	int inc;
-	ASN1_OCTET_STRING *os = (ASN1_OCTET_STRING *)pkey->pkey.ptr;
-	if (pder)
-		{
-		if (!*pder)
-			{
-			*pder = malloc(os->length);
-			inc = 0;
-			}
-		else inc = 1;
+	if (!ENGINE_set_id(e, engine_e_rdrand_id) ||
+	    !ENGINE_set_name(e, engine_e_rdrand_name) ||
+            !ENGINE_set_flags(e, ENGINE_FLAGS_NO_REGISTER_ALL) ||
+	    !ENGINE_set_init_function(e, rdrand_init) ||
+	    !ENGINE_set_RAND(e, &rdrand_meth) )
+		return 0;
 
-		memcpy(*pder, os->data, os->length);
-
-		if (inc)
-			*pder += os->length;
-		}
-			
-	return os->length;
+	return 1;
 	}
 
+static ENGINE *ENGINE_rdrand(void)
+	{
+	ENGINE *ret = ENGINE_new();
+	if(!ret)
+		return NULL;
+	if(!bind_helper(ret))
+		{
+		ENGINE_free(ret);
+		return NULL;
+		}
+	return ret;
+	}
+
+void ENGINE_load_rdrand (void)
+	{
+	extern unsigned int OPENSSL_ia32cap_P[];
+
+	if (OPENSSL_ia32cap_P[1] & (1<<(62-32)))
+		{
+		ENGINE *toadd = ENGINE_rdrand();
+		if(!toadd) return;
+		ENGINE_add(toadd);
+		ENGINE_free(toadd);
+		ERR_clear_error();
+		}
+	}
+#else
+void ENGINE_load_rdrand (void) {}
 #endif
-
-const EVP_PKEY_ASN1_METHOD hmac_asn1_meth = {
-	.pkey_id = EVP_PKEY_HMAC,
-	.pkey_base_id = EVP_PKEY_HMAC,
-
-	.pem_str = "HMAC",
-	.info = "OpenSSL HMAC method",
-
-	.pkey_size = hmac_size,
-
-	.pkey_free = hmac_key_free,
-	.pkey_ctrl = hmac_pkey_ctrl,
-#ifdef HMAC_TEST_PRIVATE_KEY_FORMAT
-	.old_priv_decode = old_hmac_decode,
-	.old_priv_encode = old_hmac_encode
-#endif
-	};
-
