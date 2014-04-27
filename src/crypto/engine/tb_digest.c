@@ -1,16 +1,12 @@
-/* conf_sap.c */
-/* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
- * project 2001.
- */
 /* ====================================================================
- * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
+ *    notice, this list of conditions and the following disclaimer. 
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -56,55 +52,92 @@
  *
  */
 
-#include <stdio.h>
-#include <openssl/crypto.h>
-#include "cryptlib.h"
-#include <openssl/conf.h>
-#include <openssl/dso.h>
-#include <openssl/x509.h>
-#include <openssl/asn1.h>
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
+#include "eng_int.h"
 
-/* This is the automatic configuration loader: it is called automatically by
- * OpenSSL when any of a number of standard initialisation functions are called,
- * unless this is overridden by calling OPENSSL_no_config()
- */
+/* If this symbol is defined then ENGINE_get_digest_engine(), the function that
+ * is used by EVP to hook in digest code and cache defaults (etc), will display
+ * brief debugging summaries to stderr with the 'nid'. */
+/* #define ENGINE_DIGEST_DEBUG */
 
-static int openssl_configured = 0;
+static ENGINE_TABLE *digest_table = NULL;
 
-void
-OPENSSL_config(const char *config_name)
-{
-	if (openssl_configured)
-		return;
-
-	OPENSSL_load_builtin_modules();
-#ifndef OPENSSL_NO_ENGINE
-	/* Need to load ENGINEs */
-	ENGINE_load_builtin_engines();
-#endif
-	/* Add others here? */
-
-	ERR_clear_error();
-	if (CONF_modules_load_file(NULL, config_name,
-	    CONF_MFLAGS_DEFAULT_SECTION|CONF_MFLAGS_IGNORE_MISSING_FILE) <= 0) {
-		BIO *bio_err;
-		ERR_load_crypto_strings();
-		if ((bio_err = BIO_new_fp(stderr, BIO_NOCLOSE)) != NULL) {
-			BIO_printf(bio_err, "Auto configuration failed\n");
-			ERR_print_errors(bio_err);
-			BIO_free(bio_err);
-		}
-		exit(1);
+void ENGINE_unregister_digests(ENGINE *e)
+	{
+	engine_table_unregister(&digest_table, e);
 	}
 
-	return;
-}
+static void engine_unregister_all_digests(void)
+	{
+	engine_table_cleanup(&digest_table);
+	}
 
-void
-OPENSSL_no_config(void)
-{
-	openssl_configured = 1;
-}
+int ENGINE_register_digests(ENGINE *e)
+	{
+	if(e->digests)
+		{
+		const int *nids;
+		int num_nids = e->digests(e, NULL, &nids, 0);
+		if(num_nids > 0)
+			return engine_table_register(&digest_table,
+					engine_unregister_all_digests, e, nids,
+					num_nids, 0);
+		}
+	return 1;
+	}
+
+void ENGINE_register_all_digests(void)
+	{
+	ENGINE *e;
+
+	for(e=ENGINE_get_first() ; e ; e=ENGINE_get_next(e))
+		ENGINE_register_digests(e);
+	}
+
+int ENGINE_set_default_digests(ENGINE *e)
+	{
+	if(e->digests)
+		{
+		const int *nids;
+		int num_nids = e->digests(e, NULL, &nids, 0);
+		if(num_nids > 0)
+			return engine_table_register(&digest_table,
+					engine_unregister_all_digests, e, nids,
+					num_nids, 1);
+		}
+	return 1;
+	}
+
+/* Exposed API function to get a functional reference from the implementation
+ * table (ie. try to get a functional reference from the tabled structural
+ * references) for a given digest 'nid' */
+ENGINE *ENGINE_get_digest_engine(int nid)
+	{
+	return engine_table_select(&digest_table, nid);
+	}
+
+/* Obtains a digest implementation from an ENGINE functional reference */
+const EVP_MD *ENGINE_get_digest(ENGINE *e, int nid)
+	{
+	const EVP_MD *ret;
+	ENGINE_DIGESTS_PTR fn = ENGINE_get_digests(e);
+	if(!fn || !fn(e, &ret, NULL, nid))
+		{
+		ENGINEerr(ENGINE_F_ENGINE_GET_DIGEST,
+				ENGINE_R_UNIMPLEMENTED_DIGEST);
+		return NULL;
+		}
+	return ret;
+	}
+
+/* Gets the digest callback from an ENGINE structure */
+ENGINE_DIGESTS_PTR ENGINE_get_digests(const ENGINE *e)
+	{
+	return e->digests;
+	}
+
+/* Sets the digest callback in an ENGINE structure */
+int ENGINE_set_digests(ENGINE *e, ENGINE_DIGESTS_PTR f)
+	{
+	e->digests = f;
+	return 1;
+	}

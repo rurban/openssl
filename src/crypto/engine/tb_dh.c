@@ -1,16 +1,12 @@
-/* conf_sap.c */
-/* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
- * project 2001.
- */
 /* ====================================================================
- * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
+ *    notice, this list of conditions and the following disclaimer. 
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -56,55 +52,67 @@
  *
  */
 
-#include <stdio.h>
-#include <openssl/crypto.h>
-#include "cryptlib.h"
-#include <openssl/conf.h>
-#include <openssl/dso.h>
-#include <openssl/x509.h>
-#include <openssl/asn1.h>
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
+#include "eng_int.h"
 
-/* This is the automatic configuration loader: it is called automatically by
- * OpenSSL when any of a number of standard initialisation functions are called,
- * unless this is overridden by calling OPENSSL_no_config()
- */
+/* If this symbol is defined then ENGINE_get_default_DH(), the function that is
+ * used by DH to hook in implementation code and cache defaults (etc), will
+ * display brief debugging summaries to stderr with the 'nid'. */
+/* #define ENGINE_DH_DEBUG */
 
-static int openssl_configured = 0;
+static ENGINE_TABLE *dh_table = NULL;
+static const int dummy_nid = 1;
 
-void
-OPENSSL_config(const char *config_name)
-{
-	if (openssl_configured)
-		return;
-
-	OPENSSL_load_builtin_modules();
-#ifndef OPENSSL_NO_ENGINE
-	/* Need to load ENGINEs */
-	ENGINE_load_builtin_engines();
-#endif
-	/* Add others here? */
-
-	ERR_clear_error();
-	if (CONF_modules_load_file(NULL, config_name,
-	    CONF_MFLAGS_DEFAULT_SECTION|CONF_MFLAGS_IGNORE_MISSING_FILE) <= 0) {
-		BIO *bio_err;
-		ERR_load_crypto_strings();
-		if ((bio_err = BIO_new_fp(stderr, BIO_NOCLOSE)) != NULL) {
-			BIO_printf(bio_err, "Auto configuration failed\n");
-			ERR_print_errors(bio_err);
-			BIO_free(bio_err);
-		}
-		exit(1);
+void ENGINE_unregister_DH(ENGINE *e)
+	{
+	engine_table_unregister(&dh_table, e);
 	}
 
-	return;
-}
+static void engine_unregister_all_DH(void)
+	{
+	engine_table_cleanup(&dh_table);
+	}
 
-void
-OPENSSL_no_config(void)
-{
-	openssl_configured = 1;
-}
+int ENGINE_register_DH(ENGINE *e)
+	{
+	if(e->dh_meth)
+		return engine_table_register(&dh_table,
+				engine_unregister_all_DH, e, &dummy_nid, 1, 0);
+	return 1;
+	}
+
+void ENGINE_register_all_DH(void)
+	{
+	ENGINE *e;
+
+	for(e=ENGINE_get_first() ; e ; e=ENGINE_get_next(e))
+		ENGINE_register_DH(e);
+	}
+
+int ENGINE_set_default_DH(ENGINE *e)
+	{
+	if(e->dh_meth)
+		return engine_table_register(&dh_table,
+				engine_unregister_all_DH, e, &dummy_nid, 1, 1);
+	return 1;
+	}
+
+/* Exposed API function to get a functional reference from the implementation
+ * table (ie. try to get a functional reference from the tabled structural
+ * references). */
+ENGINE *ENGINE_get_default_DH(void)
+	{
+	return engine_table_select(&dh_table, dummy_nid);
+	}
+
+/* Obtains an DH implementation from an ENGINE functional reference */
+const DH_METHOD *ENGINE_get_DH(const ENGINE *e)
+	{
+	return e->dh_meth;
+	}
+
+/* Sets an DH implementation in an ENGINE structure */
+int ENGINE_set_DH(ENGINE *e, const DH_METHOD *dh_meth)
+	{
+	e->dh_meth = dh_meth;
+	return 1;
+	}

@@ -1,16 +1,12 @@
-/* conf_sap.c */
-/* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
- * project 2001.
- */
 /* ====================================================================
- * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
+ *    notice, this list of conditions and the following disclaimer. 
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -56,55 +52,92 @@
  *
  */
 
-#include <stdio.h>
-#include <openssl/crypto.h>
-#include "cryptlib.h"
-#include <openssl/conf.h>
-#include <openssl/dso.h>
-#include <openssl/x509.h>
-#include <openssl/asn1.h>
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
+#include "eng_int.h"
 
-/* This is the automatic configuration loader: it is called automatically by
- * OpenSSL when any of a number of standard initialisation functions are called,
- * unless this is overridden by calling OPENSSL_no_config()
- */
+/* If this symbol is defined then ENGINE_get_cipher_engine(), the function that
+ * is used by EVP to hook in cipher code and cache defaults (etc), will display
+ * brief debugging summaries to stderr with the 'nid'. */
+/* #define ENGINE_CIPHER_DEBUG */
 
-static int openssl_configured = 0;
+static ENGINE_TABLE *cipher_table = NULL;
 
-void
-OPENSSL_config(const char *config_name)
-{
-	if (openssl_configured)
-		return;
-
-	OPENSSL_load_builtin_modules();
-#ifndef OPENSSL_NO_ENGINE
-	/* Need to load ENGINEs */
-	ENGINE_load_builtin_engines();
-#endif
-	/* Add others here? */
-
-	ERR_clear_error();
-	if (CONF_modules_load_file(NULL, config_name,
-	    CONF_MFLAGS_DEFAULT_SECTION|CONF_MFLAGS_IGNORE_MISSING_FILE) <= 0) {
-		BIO *bio_err;
-		ERR_load_crypto_strings();
-		if ((bio_err = BIO_new_fp(stderr, BIO_NOCLOSE)) != NULL) {
-			BIO_printf(bio_err, "Auto configuration failed\n");
-			ERR_print_errors(bio_err);
-			BIO_free(bio_err);
-		}
-		exit(1);
+void ENGINE_unregister_ciphers(ENGINE *e)
+	{
+	engine_table_unregister(&cipher_table, e);
 	}
 
-	return;
-}
+static void engine_unregister_all_ciphers(void)
+	{
+	engine_table_cleanup(&cipher_table);
+	}
 
-void
-OPENSSL_no_config(void)
-{
-	openssl_configured = 1;
-}
+int ENGINE_register_ciphers(ENGINE *e)
+	{
+	if(e->ciphers)
+		{
+		const int *nids;
+		int num_nids = e->ciphers(e, NULL, &nids, 0);
+		if(num_nids > 0)
+			return engine_table_register(&cipher_table,
+					engine_unregister_all_ciphers, e, nids,
+					num_nids, 0);
+		}
+	return 1;
+	}
+
+void ENGINE_register_all_ciphers(void)
+	{
+	ENGINE *e;
+
+	for(e=ENGINE_get_first() ; e ; e=ENGINE_get_next(e))
+		ENGINE_register_ciphers(e);
+	}
+
+int ENGINE_set_default_ciphers(ENGINE *e)
+	{
+	if(e->ciphers)
+		{
+		const int *nids;
+		int num_nids = e->ciphers(e, NULL, &nids, 0);
+		if(num_nids > 0)
+			return engine_table_register(&cipher_table,
+					engine_unregister_all_ciphers, e, nids,
+					num_nids, 1);
+		}
+	return 1;
+	}
+
+/* Exposed API function to get a functional reference from the implementation
+ * table (ie. try to get a functional reference from the tabled structural
+ * references) for a given cipher 'nid' */
+ENGINE *ENGINE_get_cipher_engine(int nid)
+	{
+	return engine_table_select(&cipher_table, nid);
+	}
+
+/* Obtains a cipher implementation from an ENGINE functional reference */
+const EVP_CIPHER *ENGINE_get_cipher(ENGINE *e, int nid)
+	{
+	const EVP_CIPHER *ret;
+	ENGINE_CIPHERS_PTR fn = ENGINE_get_ciphers(e);
+	if(!fn || !fn(e, &ret, NULL, nid))
+		{
+		ENGINEerr(ENGINE_F_ENGINE_GET_CIPHER,
+				ENGINE_R_UNIMPLEMENTED_CIPHER);
+		return NULL;
+		}
+	return ret;
+	}
+
+/* Gets the cipher callback from an ENGINE structure */
+ENGINE_CIPHERS_PTR ENGINE_get_ciphers(const ENGINE *e)
+	{
+	return e->ciphers;
+	}
+
+/* Sets the cipher callback in an ENGINE structure */
+int ENGINE_set_ciphers(ENGINE *e, ENGINE_CIPHERS_PTR f)
+	{
+	e->ciphers = f;
+	return 1;
+	}
