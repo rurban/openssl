@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
+ *    notice, this list of conditions and the following disclaimer. 
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -56,13 +56,9 @@
  *
  */
 
-/*
-**	19990701	VRS 	Started.
-*/
+#ifndef	KSSL_LCL_H
+#define	KSSL_LCL_H
 
-#ifndef	KSSL_H
-#define	KSSL_H
+#include <openssl/kssl.h>
 
-#include <openssl/opensslconf.h>
-
-#endif	/* KSSL_H 	*/
+#endif	/* KSSL_LCL_H 	*/
