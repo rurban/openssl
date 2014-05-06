@@ -1,4 +1,4 @@
-/* crypto/ec/ec_print.c */
+/* crypto/ec/ec_check.c */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -53,126 +53,65 @@
  *
  */
 
-#include <openssl/crypto.h>
 #include "ec_lcl.h"
+#include <openssl/err.h>
 
-BIGNUM *
-EC_POINT_point2bn(const EC_GROUP * group, const EC_POINT * point,
-    point_conversion_form_t form, BIGNUM * ret, BN_CTX * ctx)
+int 
+EC_GROUP_check(const EC_GROUP * group, BN_CTX * ctx)
 {
-	size_t buf_len = 0;
-	unsigned char *buf;
+	int ret = 0;
+	BIGNUM *order;
+	BN_CTX *new_ctx = NULL;
+	EC_POINT *point = NULL;
 
-	buf_len = EC_POINT_point2oct(group, point, form,
-	    NULL, 0, ctx);
-	if (buf_len == 0)
-		return NULL;
-
-	if ((buf = malloc(buf_len)) == NULL)
-		return NULL;
-
-	if (!EC_POINT_point2oct(group, point, form, buf, buf_len, ctx)) {
-		free(buf);
-		return NULL;
-	}
-	ret = BN_bin2bn(buf, buf_len, ret);
-
-	free(buf);
-
-	return ret;
-}
-
-EC_POINT *
-EC_POINT_bn2point(const EC_GROUP * group,
-    const BIGNUM * bn, EC_POINT * point, BN_CTX * ctx)
-{
-	size_t buf_len = 0;
-	unsigned char *buf;
-	EC_POINT *ret;
-
-	if ((buf_len = BN_num_bytes(bn)) == 0)
-		return NULL;
-	buf = malloc(buf_len);
-	if (buf == NULL)
-		return NULL;
-
-	if (!BN_bn2bin(bn, buf)) {
-		free(buf);
-		return NULL;
-	}
-	if (point == NULL) {
-		if ((ret = EC_POINT_new(group)) == NULL) {
-			free(buf);
-			return NULL;
+	if (ctx == NULL) {
+		ctx = new_ctx = BN_CTX_new();
+		if (ctx == NULL) {
+			ECerr(EC_F_EC_GROUP_CHECK, ERR_R_MALLOC_FAILURE);
+			goto err;
 		}
-	} else
-		ret = point;
-
-	if (!EC_POINT_oct2point(group, ret, buf, buf_len, ctx)) {
-		if (point == NULL)
-			EC_POINT_clear_free(ret);
-		free(buf);
-		return NULL;
 	}
-	free(buf);
-	return ret;
-}
+	BN_CTX_start(ctx);
+	if ((order = BN_CTX_get(ctx)) == NULL)
+		goto err;
 
-static const char *HEX_DIGITS = "0123456789ABCDEF";
-
-/* the return value must be freed (using free()) */
-char *
-EC_POINT_point2hex(const EC_GROUP * group, const EC_POINT * point,
-    point_conversion_form_t form, BN_CTX * ctx)
-{
-	char *ret, *p;
-	size_t buf_len = 0, i;
-	unsigned char *buf, *pbuf;
-
-	buf_len = EC_POINT_point2oct(group, point, form,
-	    NULL, 0, ctx);
-	if (buf_len == 0)
-		return NULL;
-
-	if ((buf = malloc(buf_len)) == NULL)
-		return NULL;
-
-	if (!EC_POINT_point2oct(group, point, form, buf, buf_len, ctx)) {
-		free(buf);
-		return NULL;
+	/* check the discriminant */
+	if (!EC_GROUP_check_discriminant(group, ctx)) {
+		ECerr(EC_F_EC_GROUP_CHECK, EC_R_DISCRIMINANT_IS_ZERO);
+		goto err;
 	}
-	ret = (char *) malloc(buf_len * 2 + 2);
-	if (ret == NULL) {
-		free(buf);
-		return NULL;
+	/* check the generator */
+	if (group->generator == NULL) {
+		ECerr(EC_F_EC_GROUP_CHECK, EC_R_UNDEFINED_GENERATOR);
+		goto err;
 	}
-	p = ret;
-	pbuf = buf;
-	for (i = buf_len; i > 0; i--) {
-		int v = (int) *(pbuf++);
-		*(p++) = HEX_DIGITS[v >> 4];
-		*(p++) = HEX_DIGITS[v & 0x0F];
+	if (!EC_POINT_is_on_curve(group, group->generator, ctx)) {
+		ECerr(EC_F_EC_GROUP_CHECK, EC_R_POINT_IS_NOT_ON_CURVE);
+		goto err;
 	}
-	*p = '\0';
+	/* check the order of the generator */
+	if ((point = EC_POINT_new(group)) == NULL)
+		goto err;
+	if (!EC_GROUP_get_order(group, order, ctx))
+		goto err;
+	if (BN_is_zero(order)) {
+		ECerr(EC_F_EC_GROUP_CHECK, EC_R_UNDEFINED_ORDER);
+		goto err;
+	}
+	if (!EC_POINT_mul(group, point, order, NULL, NULL, ctx))
+		goto err;
+	if (!EC_POINT_is_at_infinity(group, point)) {
+		ECerr(EC_F_EC_GROUP_CHECK, EC_R_INVALID_GROUP_ORDER);
+		goto err;
+	}
+	ret = 1;
 
-	free(buf);
-
-	return ret;
-}
-
-EC_POINT *
-EC_POINT_hex2point(const EC_GROUP * group, const char *buf,
-    EC_POINT * point, BN_CTX * ctx)
-{
-	EC_POINT *ret = NULL;
-	BIGNUM *tmp_bn = NULL;
-
-	if (!BN_hex2bn(&tmp_bn, buf))
-		return NULL;
-
-	ret = EC_POINT_bn2point(group, tmp_bn, point, ctx);
-
-	BN_clear_free(tmp_bn);
-
+err:
+	if (ctx != NULL)
+		BN_CTX_end(ctx);
+	if (new_ctx != NULL)
+		BN_CTX_free(new_ctx);
+	if (point)
+		EC_POINT_free(point);
 	return ret;
 }
