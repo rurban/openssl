@@ -1,4 +1,4 @@
-/* crypto/evp/p_verify.c */
+/* crypto/evp/p_seal.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,61 +58,64 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
+#include <openssl/rand.h>
+#ifndef OPENSSL_NO_RSA
+#include <openssl/rsa.h>
+#endif
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
 int
-EVP_VerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sigbuf,
-    unsigned int siglen, EVP_PKEY *pkey)
+EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type, unsigned char **ek,
+    int *ekl, unsigned char *iv, EVP_PKEY **pubk, int npubk)
 {
-	unsigned char m[EVP_MAX_MD_SIZE];
-	unsigned int m_len;
-	int i = 0, ok = 0, v;
-	EVP_MD_CTX tmp_ctx;
-	EVP_PKEY_CTX *pkctx = NULL;
+	unsigned char key[EVP_MAX_KEY_LENGTH];
+	int i;
 
-	EVP_MD_CTX_init(&tmp_ctx);
-	if (!EVP_MD_CTX_copy_ex(&tmp_ctx, ctx))
-		goto err;
-	if (!EVP_DigestFinal_ex(&tmp_ctx, &(m[0]), &m_len))
-		goto err;
-	EVP_MD_CTX_cleanup(&tmp_ctx);
+	if (type) {
+		EVP_CIPHER_CTX_init(ctx);
+		if (!EVP_EncryptInit_ex(ctx, type, NULL, NULL, NULL))
+			return 0;
+	}
+	if ((npubk <= 0) || !pubk)
+		return 1;
+	if (EVP_CIPHER_CTX_rand_key(ctx, key) <= 0)
+		return 0;
+	if (EVP_CIPHER_CTX_iv_length(ctx))
+		RAND_pseudo_bytes(iv, EVP_CIPHER_CTX_iv_length(ctx));
 
-	if (ctx->digest->flags & EVP_MD_FLAG_PKEY_METHOD_SIGNATURE) {
-		i = -1;
-		pkctx = EVP_PKEY_CTX_new(pkey, NULL);
-		if (!pkctx)
-			goto err;
-		if (EVP_PKEY_verify_init(pkctx) <= 0)
-			goto err;
-		if (EVP_PKEY_CTX_set_signature_md(pkctx, ctx->digest) <= 0)
-			goto err;
-		i = EVP_PKEY_verify(pkctx, sigbuf, siglen, m, m_len);
-err:
-		EVP_PKEY_CTX_free(pkctx);
-		return i;
-	}
+	if (!EVP_EncryptInit_ex(ctx, NULL, NULL, key, iv))
+		return 0;
 
-	for (i = 0; i < 4; i++) {
-		v = ctx->digest->required_pkey_type[i];
-		if (v == 0)
-			break;
-		if (pkey->type == v) {
-			ok = 1;
-			break;
-		}
+	for (i = 0; i < npubk; i++) {
+		ekl[i] = EVP_PKEY_encrypt_old(ek[i], key,
+		    EVP_CIPHER_CTX_key_length(ctx), pubk[i]);
+		if (ekl[i] <= 0)
+			return (-1);
 	}
-	if (!ok) {
-		EVPerr(EVP_F_EVP_VERIFYFINAL, EVP_R_WRONG_PUBLIC_KEY_TYPE);
-		return (-1);
-	}
-	if (ctx->digest->verify == NULL) {
-		EVPerr(EVP_F_EVP_VERIFYFINAL,
-		    EVP_R_NO_VERIFY_FUNCTION_CONFIGURED);
-		return (0);
-	}
+	return (npubk);
+}
 
-	return(ctx->digest->verify(ctx->digest->type, m, m_len,
-	    sigbuf, siglen, pkey->pkey.ptr));
+/* MACRO
+void EVP_SealUpdate(ctx,out,outl,in,inl)
+EVP_CIPHER_CTX *ctx;
+unsigned char *out;
+int *outl;
+unsigned char *in;
+int inl;
+	{
+	EVP_EncryptUpdate(ctx,out,outl,in,inl);
+	}
+*/
+
+int
+EVP_SealFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
+{
+	int i;
+
+	i = EVP_EncryptFinal_ex(ctx, out, outl);
+	if (i)
+		i = EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, NULL);
+	return i;
 }
