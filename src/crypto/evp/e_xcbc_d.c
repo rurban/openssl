@@ -1,4 +1,4 @@
-/* crypto/evp/e_null.c */
+/* crypto/evp/e_xcbc_d.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,47 +58,77 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
+
+#ifndef OPENSSL_NO_DES
+
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include "evp_locl.h"
+#include <openssl/des.h>
 
-static int null_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+static int desx_cbc_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     const unsigned char *iv, int enc);
-static int null_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int desx_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const unsigned char *in, size_t inl);
 
-static const EVP_CIPHER n_cipher = {
-	NID_undef,
-	1, 0, 0,
-	0,
-	null_init_key,
-	null_cipher,
+
+typedef struct {
+	DES_key_schedule ks;/* key schedule */
+	DES_cblock inw;
+	DES_cblock outw;
+} DESX_CBC_KEY;
+
+#define data(ctx) ((DESX_CBC_KEY *)(ctx)->cipher_data)
+
+static const EVP_CIPHER d_xcbc_cipher = {
+	NID_desx_cbc,
+	8, 24, 8,
+	EVP_CIPH_CBC_MODE,
+	desx_cbc_init_key,
+	desx_cbc_cipher,
 	NULL,
-	0,
-	NULL,
-	NULL,
+	sizeof(DESX_CBC_KEY),
+	EVP_CIPHER_set_asn1_iv,
+	EVP_CIPHER_get_asn1_iv,
 	NULL,
 	NULL
 };
 
 const EVP_CIPHER *
-EVP_enc_null(void)
+EVP_desx_cbc(void)
 {
-	return (&n_cipher);
+	return (&d_xcbc_cipher);
 }
 
 static int
-null_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+desx_cbc_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     const unsigned char *iv, int enc)
 {
-	/*	memset(&(ctx->c),0,sizeof(ctx->c));*/
+	DES_cblock *deskey = (DES_cblock *)key;
+
+	DES_set_key_unchecked(deskey, &data(ctx)->ks);
+	memcpy(&data(ctx)->inw[0], &key[8], 8);
+	memcpy(&data(ctx)->outw[0], &key[16], 8);
+
 	return 1;
 }
 
 static int
-null_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+desx_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const unsigned char *in, size_t inl)
 {
-	if (in != out)
-		memcpy((char *)out, (const char *)in, inl);
+	while (inl >= EVP_MAXCHUNK) {
+		DES_xcbc_encrypt(in, out, (long)EVP_MAXCHUNK, &data(ctx)->ks,
+		    (DES_cblock *)&(ctx->iv[0]), &data(ctx)->inw,
+		    &data(ctx)->outw, ctx->encrypt);
+		inl -= EVP_MAXCHUNK;
+		in += EVP_MAXCHUNK;
+		out += EVP_MAXCHUNK;
+	}
+	if (inl)
+		DES_xcbc_encrypt(in, out, (long)inl, &data(ctx)->ks,
+		    (DES_cblock *)&(ctx->iv[0]), &data(ctx)->inw,
+		    &data(ctx)->outw, ctx->encrypt);
 	return 1;
 }
+#endif

@@ -1,4 +1,4 @@
-/* crypto/evp/e_null.c */
+/* crypto/evp/e_rc5.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,47 +58,69 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
+
+#ifndef OPENSSL_NO_RC5
+
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include "evp_locl.h"
+#include <openssl/rc5.h>
 
-static int null_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+static int r_32_12_16_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     const unsigned char *iv, int enc);
-static int null_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-    const unsigned char *in, size_t inl);
+static int rc5_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr);
 
-static const EVP_CIPHER n_cipher = {
-	NID_undef,
-	1, 0, 0,
-	0,
-	null_init_key,
-	null_cipher,
-	NULL,
-	0,
-	NULL,
-	NULL,
-	NULL,
-	NULL
-};
+typedef struct {
+	int rounds;	/* number of rounds */
+	RC5_32_KEY ks;	/* key schedule */
+} EVP_RC5_KEY;
 
-const EVP_CIPHER *
-EVP_enc_null(void)
+#define data(ctx)	EVP_C_DATA(EVP_RC5_KEY,ctx)
+
+IMPLEMENT_BLOCK_CIPHER(rc5_32_12_16, ks, RC5_32, EVP_RC5_KEY, NID_rc5,
+    8, RC5_32_KEY_LENGTH, 8, 64,
+    EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_CTRL_INIT,
+    r_32_12_16_init_key, NULL,
+    NULL, NULL, rc5_ctrl)
+
+static int
+rc5_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 {
-	return (&n_cipher);
+	switch (type) {
+	case EVP_CTRL_INIT:
+		data(c)->rounds = RC5_12_ROUNDS;
+		return 1;
+
+	case EVP_CTRL_GET_RC5_ROUNDS:
+		*(int *)ptr = data(c)->rounds;
+		return 1;
+
+	case EVP_CTRL_SET_RC5_ROUNDS:
+		switch (arg) {
+		case RC5_8_ROUNDS:
+		case RC5_12_ROUNDS:
+		case RC5_16_ROUNDS:
+			data(c)->rounds = arg;
+			return 1;
+
+		default:
+			EVPerr(EVP_F_RC5_CTRL,
+			    EVP_R_UNSUPORTED_NUMBER_OF_ROUNDS);
+			return 0;
+		}
+
+	default:
+		return -1;
+	}
 }
 
 static int
-null_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+r_32_12_16_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     const unsigned char *iv, int enc)
 {
-	/*	memset(&(ctx->c),0,sizeof(ctx->c));*/
+	RC5_32_set_key(&data(ctx)->ks, EVP_CIPHER_CTX_key_length(ctx), key,
+	    data(ctx)->rounds);
 	return 1;
 }
 
-static int
-null_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-    const unsigned char *in, size_t inl)
-{
-	if (in != out)
-		memcpy((char *)out, (const char *)in, inl);
-	return 1;
-}
+#endif

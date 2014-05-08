@@ -1,6 +1,9 @@
-/* crypto/evp/e_camellia.c -*- mode:C; c-file-style: "eay" -*- */
+/* crypto/evp/e_old.c -*- mode:C; c-file-style: "eay" -*- */
+/* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
+ * project 2004.
+ */
 /* ====================================================================
- * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2004 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -53,71 +56,103 @@
  *
  */
 
-#include <openssl/opensslconf.h>
-#ifndef OPENSSL_NO_CAMELLIA
+#ifdef OPENSSL_NO_DEPRECATED
+static void *dummy = &dummy;
+#else
+
 #include <openssl/evp.h>
-#include <openssl/err.h>
-#include <string.h>
-#include <assert.h>
-#include <openssl/camellia.h>
-#include "evp_locl.h"
 
-static int camellia_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-    const unsigned char *iv, int enc);
+/* Define some deprecated functions, so older programs
+   don't crash and burn too quickly.  On Windows and VMS,
+   these will never be used, since functions and variables
+   in shared libraries are selected by entry point location,
+   not by name.  */
 
-/* Camellia subkey Structure */
-typedef struct {
-	CAMELLIA_KEY ks;
-} EVP_CAMELLIA_KEY;
-
-/* Attribute operation for Camellia */
-#define data(ctx)	EVP_C_DATA(EVP_CAMELLIA_KEY,ctx)
-
-IMPLEMENT_BLOCK_CIPHER(camellia_128, ks, Camellia, EVP_CAMELLIA_KEY,
-    NID_camellia_128, 16, 16, 16, 128,
-    0, camellia_init_key, NULL,
-    EVP_CIPHER_set_asn1_iv,
-    EVP_CIPHER_get_asn1_iv,
-    NULL)
-IMPLEMENT_BLOCK_CIPHER(camellia_192, ks, Camellia, EVP_CAMELLIA_KEY,
-    NID_camellia_192, 16, 24, 16, 128,
-    0, camellia_init_key, NULL,
-    EVP_CIPHER_set_asn1_iv,
-    EVP_CIPHER_get_asn1_iv,
-    NULL)
-IMPLEMENT_BLOCK_CIPHER(camellia_256, ks, Camellia, EVP_CAMELLIA_KEY,
-    NID_camellia_256, 16, 32, 16, 128,
-    0, camellia_init_key, NULL,
-    EVP_CIPHER_set_asn1_iv,
-    EVP_CIPHER_get_asn1_iv,
-    NULL)
-
-#define IMPLEMENT_CAMELLIA_CFBR(ksize,cbits)	IMPLEMENT_CFBR(camellia,Camellia,EVP_CAMELLIA_KEY,ks,ksize,cbits,16)
-
-IMPLEMENT_CAMELLIA_CFBR(128, 1)
-IMPLEMENT_CAMELLIA_CFBR(192, 1)
-IMPLEMENT_CAMELLIA_CFBR(256, 1)
-
-IMPLEMENT_CAMELLIA_CFBR(128, 8)
-IMPLEMENT_CAMELLIA_CFBR(192, 8)
-IMPLEMENT_CAMELLIA_CFBR(256, 8)
-
-
-/* The subkey for Camellia is generated. */
-static int
-camellia_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-    const unsigned char *iv, int enc)
+#ifndef OPENSSL_NO_BF
+#undef EVP_bf_cfb
+const EVP_CIPHER *EVP_bf_cfb(void);
+const EVP_CIPHER *EVP_bf_cfb(void)
 {
-	int ret;
-
-	ret = Camellia_set_key(key, ctx->key_len * 8, ctx->cipher_data);
-
-	if (ret < 0) {
-		EVPerr(EVP_F_CAMELLIA_INIT_KEY,
-		    EVP_R_CAMELLIA_KEY_SETUP_FAILED);
-		return 0;
-	}
-
-	return 1;
+	return EVP_bf_cfb64();
 }
+#endif
+
+#ifndef OPENSSL_NO_DES
+#undef EVP_des_cfb
+const EVP_CIPHER *EVP_des_cfb(void);
+const EVP_CIPHER *EVP_des_cfb(void)
+{
+	return EVP_des_cfb64();
+}
+#undef EVP_des_ede3_cfb
+const EVP_CIPHER *EVP_des_ede3_cfb(void);
+const EVP_CIPHER *EVP_des_ede3_cfb(void)
+{
+	return EVP_des_ede3_cfb64();
+}
+#undef EVP_des_ede_cfb
+const EVP_CIPHER *EVP_des_ede_cfb(void);
+const EVP_CIPHER *EVP_des_ede_cfb(void)
+{
+	return EVP_des_ede_cfb64();
+}
+#endif
+
+#ifndef OPENSSL_NO_IDEA
+#undef EVP_idea_cfb
+const EVP_CIPHER *EVP_idea_cfb(void);
+const EVP_CIPHER *EVP_idea_cfb(void)
+{
+	return EVP_idea_cfb64();
+}
+#endif
+
+#ifndef OPENSSL_NO_RC2
+#undef EVP_rc2_cfb
+const EVP_CIPHER *EVP_rc2_cfb(void);
+const EVP_CIPHER *EVP_rc2_cfb(void)
+{
+	return EVP_rc2_cfb64();
+}
+#endif
+
+#ifndef OPENSSL_NO_CAST
+#undef EVP_cast5_cfb
+const EVP_CIPHER *EVP_cast5_cfb(void);
+const EVP_CIPHER *EVP_cast5_cfb(void)
+{
+	return EVP_cast5_cfb64();
+}
+#endif
+
+#ifndef OPENSSL_NO_RC5
+#undef EVP_rc5_32_12_16_cfb
+const EVP_CIPHER *EVP_rc5_32_12_16_cfb(void);
+const EVP_CIPHER *EVP_rc5_32_12_16_cfb(void)
+{
+	return EVP_rc5_32_12_16_cfb64();
+}
+#endif
+
+#ifndef OPENSSL_NO_AES
+#undef EVP_aes_128_cfb
+const EVP_CIPHER *EVP_aes_128_cfb(void);
+const EVP_CIPHER *EVP_aes_128_cfb(void)
+{
+	return EVP_aes_128_cfb128();
+}
+#undef EVP_aes_192_cfb
+const EVP_CIPHER *EVP_aes_192_cfb(void);
+const EVP_CIPHER *EVP_aes_192_cfb(void)
+{
+	return EVP_aes_192_cfb128();
+}
+#undef EVP_aes_256_cfb
+const EVP_CIPHER *EVP_aes_256_cfb(void);
+const EVP_CIPHER *EVP_aes_256_cfb(void)
+{
+	return EVP_aes_256_cfb128();
+}
+#endif
+
 #endif

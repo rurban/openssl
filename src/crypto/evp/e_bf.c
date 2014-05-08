@@ -1,4 +1,4 @@
-/* crypto/evp/e_null.c */
+/* crypto/evp/e_bf.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,47 +58,30 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
+#ifndef OPENSSL_NO_BF
 #include <openssl/evp.h>
+#include "evp_locl.h"
 #include <openssl/objects.h>
+#include <openssl/blowfish.h>
 
-static int null_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+static int bf_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     const unsigned char *iv, int enc);
-static int null_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-    const unsigned char *in, size_t inl);
 
-static const EVP_CIPHER n_cipher = {
-	NID_undef,
-	1, 0, 0,
-	0,
-	null_init_key,
-	null_cipher,
-	NULL,
-	0,
-	NULL,
-	NULL,
-	NULL,
-	NULL
-};
+typedef struct {
+	BF_KEY ks;
+} EVP_BF_KEY;
 
-const EVP_CIPHER *
-EVP_enc_null(void)
-{
-	return (&n_cipher);
-}
+#define data(ctx)	EVP_C_DATA(EVP_BF_KEY,ctx)
+
+IMPLEMENT_BLOCK_CIPHER(bf, ks, BF, EVP_BF_KEY, NID_bf, 8, 16, 8, 64,
+    EVP_CIPH_VARIABLE_LENGTH, bf_init_key, NULL,
+    EVP_CIPHER_set_asn1_iv, EVP_CIPHER_get_asn1_iv, NULL)
 
 static int
-null_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+bf_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     const unsigned char *iv, int enc)
 {
-	/*	memset(&(ctx->c),0,sizeof(ctx->c));*/
+	BF_set_key(&data(ctx)->ks, EVP_CIPHER_CTX_key_length(ctx), key);
 	return 1;
 }
-
-static int
-null_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-    const unsigned char *in, size_t inl)
-{
-	if (in != out)
-		memcpy((char *)out, (const char *)in, inl);
-	return 1;
-}
+#endif
