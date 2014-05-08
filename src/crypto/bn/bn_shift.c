@@ -1,4 +1,4 @@
-/* crypto/bn/bn_add.c */
+/* crypto/bn/bn_shift.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,251 +60,157 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
-/* r can == a or b */
 int
-BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
+BN_lshift1(BIGNUM *r, const BIGNUM *a)
 {
-	const BIGNUM *tmp;
-	int a_neg = a->neg, ret;
+	register BN_ULONG *ap, *rp, t, c;
+	int i;
 
-	bn_check_top(a);
-	bn_check_top(b);
-
-	/*  a +  b	a+b
-	 *  a + -b	a-b
-	 * -a +  b	b-a
-	 * -a + -b	-(a+b)
-	 */
-	if (a_neg ^ b->neg) {
-		/* only one is negative */
-		if (a_neg)
-				{ tmp = a;
-			a = b;
-			b = tmp;
-		}
-
-		/* we are now a - b */
-
-		if (BN_ucmp(a, b) < 0) {
-			if (!BN_usub(r, b, a))
-				return (0);
-			r->neg = 1;
-		} else {
-			if (!BN_usub(r, a, b))
-				return (0);
-			r->neg = 0;
-		}
-		return (1);
-	}
-
-	ret = BN_uadd(r, a, b);
-	r->neg = a_neg;
 	bn_check_top(r);
-	return ret;
-}
-
-/* unsigned add of b to a */
-int
-BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
-{
-	int max, min, dif;
-	BN_ULONG *ap, *bp, *rp, carry, t1, t2;
-	const BIGNUM *tmp;
-
 	bn_check_top(a);
-	bn_check_top(b);
 
-	if (a->top < b->top) {
-		tmp = a;
-		a = b;
-		b = tmp;
+	if (r != a) {
+		r->neg = a->neg;
+		if (bn_wexpand(r, a->top + 1) == NULL)
+			return (0);
+		r->top = a->top;
+	} else {
+		if (bn_wexpand(r, a->top + 1) == NULL)
+			return (0);
 	}
-	max = a->top;
-	min = b->top;
-	dif = max - min;
-
-	if (bn_wexpand(r, max + 1) == NULL)
-		return 0;
-
-	r->top = max;
-
 	ap = a->d;
-	bp = b->d;
 	rp = r->d;
-
-	carry = bn_add_words(rp, ap, bp, min);
-	rp += min;
-	ap += min;
-	bp += min;
-
-	if (carry) {
-		while (dif) {
-			dif--;
-			t1 = *(ap++);
-			t2 = (t1 + 1) & BN_MASK2;
-			*(rp++) = t2;
-			if (t2) {
-				carry = 0;
-				break;
-			}
-		}
-		if (carry) {
-			/* carry != 0 => dif == 0 */
-			*rp = 1;
-			r->top++;
-		}
+	c = 0;
+	for (i = 0; i < a->top; i++) {
+		t= *(ap++);
+		*(rp++) = ((t << 1) | c) & BN_MASK2;
+		c = (t & BN_TBIT) ? 1 : 0;
 	}
-	if (dif && rp != ap)
-		while (dif--)
-			/* copy remaining words if ap != rp */
-			*(rp++) = *(ap++);
-	r->neg = 0;
+	if (c) {
+		*rp = 1;
+		r->top++;
+	}
 	bn_check_top(r);
-	return 1;
-}
-
-/* unsigned subtraction of b from a, a must be larger than b. */
-int
-BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
-{
-	int max, min, dif;
-	register BN_ULONG t1, t2, *ap, *bp, *rp;
-	int i, carry;
-
-	bn_check_top(a);
-	bn_check_top(b);
-
-	max = a->top;
-	min = b->top;
-	dif = max - min;
-
-	if (dif < 0)	/* hmm... should not be happening */
-	{
-		BNerr(BN_F_BN_USUB, BN_R_ARG2_LT_ARG3);
-		return (0);
-	}
-
-	if (bn_wexpand(r, max) == NULL)
-		return (0);
-
-	ap = a->d;
-	bp = b->d;
-	rp = r->d;
-
-#if 1
-	carry = 0;
-	for (i = min; i != 0; i--) {
-		t1= *(ap++);
-		t2= *(bp++);
-		if (carry) {
-			carry = (t1 <= t2);
-			t1 = (t1 - t2 - 1)&BN_MASK2;
-		} else {
-			carry = (t1 < t2);
-			t1 = (t1 - t2)&BN_MASK2;
-		}
-		*(rp++) = t1&BN_MASK2;
-	}
-#else
-	carry = bn_sub_words(rp, ap, bp, min);
-	ap += min;
-	bp += min;
-	rp += min;
-#endif
-	if (carry) /* subtracted */
-	{
-		if (!dif)
-			/* error: a < b */
-			return 0;
-		while (dif) {
-			dif--;
-			t1 = *(ap++);
-			t2 = (t1 - 1)&BN_MASK2;
-			*(rp++) = t2;
-			if (t1)
-				break;
-		}
-	}
-#if 0
-	memcpy(rp, ap, sizeof(*rp)*(max - i));
-#else
-	if (rp != ap) {
-		for (;;) {
-			if (!dif--)
-				break;
-			rp[0] = ap[0];
-			if (!dif--)
-				break;
-			rp[1] = ap[1];
-			if (!dif--)
-				break;
-			rp[2] = ap[2];
-			if (!dif--)
-				break;
-			rp[3] = ap[3];
-			rp += 4;
-			ap += 4;
-		}
-	}
-#endif
-
-	r->top = max;
-	r->neg = 0;
-	bn_correct_top(r);
 	return (1);
 }
 
 int
-BN_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
+BN_rshift1(BIGNUM *r, const BIGNUM *a)
 {
-	int max;
-	int add = 0, neg = 0;
-	const BIGNUM *tmp;
+	BN_ULONG *ap, *rp, t, c;
+	int i, j;
 
+	bn_check_top(r);
 	bn_check_top(a);
-	bn_check_top(b);
 
-	/*  a -  b	a-b
-	 *  a - -b	a+b
-	 * -a -  b	-(a+b)
-	 * -a - -b	b-a
-	 */
-	if (a->neg) {
-		if (b->neg) {
-			tmp = a;
-			a = b;
-			b = tmp;
-		} else {
-			add = 1;
-			neg = 1;
-		}
-	} else {
-		if (b->neg) {
-			add = 1;
-			neg = 0;
-		}
-	}
-
-	if (add) {
-		if (!BN_uadd(r, a, b))
-			return (0);
-		r->neg = neg;
+	if (BN_is_zero(a)) {
+		BN_zero(r);
 		return (1);
 	}
+	i = a->top;
+	ap = a->d;
+	j = i - (ap[i - 1]==1);
+	if (a != r) {
+		if (bn_wexpand(r, j) == NULL)
+			return (0);
+		r->neg = a->neg;
+	}
+	rp = r->d;
+	t = ap[--i];
+	c = (t & 1) ? BN_TBIT : 0;
+	if (t >>= 1)
+		rp[i] = t;
+	while (i > 0) {
+		t = ap[--i];
+		rp[i] = ((t >> 1) & BN_MASK2) | c;
+		c = (t & 1) ? BN_TBIT : 0;
+	}
+	r->top = j;
+	bn_check_top(r);
+	return (1);
+}
 
-	/* We are actually doing a - b :-) */
+int
+BN_lshift(BIGNUM *r, const BIGNUM *a, int n)
+{
+	int i, nw, lb, rb;
+	BN_ULONG *t, *f;
+	BN_ULONG l;
 
-	max = (a->top > b->top) ? a->top : b->top;
-	if (bn_wexpand(r, max) == NULL)
+	bn_check_top(r);
+	bn_check_top(a);
+
+	r->neg = a->neg;
+	nw = n / BN_BITS2;
+	if (bn_wexpand(r, a->top + nw + 1) == NULL)
 		return (0);
-	if (BN_ucmp(a, b) < 0) {
-		if (!BN_usub(r, b, a))
+	lb = n % BN_BITS2;
+	rb = BN_BITS2 - lb;
+	f = a->d;
+	t = r->d;
+	t[a->top + nw] = 0;
+	if (lb == 0)
+		for (i = a->top - 1; i >= 0; i--)
+			t[nw + i] = f[i];
+	else
+		for (i = a->top - 1; i >= 0; i--) {
+			l = f[i];
+			t[nw + i + 1] |= (l >> rb) & BN_MASK2;
+			t[nw + i] = (l << lb) & BN_MASK2;
+		}
+	memset(t, 0, nw * sizeof(t[0]));
+/*	for (i=0; i<nw; i++)
+		t[i]=0;*/
+	r->top = a->top + nw + 1;
+	bn_correct_top(r);
+	bn_check_top(r);
+	return (1);
+}
+
+int
+BN_rshift(BIGNUM *r, const BIGNUM *a, int n)
+{
+	int i, j, nw, lb, rb;
+	BN_ULONG *t, *f;
+	BN_ULONG l, tmp;
+
+	bn_check_top(r);
+	bn_check_top(a);
+
+	nw = n / BN_BITS2;
+	rb = n % BN_BITS2;
+	lb = BN_BITS2 - rb;
+	if (nw >= a->top || a->top == 0) {
+		BN_zero(r);
+		return (1);
+	}
+	i = (BN_num_bits(a) - n + (BN_BITS2 - 1)) / BN_BITS2;
+	if (r != a) {
+		r->neg = a->neg;
+		if (bn_wexpand(r, i) == NULL)
 			return (0);
-		r->neg = 1;
 	} else {
-		if (!BN_usub(r, a, b))
-			return (0);
-		r->neg = 0;
+		if (n == 0)
+			return 1; /* or the copying loop will go berserk */
+	}
+
+	f = &(a->d[nw]);
+	t = r->d;
+	j = a->top - nw;
+	r->top = i;
+
+	if (rb == 0) {
+		for (i = j; i != 0; i--)
+			*(t++) = *(f++);
+	} else {
+		l = *(f++);
+		for (i = j - 1; i != 0; i--) {
+			tmp = (l >> rb) & BN_MASK2;
+			l = *(f++);
+			*(t++) = (tmp|(l << lb)) & BN_MASK2;
+		}
+		if ((l = (l >> rb) & BN_MASK2))
+			*(t) = l;
 	}
 	bn_check_top(r);
 	return (1);
