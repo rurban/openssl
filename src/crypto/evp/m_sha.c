@@ -1,4 +1,4 @@
-/* crypto/evp/m_dss.c */
+/* crypto/evp/m_sha.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,48 +58,50 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
+
+#if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA0)
+
 #include <openssl/evp.h>
 #include <openssl/objects.h>
-#include <openssl/sha.h>
-#ifndef OPENSSL_NO_DSA
-#include <openssl/dsa.h>
+#include <openssl/x509.h>
+#ifndef OPENSSL_NO_RSA
+#include <openssl/rsa.h>
 #endif
-
-#ifndef OPENSSL_NO_SHA
+#include "evp_locl.h"
 
 static int init(EVP_MD_CTX *ctx)
 {
-	return SHA1_Init(ctx->md_data);
+	return SHA_Init(ctx->md_data);
 }
 
 static int update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
-	return SHA1_Update(ctx->md_data, data, count);
+	return SHA_Update(ctx->md_data, data, count);
 }
 
 static int final(EVP_MD_CTX *ctx, unsigned char *md)
 {
-	return SHA1_Final(md, ctx->md_data);
+	return SHA_Final(md, ctx->md_data);
 }
 
-static const EVP_MD dsa_md = {
-	NID_dsaWithSHA,
-	NID_dsaWithSHA,
+static const EVP_MD sha_md = {
+	NID_sha,
+	NID_shaWithRSAEncryption,
 	SHA_DIGEST_LENGTH,
-	EVP_MD_FLAG_PKEY_DIGEST,
+	0,
 	init,
 	update,
 	final,
 	NULL,
 	NULL,
-	EVP_PKEY_DSA_method,
+	EVP_PKEY_RSA_method,
 	SHA_CBLOCK,
 	sizeof(EVP_MD *) + sizeof(SHA_CTX),
 };
 
 const EVP_MD *
-EVP_dss(void)
+EVP_sha(void)
 {
-	return (&dsa_md);
+	return (&sha_md);
 }
 #endif
