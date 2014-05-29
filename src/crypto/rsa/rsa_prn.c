@@ -1,16 +1,16 @@
-/* t_crl.c */
+/* crypto/rsa/rsa_prn.c */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
- * project 1999.
+ * project 2006.
  */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
+ *    notice, this list of conditions and the following disclaimer. 
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -58,76 +58,34 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include <openssl/buffer.h>
-#include <openssl/bn.h>
-#include <openssl/objects.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
+#include <openssl/rsa.h>
+#include <openssl/evp.h>
 
-int
-X509_CRL_print_fp(FILE *fp, X509_CRL *x)
-{
+int RSA_print_fp(FILE *fp, const RSA *x, int off)
+	{
 	BIO *b;
 	int ret;
 
-	if ((b = BIO_new(BIO_s_file())) == NULL) {
-		X509err(X509_F_X509_CRL_PRINT_FP, ERR_R_BUF_LIB);
-		return (0);
-	}
-	BIO_set_fp(b, fp, BIO_NOCLOSE);
-	ret = X509_CRL_print(b, x);
+	if ((b=BIO_new(BIO_s_file())) == NULL)
+		{
+		RSAerr(RSA_F_RSA_PRINT_FP,ERR_R_BUF_LIB);
+		return(0);
+		}
+	BIO_set_fp(b,fp,BIO_NOCLOSE);
+	ret=RSA_print(b,x,off);
 	BIO_free(b);
-	return (ret);
-}
-
-int
-X509_CRL_print(BIO *out, X509_CRL *x)
-{
-	STACK_OF(X509_REVOKED) *rev;
-	X509_REVOKED *r;
-	long l;
-	int i;
-	char *p;
-
-	BIO_printf(out, "Certificate Revocation List (CRL):\n");
-	l = X509_CRL_get_version(x);
-	BIO_printf(out, "%8sVersion %lu (0x%lx)\n", "", l + 1, l);
-	i = OBJ_obj2nid(x->sig_alg->algorithm);
-	X509_signature_print(out, x->sig_alg, NULL);
-	p = X509_NAME_oneline(X509_CRL_get_issuer(x), NULL, 0);
-	BIO_printf(out, "%8sIssuer: %s\n", "", p);
-	free(p);
-	BIO_printf(out, "%8sLast Update: ", "");
-	ASN1_TIME_print(out, X509_CRL_get_lastUpdate(x));
-	BIO_printf(out, "\n%8sNext Update: ", "");
-	if (X509_CRL_get_nextUpdate(x))
-		ASN1_TIME_print(out, X509_CRL_get_nextUpdate(x));
-	else
-		BIO_printf(out, "NONE");
-	BIO_printf(out, "\n");
-
-	X509V3_extensions_print(out, "CRL extensions",
-	    x->crl->extensions, 0, 8);
-
-	rev = X509_CRL_get_REVOKED(x);
-
-	if (sk_X509_REVOKED_num(rev) > 0)
-		BIO_printf(out, "Revoked Certificates:\n");
-	else
-		BIO_printf(out, "No Revoked Certificates.\n");
-
-	for (i = 0; i < sk_X509_REVOKED_num(rev); i++) {
-		r = sk_X509_REVOKED_value(rev, i);
-		BIO_printf(out, "    Serial Number: ");
-		i2a_ASN1_INTEGER(out, r->serialNumber);
-		BIO_printf(out, "\n        Revocation Date: ");
-		ASN1_TIME_print(out, r->revocationDate);
-		BIO_printf(out, "\n");
-		X509V3_extensions_print(out, "CRL entry extensions",
-		    r->extensions, 0, 8);
+	return(ret);
 	}
-	X509_signature_print(out, x->sig_alg, x->signature);
 
-	return 1;
+int RSA_print(BIO *bp, const RSA *x, int off)
+	{
+	EVP_PKEY *pk;
+	int ret;
+	pk = EVP_PKEY_new();
+	if (!pk || !EVP_PKEY_set1_RSA(pk, (RSA *)x))
+		return 0;
+	ret = EVP_PKEY_print_private(bp, pk, off, NULL);
+	EVP_PKEY_free(pk);
+	return ret;
+	}
 
-}
