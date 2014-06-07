@@ -405,7 +405,7 @@ password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_tmp)
 			ok = UI_add_input_string(ui, prompt, ui_flags, buf,
 			    PW_MIN_LENGTH, bufsiz - 1);
 		if (ok >= 0 && verify) {
-			buff = (char *) malloc(bufsiz);
+			buff = malloc(bufsiz);
 			ok = UI_add_verify_string(ui, prompt, ui_flags, buff,
 			    PW_MIN_LENGTH, bufsiz - 1, buf);
 		}
@@ -2012,18 +2012,18 @@ args_verify(char ***pargs, int *pargc, int *badarg, BIO *err,
 		if (!argn)
 			*badarg = 1;
 		else {
-			long timestamp;
+			long long timestamp;
 			/*
 			 * interpret the -attime argument as seconds since
 			 * Epoch
 			 */
-			if (sscanf(argn, "%li", &timestamp) != 1) {
+			if (sscanf(argn, "%lli", &timestamp) != 1) {
 				BIO_printf(bio_err,
 				    "Error parsing timestamp %s\n",
 				    argn);
 				*badarg = 1;
 			}
-			/* on some platforms time_t may be a float */
+			/* XXX 2038 truncation */
 			at_time = (time_t) timestamp;
 		}
 		(*pargs)++;
