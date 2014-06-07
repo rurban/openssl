@@ -791,8 +791,7 @@ dtls1_client_hello(SSL *s)
 		for (i = 0; p[i]=='\0' && i < sizeof(s->s3->client_random); i++)
 			;
 		if (i == sizeof(s->s3->client_random))
-			ssl_fill_hello_random(s, 0, p,
-			    sizeof(s->s3->client_random));
+			RAND_pseudo_bytes(p, sizeof(s->s3->client_random));
 
 		/* Do the message type and length last */
 		d = p = &(buf[DTLS1_HM_HEADER_LENGTH]);
@@ -1211,8 +1210,7 @@ dtls1_send_client_key_exchange(SSL *s)
 			/* Free allocated memory */
 			BN_CTX_free(bn_ctx);
 			free(encodedPoint);
-			if (clnt_ecdh != NULL)
-				EC_KEY_free(clnt_ecdh);
+			EC_KEY_free(clnt_ecdh);
 			EVP_PKEY_free(srvr_pub_pkey);
 		}
 
@@ -1321,11 +1319,11 @@ psk_err:
 
 	/* SSL3_ST_CW_KEY_EXCH_B */
 	return (dtls1_do_write(s, SSL3_RT_HANDSHAKE));
+
 err:
 	BN_CTX_free(bn_ctx);
 	free(encodedPoint);
-	if (clnt_ecdh != NULL)
-		EC_KEY_free(clnt_ecdh);
+	EC_KEY_free(clnt_ecdh);
 	EVP_PKEY_free(srvr_pub_pkey);
 	return (-1);
 }
@@ -1447,8 +1445,7 @@ dtls1_send_client_certificate(SSL *s)
 
 		if (x509 != NULL)
 			X509_free(x509);
-		if (pkey != NULL)
-			EVP_PKEY_free(pkey);
+		EVP_PKEY_free(pkey);
 		if (i == 0) {
 			if (s->version == SSL3_VERSION) {
 				s->s3->tmp.cert_req = 0;
