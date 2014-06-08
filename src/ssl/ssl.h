@@ -611,12 +611,6 @@ struct ssl_session_st {
  * TLS only.)  "Released" buffers are put onto a free-list in the context
  * or just freed (depending on the context's setting for freelist_max_len). */
 #define SSL_MODE_RELEASE_BUFFERS 0x00000010L
-/* Send the current time in the Random fields of the ClientHello and
- * ServerHello records for compatibility with hypothetical implementations
- * that require it.
- */
-#define SSL_MODE_SEND_CLIENTHELLO_TIME 0x00000020L
-#define SSL_MODE_SEND_SERVERHELLO_TIME 0x00000040L
 
 /* Note: SSL[_CTX]_set_{options,mode} use |= op on the previous value,
  * they cannot be used to clear bits. */
@@ -2090,6 +2084,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL_VERIFY_CERT_CHAIN			 207
 #define SSL_F_SSL_WRITE					 208
 #define SSL_F_TLS1_CERT_VERIFY_MAC			 286
+#define SSL_F_TLS1_CHANGE_CIPHER_STATE_CIPHER		 338
 #define SSL_F_TLS1_CHANGE_CIPHER_STATE			 209
 #define SSL_F_TLS1_CHECK_SERVERHELLO_TLSEXT		 274
 #define SSL_F_TLS1_ENC					 210
