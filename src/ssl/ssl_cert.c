@@ -143,8 +143,9 @@ SSL_get_ex_data_X509_STORE_CTX_idx(void)
 		got_write_lock = 1;
 
 		if (ssl_x509_store_ctx_idx < 0) {
-			ssl_x509_store_ctx_idx = X509_STORE_CTX_get_ex_new_index(
-			0, "SSL for verify callback", NULL, NULL, NULL);
+			ssl_x509_store_ctx_idx =
+			    X509_STORE_CTX_get_ex_new_index(
+				0, "SSL for verify callback", NULL, NULL, NULL);
 		}
 	}
 
@@ -298,18 +299,14 @@ ssl_cert_dup(CERT *cert)
 	return (ret);
 
 err:
-	if (ret->rsa_tmp != NULL)
-		RSA_free(ret->rsa_tmp);
-	if (ret->dh_tmp != NULL)
-		DH_free(ret->dh_tmp);
-	if (ret->ecdh_tmp != NULL)
-		EC_KEY_free(ret->ecdh_tmp);
+	RSA_free(ret->rsa_tmp);
+	DH_free(ret->dh_tmp);
+	EC_KEY_free(ret->ecdh_tmp);
 
 	for (i = 0; i < SSL_PKEY_NUM; i++) {
 		if (ret->pkeys[i].x509 != NULL)
 			X509_free(ret->pkeys[i].x509);
-		if (ret->pkeys[i].privatekey != NULL)
-			EVP_PKEY_free(ret->pkeys[i].privatekey);
+		EVP_PKEY_free(ret->pkeys[i].privatekey);
 	}
 
 	return NULL;
@@ -328,19 +325,16 @@ ssl_cert_free(CERT *c)
 	if (i > 0)
 		return;
 
-	if (c->rsa_tmp)
-		RSA_free(c->rsa_tmp);
-	if (c->dh_tmp)
-		DH_free(c->dh_tmp);
-	if (c->ecdh_tmp)
-		EC_KEY_free(c->ecdh_tmp);
+	RSA_free(c->rsa_tmp);
+	DH_free(c->dh_tmp);
+	EC_KEY_free(c->ecdh_tmp);
 
 	for (i = 0; i < SSL_PKEY_NUM; i++) {
 		if (c->pkeys[i].x509 != NULL)
 			X509_free(c->pkeys[i].x509);
-		if (c->pkeys[i].privatekey != NULL)
-			EVP_PKEY_free(c->pkeys[i].privatekey);
+		EVP_PKEY_free(c->pkeys[i].privatekey);
 	}
+
 	free(c);
 }
 
@@ -407,12 +401,9 @@ ssl_sess_cert_free(SESS_CERT *sc)
 			X509_free(sc->peer_pkeys[i].x509);
 	}
 
-	if (sc->peer_rsa_tmp != NULL)
-		RSA_free(sc->peer_rsa_tmp);
-	if (sc->peer_dh_tmp != NULL)
-		DH_free(sc->peer_dh_tmp);
-	if (sc->peer_ecdh_tmp != NULL)
-		EC_KEY_free(sc->peer_ecdh_tmp);
+	RSA_free(sc->peer_rsa_tmp);
+	DH_free(sc->peer_dh_tmp);
+	EC_KEY_free(sc->peer_ecdh_tmp);
 
 	free(sc);
 }
@@ -427,9 +418,9 @@ ssl_set_peer_cert_type(SESS_CERT *sc, int type)
 int
 ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
 {
-	X509 *x;
-	int i;
 	X509_STORE_CTX ctx;
+	X509 *x;
+	int ret;
 
 	if ((sk == NULL) || (sk_X509_num(sk) == 0))
 		return (0);
@@ -439,7 +430,8 @@ ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
 		SSLerr(SSL_F_SSL_VERIFY_CERT_CHAIN, ERR_R_X509_LIB);
 		return (0);
 	}
-	X509_STORE_CTX_set_ex_data(&ctx, SSL_get_ex_data_X509_STORE_CTX_idx(), s);
+	X509_STORE_CTX_set_ex_data(&ctx,
+	    SSL_get_ex_data_X509_STORE_CTX_idx(), s);
 
 	/* We need to inherit the verify parameters. These can be determined by
 	 * the context: if its a server it will verify SSL client certificates
@@ -447,7 +439,8 @@ ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
 	 */
 
 	X509_STORE_CTX_set_default(&ctx,
-	s->server ? "ssl_client" : "ssl_server");
+	    s->server ? "ssl_client" : "ssl_server");
+
 	/* Anything non-default in "param" should overwrite anything in the
 	 * ctx.
 	 */
@@ -457,25 +450,19 @@ ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
 		X509_STORE_CTX_set_verify_cb(&ctx, s->verify_callback);
 
 	if (s->ctx->app_verify_callback != NULL)
-		i = s->ctx->app_verify_callback(&ctx, s->ctx->app_verify_arg);
-	else {
-#ifndef OPENSSL_NO_X509_VERIFY
-		i = X509_verify_cert(&ctx);
-#else
-		i = 0;
-		ctx.error = X509_V_ERR_APPLICATION_VERIFICATION;
-		SSLerr(SSL_F_SSL_VERIFY_CERT_CHAIN, SSL_R_NO_VERIFY_CALLBACK);
-#endif
-	}
+		ret = s->ctx->app_verify_callback(&ctx, s->ctx->app_verify_arg);
+	else
+		ret = X509_verify_cert(&ctx);
 
 	s->verify_result = ctx.error;
 	X509_STORE_CTX_cleanup(&ctx);
 
-	return (i);
+	return (ret);
 }
 
 static void
-set_client_CA_list(STACK_OF(X509_NAME) **ca_list, STACK_OF(X509_NAME) *name_list)
+set_client_CA_list(STACK_OF(X509_NAME) **ca_list,
+    STACK_OF(X509_NAME) *name_list)
 {
 	if (*ca_list != NULL)
 		sk_X509_NAME_pop_free(*ca_list, X509_NAME_free);
@@ -522,11 +509,11 @@ SSL_CTX_get_client_CA_list(const SSL_CTX *ctx)
 STACK_OF(X509_NAME) *
 SSL_get_client_CA_list(const SSL *s)
 {
-	if (s->type == SSL_ST_CONNECT)
-			{ /* we are in the client */
+	if (s->type == SSL_ST_CONNECT) {
+		/* We are in the client. */
 		if (((s->version >> 8) == SSL3_VERSION_MAJOR) &&
-			(s->s3 != NULL))
-		return (s->s3->tmp.ca_names);
+		    (s->s3 != NULL))
+			return (s->s3->tmp.ca_names);
 		else
 			return (NULL);
 	} else {
@@ -609,7 +596,8 @@ SSL_load_client_CA_file(const char *file)
 		if (ret == NULL) {
 			ret = sk_X509_NAME_new_null();
 			if (ret == NULL) {
-				SSLerr(SSL_F_SSL_LOAD_CLIENT_CA_FILE, ERR_R_MALLOC_FAILURE);
+				SSLerr(SSL_F_SSL_LOAD_CLIENT_CA_FILE,
+				    ERR_R_MALLOC_FAILURE);
 				goto err;
 			}
 		}
@@ -634,8 +622,7 @@ err:
 	}
 	if (sk != NULL)
 		sk_X509_NAME_free(sk);
-	if (in != NULL)
-		BIO_free(in);
+	BIO_free(in);
 	if (x != NULL)
 		X509_free(x);
 	if (ret != NULL)
@@ -667,7 +654,8 @@ SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 	in = BIO_new(BIO_s_file_internal());
 
 	if (in == NULL) {
-		SSLerr(SSL_F_SSL_ADD_FILE_CERT_SUBJECTS_TO_STACK, ERR_R_MALLOC_FAILURE);
+		SSLerr(SSL_F_SSL_ADD_FILE_CERT_SUBJECTS_TO_STACK,
+		    ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
@@ -693,8 +681,7 @@ SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 err:
 		ret = 0;
 	}
-	if (in != NULL)
-		BIO_free(in);
+	BIO_free(in);
 	if (x != NULL)
 		X509_free(x);
 
@@ -708,15 +695,14 @@ err:
  * \param stack the stack to append to.
  * \param dir the directory to append from. All files in this directory will be
  * examined as potential certs. Any that are acceptable to
- * SSL_add_dir_cert_subjects_to_stack() that are not already in the stack will be
- * included.
+ * SSL_add_dir_cert_subjects_to_stack() that are not already in the stack will
+ * be included.
  * \return 1 for success, 0 for failure. Note that in the case of failure some
  * certs may have been added to \c stack.
  */
 
 int
-SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
-    const char *dir)
+SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack, const char *dir)
 {
 	DIR *dirp = NULL;
 	char *path = NULL;
@@ -725,11 +711,11 @@ SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 	CRYPTO_w_lock(CRYPTO_LOCK_READDIR);
 	dirp = opendir(dir);
 	if (dirp) {
-		struct dirent * dp;
+		struct dirent *dp;
 		while ((dp = readdir(dirp)) != NULL) {
 			if (asprintf(&path, "%s/%s", dir, dp->d_name) != -1) {
-				ret = SSL_add_file_cert_subjects_to_stack
-				    (stack,path);
+				ret = SSL_add_file_cert_subjects_to_stack(
+				    stack, path);
 				free(path);
 			}
 			if (!ret)
@@ -740,8 +726,7 @@ SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 	if (!ret) {
  		SYSerr(SYS_F_OPENDIR, errno);
 		ERR_asprintf_error_data("opendir ('%s')", dir);
-		SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK,
-		    ERR_R_SYS_LIB);
+		SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK, ERR_R_SYS_LIB);
 	}
 	CRYPTO_w_unlock(CRYPTO_LOCK_READDIR);
 	return ret;
