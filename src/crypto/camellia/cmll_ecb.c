@@ -1,6 +1,6 @@
-/* crypto/aes/aes_misc.c */
+/* crypto/camellia/camellia_ecb.c */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -49,35 +49,26 @@
  *
  */
 
-#include <openssl/opensslv.h>
-#include <openssl/crypto.h>
-#include <openssl/aes.h>
-#include "aes_locl.h"
-
-const char AES_version[]="AES" OPENSSL_VERSION_PTEXT;
-
-const char *
-AES_options(void)
-{
-#ifdef FULL_UNROLL
-	return "aes(full)";
-#else   
-	return "aes(partial)";
+#ifndef CAMELLIA_DEBUG
+# ifndef NDEBUG
+#  define NDEBUG
+# endif
 #endif
-}
+#include <assert.h>
 
-/* FIPS wrapper functions to block low level AES calls in FIPS mode */
+#include <openssl/camellia.h>
+#include "cmll_locl.h"
 
-int
-AES_set_encrypt_key(const unsigned char *userKey, const int bits,
-    AES_KEY *key)
-{
-	return private_AES_set_encrypt_key(userKey, bits, key);
-}
+void Camellia_ecb_encrypt(const unsigned char *in, unsigned char *out,
+	const CAMELLIA_KEY *key, const int enc) 
+	{
 
-int
-AES_set_decrypt_key(const unsigned char *userKey, const int bits,
-    AES_KEY *key)
-{
-	return private_AES_set_decrypt_key(userKey, bits, key);
-}
+	assert(in && out && key);
+	assert((CAMELLIA_ENCRYPT == enc)||(CAMELLIA_DECRYPT == enc));
+
+	if (CAMELLIA_ENCRYPT == enc)
+		Camellia_encrypt(in, out, key);
+	else
+		Camellia_decrypt(in, out, key);
+	}
+

@@ -1,6 +1,23 @@
-/* crypto/aes/aes_misc.c */
+/* crypto/camellia/camellia_locl.h */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright 2006 NTT (Nippon Telegraph and Telephone Corporation) . 
+ * ALL RIGHTS RESERVED.
+ *
+ * Intellectual Property information for Camellia:
+ *     http://info.isl.ntt.co.jp/crypt/eng/info/chiteki.html
+ *
+ * News Release for Announcement of Camellia open source:
+ *     http://www.ntt.co.jp/news/news06e/0604/060413a.html
+ *
+ * The Camellia Code included herein is developed by
+ * NTT (Nippon Telegraph and Telephone Corporation), and is contributed
+ * to the OpenSSL project.
+ *
+ * The Camellia Code is licensed pursuant to the OpenSSL open source
+ * license provided below.
+ */
+/* ====================================================================
+ * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -46,38 +63,24 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ====================================================================
- *
  */
 
-#include <openssl/opensslv.h>
-#include <openssl/crypto.h>
-#include <openssl/aes.h>
-#include "aes_locl.h"
+#ifndef HEADER_CAMELLIA_LOCL_H
+#define HEADER_CAMELLIA_LOCL_H
 
-const char AES_version[]="AES" OPENSSL_VERSION_PTEXT;
+typedef unsigned int  u32;
+typedef unsigned char u8;
 
-const char *
-AES_options(void)
-{
-#ifdef FULL_UNROLL
-	return "aes(full)";
-#else   
-	return "aes(partial)";
-#endif
-}
-
-/* FIPS wrapper functions to block low level AES calls in FIPS mode */
-
-int
-AES_set_encrypt_key(const unsigned char *userKey, const int bits,
-    AES_KEY *key)
-{
-	return private_AES_set_encrypt_key(userKey, bits, key);
-}
-
-int
-AES_set_decrypt_key(const unsigned char *userKey, const int bits,
-    AES_KEY *key)
-{
-	return private_AES_set_decrypt_key(userKey, bits, key);
-}
+int Camellia_Ekeygen(int keyBitLength, const u8 *rawKey,
+		     KEY_TABLE_TYPE keyTable);
+void Camellia_EncryptBlock_Rounds(int grandRounds, const u8 plaintext[], 
+		const KEY_TABLE_TYPE keyTable, u8 ciphertext[]);
+void Camellia_DecryptBlock_Rounds(int grandRounds, const u8 ciphertext[], 
+		const KEY_TABLE_TYPE keyTable, u8 plaintext[]);
+void Camellia_EncryptBlock(int keyBitLength, const u8 plaintext[], 
+		const KEY_TABLE_TYPE keyTable, u8 ciphertext[]);
+void Camellia_DecryptBlock(int keyBitLength, const u8 ciphertext[], 
+		const KEY_TABLE_TYPE keyTable, u8 plaintext[]);
+int private_Camellia_set_key(const unsigned char *userKey, const int bits,
+			     CAMELLIA_KEY *key);
+#endif /* #ifndef HEADER_CAMELLIA_LOCL_H */

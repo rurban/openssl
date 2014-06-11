@@ -1,6 +1,6 @@
-/* crypto/aes/aes_misc.c */
+/* crypto/camellia/camellia_cbc.c */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -49,35 +49,16 @@
  *
  */
 
-#include <openssl/opensslv.h>
-#include <openssl/crypto.h>
-#include <openssl/aes.h>
-#include "aes_locl.h"
+#include <openssl/camellia.h>
+#include <openssl/modes.h>
 
-const char AES_version[]="AES" OPENSSL_VERSION_PTEXT;
+void Camellia_cbc_encrypt(const unsigned char *in, unsigned char *out,
+	size_t len, const CAMELLIA_KEY *key,
+	unsigned char *ivec, const int enc) 
+	{
 
-const char *
-AES_options(void)
-{
-#ifdef FULL_UNROLL
-	return "aes(full)";
-#else   
-	return "aes(partial)";
-#endif
-}
-
-/* FIPS wrapper functions to block low level AES calls in FIPS mode */
-
-int
-AES_set_encrypt_key(const unsigned char *userKey, const int bits,
-    AES_KEY *key)
-{
-	return private_AES_set_encrypt_key(userKey, bits, key);
-}
-
-int
-AES_set_decrypt_key(const unsigned char *userKey, const int bits,
-    AES_KEY *key)
-{
-	return private_AES_set_decrypt_key(userKey, bits, key);
-}
+	if (enc)
+		CRYPTO_cbc128_encrypt(in,out,len,key,ivec,(block128_f)Camellia_encrypt);
+	else
+		CRYPTO_cbc128_decrypt(in,out,len,key,ivec,(block128_f)Camellia_decrypt);
+	}
