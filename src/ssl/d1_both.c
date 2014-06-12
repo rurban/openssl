@@ -1,4 +1,4 @@
-/* ssl/d1_both.c */
+/* $OpenBSD: d1_both.c,v 1.21 2014/06/12 15:49:31 deraadt Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -586,8 +586,14 @@ dtls1_reassemble_fragment(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 		memcpy(&(frag->msg_header), msg_hdr, sizeof(*msg_hdr));
 		frag->msg_header.frag_len = frag->msg_header.msg_len;
 		frag->msg_header.frag_off = 0;
-	} else
+	} else {
 		frag = (hm_fragment*)item->data;
+		if (frag->msg_header.msg_len != msg_hdr->msg_len) {
+			item = NULL;
+			frag = NULL;
+			goto err;
+		}
+	}
 
 	/* If message is already reassembled, this must be a
 	 * retransmit and can be dropped.
@@ -737,6 +743,7 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
 	int i, al;
 	struct hm_header_st msg_hdr;
 
+again:
 	/* see if we have the required fragment already */
 	if ((frag_len = dtls1_retrieve_buffered_fragment(s, max, ok)) || *ok) {
 		if (*ok)
@@ -795,7 +802,7 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
 				    s->msg_callback_arg);
 
 			s->init_num = 0;
-			return dtls1_get_message_fragment(s, st1, stn, max, ok);
+			goto again;
 		}
 		else /* Incorrectly formated Hello request */
 		{

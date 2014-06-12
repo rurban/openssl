@@ -1,4 +1,4 @@
-/* evp_pbe.c */
+/* $OpenBSD: evp_pbe.c,v 1.17 2014/06/12 15:49:29 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -110,30 +110,6 @@ static const EVP_PBE_CTL builtin_pbe[] = {
 	{EVP_PBE_TYPE_PRF, NID_hmacWithSHA512, -1, NID_sha512, 0},
 	{EVP_PBE_TYPE_PRF, NID_id_HMACGostR3411_94, -1, NID_id_GostR3411_94, 0},
 };
-
-#ifdef TEST
-int
-main(int argc, char **argv)
-{
-	int i, nid_md, nid_cipher;
-	EVP_PBE_CTL *tpbe, *tpbe2;
-	/*OpenSSL_add_all_algorithms();*/
-
-	for (i = 0; i < sizeof(builtin_pbe) / sizeof(EVP_PBE_CTL); i++) {
-		tpbe = builtin_pbe + i;
-		fprintf(stderr, "%d %d %s ", tpbe->pbe_type, tpbe->pbe_nid,
-		    OBJ_nid2sn(tpbe->pbe_nid));
-		if (EVP_PBE_find(tpbe->pbe_type, tpbe->pbe_nid,
-		    &nid_cipher , &nid_md, 0))
-			fprintf(stderr, "Found %s %s\n",
-			    OBJ_nid2sn(nid_cipher), OBJ_nid2sn(nid_md));
-		else
-			fprintf(stderr, "Find ERROR!!\n");
-	}
-
-	return 0;
-}
-#endif
 
 int
 EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
