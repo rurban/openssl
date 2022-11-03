@@ -454,6 +454,7 @@ static const TEST_ENCAPDATA ec_encapdata[] = {
         p256_ikmr_priv, sizeof(p256_ikmr_priv),
         p256_expected_enc, sizeof(p256_expected_enc),
         p256_expected_secret, sizeof(p256_expected_secret),
+        NULL, 0U, NULL, 0U
     },
 #ifndef OPENSSL_NO_ECX
     {
@@ -463,6 +464,7 @@ static const TEST_ENCAPDATA ec_encapdata[] = {
         x25519_rpriv, sizeof(x25519_rpriv),
         x25519_expected_enc, sizeof(x25519_expected_enc),
         x25519_expected_secret, sizeof(x25519_expected_secret),
+        NULL, 0U, NULL, 0U
     },
 #endif
     {
@@ -472,6 +474,7 @@ static const TEST_ENCAPDATA ec_encapdata[] = {
         p521_ikmr_priv, sizeof(p521_ikmr_priv),
         p521_expected_enc, sizeof(p521_expected_enc),
         p521_expected_secret, sizeof(p521_expected_secret),
+        NULL, 0U, NULL, 0U
     },
     {
         "P-521",

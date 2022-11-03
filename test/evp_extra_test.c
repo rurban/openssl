@@ -562,18 +562,20 @@ typedef struct APK_DATA_st {
 } APK_DATA;
 
 static APK_DATA keydata[] = {
-    {kExampleRSAKeyDER, sizeof(kExampleRSAKeyDER), "RSA", EVP_PKEY_RSA},
-    {kExampleRSAKeyPKCS8, sizeof(kExampleRSAKeyPKCS8), "RSA", EVP_PKEY_RSA},
+    {kExampleRSAKeyDER, sizeof(kExampleRSAKeyDER), "RSA", EVP_PKEY_RSA, 0, 0, 0,
+     0},
+    {kExampleRSAKeyPKCS8, sizeof(kExampleRSAKeyPKCS8), "RSA", EVP_PKEY_RSA, 0,
+     0, 0, 0},
 #ifndef OPENSSL_NO_EC
-    {kExampleECKeyDER, sizeof(kExampleECKeyDER), "EC", EVP_PKEY_EC}
+    {kExampleECKeyDER, sizeof(kExampleECKeyDER), "EC", EVP_PKEY_EC, 0, 0, 0, 0}
 #endif
 };
 
 static APK_DATA keycheckdata[] = {
     {kExampleRSAKeyDER, sizeof(kExampleRSAKeyDER), "RSA", EVP_PKEY_RSA, 1, 1, 1,
      0},
-    {kExampleBadRSAKeyDER, sizeof(kExampleBadRSAKeyDER), "RSA", EVP_PKEY_RSA,
-     0, 1, 1, 0},
+    {kExampleBadRSAKeyDER, sizeof(kExampleBadRSAKeyDER), "RSA", EVP_PKEY_RSA, 0,
+     1, 1, 0},
     {kExampleBad2RSAKeyDER, sizeof(kExampleBad2RSAKeyDER), "RSA", EVP_PKEY_RSA,
      0, 0, 1 /* Since there are no "params" in an RSA key this passes */, 0},
 #ifndef OPENSSL_NO_EC
@@ -2460,16 +2462,19 @@ static int test_set_get_raw_keys(int tst)
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 static int pkey_custom_check(EVP_PKEY *pkey)
 {
+    (void)pkey;
     return 0xbeef;
 }
 
 static int pkey_custom_pub_check(EVP_PKEY *pkey)
 {
+    (void)pkey;
     return 0xbeef;
 }
 
 static int pkey_custom_param_check(EVP_PKEY *pkey)
 {
+    (void)pkey;
     return 0xbeef;
 }
 
@@ -3837,6 +3842,7 @@ static void md_names(const char *name, void *vctx)
     OSSL_LIB_CTX *ctx = (OSSL_LIB_CTX *)vctx;
     /* Force a namemap update */
     EVP_CIPHER *aes128 = EVP_CIPHER_fetch(ctx, "AES-128-CBC", NULL);
+    (void)name;
 
     if (!TEST_ptr(aes128))
         success = 0;
@@ -4860,6 +4866,9 @@ static int custom_ciph_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                             const unsigned char *iv, int enc)
 {
     custom_ciph_ctx *p = EVP_CIPHER_CTX_get_cipher_data(ctx);
+    (void)key;
+    (void)iv;
+    (void)enc;
 
     if (p == NULL)
         return 0;
@@ -5116,7 +5125,7 @@ const OPTIONS *test_get_options(void)
     static const OPTIONS options[] = {
         OPT_TEST_OPTIONS_DEFAULT_USAGE,
         { "context", OPT_CONTEXT, '-', "Explicitly use a non-default library context" },
-        { NULL }
+        { NULL, 0, 0, NULL }
     };
     return options;
 }
@@ -5263,6 +5272,7 @@ static int aes_gcm_encrypt(const unsigned char *gcm_key, size_t gcm_key_s,
     OSSL_PARAM params[2] = {
         OSSL_PARAM_END, OSSL_PARAM_END
     };
+    (void)gcm_key_s;
 
     if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
             || !TEST_ptr(cipher = EVP_CIPHER_fetch(testctx, "AES-256-GCM", "")))
@@ -5311,6 +5321,7 @@ static int aes_gcm_decrypt(const unsigned char *gcm_key, size_t gcm_key_s,
     OSSL_PARAM params[2] = {
         OSSL_PARAM_END, OSSL_PARAM_END
     };
+    (void)gcm_key_s;
 
     if ((ctx = EVP_CIPHER_CTX_new()) == NULL)
         goto err;

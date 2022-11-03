@@ -55,7 +55,7 @@ const OPTIONS genpkey_options[] = {
     /* This is deliberately last. */
     {OPT_HELP_STR, 1, 1,
      "Order of options may be important!  See the documentation.\n"},
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 static const char *param_datatype_2name(unsigned int type, int *ishex)

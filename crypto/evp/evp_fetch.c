@@ -436,8 +436,10 @@ static int evp_set_parsed_default_properties(OSSL_LIB_CTX *libctx,
     OSSL_PROPERTY_LIST **plp = ossl_ctx_global_properties(libctx, loadconfig);
 
     if (plp != NULL && store != NULL) {
+#ifdef FIPS_MODULE
+        (void)mirrored;
+#else
         int ret;
-#ifndef FIPS_MODULE
         char *propstr = NULL;
         size_t strsz;
 

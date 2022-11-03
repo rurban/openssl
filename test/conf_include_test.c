@@ -239,7 +239,7 @@ const OPTIONS *test_get_options(void)
         { "f", OPT_FAIL, '-', "A failure is expected" },
         { "providers", OPT_TEST_PROV, '-',
           "Test for activated default and legacy providers"},
-        { NULL }
+        { NULL, 0, 0, NULL }
     };
     return test_options;
 }

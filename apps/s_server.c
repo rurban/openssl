@@ -420,6 +420,7 @@ static int ssl_servername_cb(SSL *s, int *ad, void *arg)
 {
     tlsextctx *p = (tlsextctx *) arg;
     const char *servername = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
+    (void)ad;
 
     if (servername != NULL && p->biodebug != NULL) {
         const char *cp = servername;
@@ -458,7 +459,7 @@ typedef struct tlsextstatusctx_st {
     int verbose;
 } tlsextstatusctx;
 
-static tlsextstatusctx tlscstatp = { -1 };
+static tlsextstatusctx tlscstatp = { -1, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0 };
 
 #ifndef OPENSSL_NO_OCSP
 
@@ -637,6 +638,7 @@ static int next_proto_cb(SSL *s, const unsigned char **data,
                          unsigned int *len, void *arg)
 {
     tlsextnextprotoctx *next_proto = arg;
+    (void)s;
 
     *data = next_proto->data;
     *len = next_proto->len;
@@ -655,6 +657,7 @@ static int alpn_cb(SSL *s, const unsigned char **out, unsigned char *outlen,
                    const unsigned char *in, unsigned int inlen, void *arg)
 {
     tlsextalpnctx *alpn_ctx = arg;
+    (void)s;
 
     if (!s_quiet) {
         /* We can assume that |in| is syntactically valid. */
@@ -686,6 +689,7 @@ static int alpn_cb(SSL *s, const unsigned char **out, unsigned char *outlen,
 
 static int not_resumable_sess_cb(SSL *s, int is_forward_secure)
 {
+    (void)s;
     /* disable resumption for sessions with forward secure ciphers */
     return is_forward_secure;
 }
@@ -983,7 +987,7 @@ const OPTIONS s_server_options[] = {
     OPT_V_OPTIONS,
     OPT_X_OPTIONS,
     OPT_PROV_OPTIONS,
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 #define IS_PROT_FLAG(o) \
@@ -2426,6 +2430,7 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
     int isdtls = (stype == SOCK_DGRAM || prot == IPPROTO_SCTP);
 # else
     int isdtls = (stype == SOCK_DGRAM);
+    (void)prot;
 # endif
 #endif
 
@@ -3145,6 +3150,8 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
 #ifdef CHARSET_EBCDIC
     BIO *filter;
 #endif
+    (void)stype;
+    (void)prot;
 
     /* Set width for a select call if needed */
     width = s + 1;
@@ -3584,6 +3591,8 @@ static int rev_body(int s, int stype, int prot, unsigned char *context)
 #ifdef CHARSET_EBCDIC
     BIO *filter;
 #endif
+    (void)stype;
+    (void)prot;
 
     /* as we use BIO_gets(), and it always null terminates data, we need
      * to allocate 1 byte longer buffer to fit the full 2^14 byte record */
@@ -3781,6 +3790,7 @@ static int add_session(SSL *ssl, SSL_SESSION *session)
 {
     simple_ssl_session *sess = app_malloc(sizeof(*sess), "get session");
     unsigned char *p;
+    (void)ssl;
 
     SSL_SESSION_get_id(session, &sess->idlen);
     sess->derlen = i2d_SSL_SESSION(session, NULL);
@@ -3820,6 +3830,8 @@ static SSL_SESSION *get_session(SSL *ssl, const unsigned char *id, int idlen,
                                 int *do_copy)
 {
     simple_ssl_session *sess;
+    (void)ssl;
+
     *do_copy = 0;
     for (sess = first; sess; sess = sess->next) {
         if (idlen == (int)sess->idlen && !memcmp(sess->id, id, idlen)) {
@@ -3838,6 +3850,8 @@ static void del_session(SSL_CTX *sctx, SSL_SESSION *session)
     simple_ssl_session *sess, *prev = NULL;
     const unsigned char *id;
     unsigned int idlen;
+    (void)sctx;
+
     id = SSL_SESSION_get_id(session, &idlen);
     for (sess = first; sess; sess = sess->next) {
         if (idlen == sess->idlen && !memcmp(sess->id, id, idlen)) {

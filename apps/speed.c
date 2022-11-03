@@ -154,6 +154,7 @@ static const int aead_lengths_list[] = {
 
 static void alarmed(ossl_unused int sig)
 {
+    (void)sig;
     signal(SIGALRM, alarmed);
     run = 0;
 }
@@ -295,7 +296,7 @@ const OPTIONS speed_options[] = {
 
     OPT_PARAMETERS(),
     {"algorithm", 0, 0, "Algorithm(s) to test (optional; otherwise tests all)"},
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 enum {
@@ -619,6 +620,7 @@ static int EVP_Digest_loop(const char *mdname, ossl_unused int algindex, void *a
     unsigned char digest[EVP_MAX_MD_SIZE];
     int count;
     EVP_MD *md = NULL;
+    (void)algindex;
 
     if (!opt_md_silent(mdname, &md))
         return -1;
@@ -700,6 +702,7 @@ static int EVP_MAC_loop(ossl_unused int algindex, void *args)
     EVP_MAC_CTX *mctx = tempargs->mctx;
     unsigned char mac[EVP_MAX_MD_SIZE];
     int count;
+    (void)algindex;
 
     for (count = 0; COND(c[algindex][testnum]); count++) {
         size_t outl;
@@ -1825,35 +1828,35 @@ int speed_main(int argc, char **argv)
      */
     static const EC_CURVE ec_curves[EC_NUM] = {
         /* Prime Curves */
-        {"secp160r1", NID_secp160r1, 160},
-        {"nistp192", NID_X9_62_prime192v1, 192},
-        {"nistp224", NID_secp224r1, 224},
-        {"nistp256", NID_X9_62_prime256v1, 256},
-        {"nistp384", NID_secp384r1, 384},
-        {"nistp521", NID_secp521r1, 521},
+        {"secp160r1", NID_secp160r1, 160, 0},
+        {"nistp192", NID_X9_62_prime192v1, 192, 0},
+        {"nistp224", NID_secp224r1, 224, 0},
+        {"nistp256", NID_X9_62_prime256v1, 256, 0},
+        {"nistp384", NID_secp384r1, 384, 0},
+        {"nistp521", NID_secp521r1, 521, 0},
 #ifndef OPENSSL_NO_EC2M
         /* Binary Curves */
-        {"nistk163", NID_sect163k1, 163},
-        {"nistk233", NID_sect233k1, 233},
-        {"nistk283", NID_sect283k1, 283},
-        {"nistk409", NID_sect409k1, 409},
-        {"nistk571", NID_sect571k1, 571},
-        {"nistb163", NID_sect163r2, 163},
-        {"nistb233", NID_sect233r1, 233},
-        {"nistb283", NID_sect283r1, 283},
-        {"nistb409", NID_sect409r1, 409},
-        {"nistb571", NID_sect571r1, 571},
+        {"nistk163", NID_sect163k1, 163, 0},
+        {"nistk233", NID_sect233k1, 233, 0},
+        {"nistk283", NID_sect283k1, 283, 0},
+        {"nistk409", NID_sect409k1, 409, 0},
+        {"nistk571", NID_sect571k1, 571, 0},
+        {"nistb163", NID_sect163r2, 163, 0},
+        {"nistb233", NID_sect233r1, 233, 0},
+        {"nistb283", NID_sect283r1, 283, 0},
+        {"nistb409", NID_sect409r1, 409, 0},
+        {"nistb571", NID_sect571r1, 571, 0},
 #endif
-        {"brainpoolP256r1", NID_brainpoolP256r1, 256},
-        {"brainpoolP256t1", NID_brainpoolP256t1, 256},
-        {"brainpoolP384r1", NID_brainpoolP384r1, 384},
-        {"brainpoolP384t1", NID_brainpoolP384t1, 384},
-        {"brainpoolP512r1", NID_brainpoolP512r1, 512},
-        {"brainpoolP512t1", NID_brainpoolP512t1, 512},
+        {"brainpoolP256r1", NID_brainpoolP256r1, 256, 0},
+        {"brainpoolP256t1", NID_brainpoolP256t1, 256, 0},
+        {"brainpoolP384r1", NID_brainpoolP384r1, 384, 0},
+        {"brainpoolP384t1", NID_brainpoolP384t1, 384, 0},
+        {"brainpoolP512r1", NID_brainpoolP512r1, 512, 0},
+        {"brainpoolP512t1", NID_brainpoolP512t1, 512, 0},
 #ifndef OPENSSL_NO_ECX
         /* Other and ECDH only ones */
-        {"X25519", NID_X25519, 253},
-        {"X448", NID_X448, 448}
+        {"X25519", NID_X25519, 253, 0},
+        {"X448", NID_X448, 448, 0}
 #endif
     };
 #ifndef OPENSSL_NO_ECX
@@ -1866,7 +1869,7 @@ int speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_SM2
     static const EC_CURVE sm2_curves[SM2_NUM] = {
         /* SM2 */
-        {"CurveSM2", NID_sm2, 256}
+        {"CurveSM2", NID_sm2, 256, 0}
     };
     uint8_t sm2_doit[SM2_NUM] = { 0 };
 #endif

@@ -167,7 +167,7 @@ const OPTIONS req_options[] = {
 
     OPT_R_OPTIONS,
     OPT_PROV_OPTIONS,
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 /*
@@ -1055,6 +1055,7 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, X509_NAME *fsubj,
     char no_prompt = 0;
     STACK_OF(CONF_VALUE) *dn_sk = NULL, *attr_sk = NULL;
     char *tmp, *dn_sect, *attr_sect;
+    (void)multirdn;
 
     tmp = app_conf_try_string(req_conf, section, PROMPT);
     if (tmp != NULL && strcmp(tmp, "no") == 0)

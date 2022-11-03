@@ -490,6 +490,7 @@ static uint32_t rxe_determine_pn_space(RXE *rxe)
 static int qrx_validate_hdr_early(OSSL_QRX *qrx, RXE *rxe,
                                   const QUIC_CONN_ID *first_dcid)
 {
+    (void)qrx;
     /* Ensure version is what we want. */
     if (rxe->hdr.version != QUIC_VERSION_1
         && rxe->hdr.version != QUIC_VERSION_NONE)
@@ -557,6 +558,7 @@ static size_t qrx_get_cipher_ctx_idx(OSSL_QRX *qrx, OSSL_QRL_ENC_LEVEL *el,
                                      int *is_old_key)
 {
     size_t idx;
+    (void)qrx;
 
     *is_old_key = 0;
 
@@ -756,6 +758,7 @@ static int qrx_decrypt_pkt_body(OSSL_QRX *qrx, unsigned char *dst,
 
 static ossl_inline void ignore_res(int x)
 {
+    (void)x;
     /* No-op. */
 }
 
@@ -1108,7 +1111,7 @@ static int qrx_process_datagram(OSSL_QRX *qrx, QUIC_URXE *e,
     int have_deferred = 0;
     PACKET pkt;
     size_t pkt_idx = 0;
-    QUIC_CONN_ID first_dcid = { 255 };
+    QUIC_CONN_ID first_dcid = { 255, {0} };
 
     qrx->bytes_received += data_len;
 

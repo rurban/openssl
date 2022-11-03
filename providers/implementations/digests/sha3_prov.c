@@ -466,6 +466,7 @@ static void *name##_newctx(void *provctx)                                      \
 {                                                                              \
     KECCAK1600_CTX *ctx = ossl_prov_is_running() ? OPENSSL_zalloc(sizeof(*ctx)) \
                                                 : NULL;                        \
+    (void)provctx;                                                             \
                                                                                \
     if (ctx == NULL)                                                           \
         return NULL;                                                           \
@@ -480,6 +481,7 @@ static void *name##_newctx(void *provctx)                                      \
 {                                                                              \
     KECCAK1600_CTX *ctx = ossl_prov_is_running() ? OPENSSL_zalloc(sizeof(*ctx))\
                                                 : NULL;                        \
+    (void)provctx;                                                             \
                                                                                \
     if (ctx == NULL)                                                           \
         return NULL;                                                           \
@@ -494,6 +496,7 @@ static void *uname##_newctx(void *provctx)                                     \
 {                                                                              \
     KECCAK1600_CTX *ctx = ossl_prov_is_running() ? OPENSSL_zalloc(sizeof(*ctx)) \
                                                 : NULL;                        \
+    (void)provctx;                                                             \
                                                                                \
     if (ctx == NULL)                                                           \
         return NULL;                                                           \

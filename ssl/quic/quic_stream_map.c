@@ -35,6 +35,7 @@ static void list_insert_tail(QUIC_STREAM_LIST_NODE *l,
 static void list_remove(QUIC_STREAM_LIST_NODE *l,
                         QUIC_STREAM_LIST_NODE *n)
 {
+    (void)l;
     assert(n->prev != NULL && n->next != NULL
            && n->prev != n && n->next != n);
 
@@ -291,6 +292,7 @@ static ossl_unused int qsm_send_part_permits_gc(const QUIC_STREAM *qs)
 static int qsm_ready_for_gc(QUIC_STREAM_MAP *qsm, QUIC_STREAM *qs)
 {
     int recv_stream_fully_drained = 0; /* TODO(QUIC FUTURE): Optimisation */
+    (void)qsm;
 
     /*
      * If sstream has no FIN, we auto-reset it at marked-for-deletion time, so
@@ -378,6 +380,7 @@ void ossl_quic_stream_map_update_state(QUIC_STREAM_MAP *qsm, QUIC_STREAM *s)
 int ossl_quic_stream_map_ensure_send_part_id(QUIC_STREAM_MAP *qsm,
                                              QUIC_STREAM *qs)
 {
+    (void)qsm;
     switch (qs->send_state) {
     case QUIC_SSTREAM_STATE_NONE:
         /* Stream without send part - caller error. */
@@ -400,6 +403,7 @@ int ossl_quic_stream_map_ensure_send_part_id(QUIC_STREAM_MAP *qsm,
 int ossl_quic_stream_map_notify_all_data_sent(QUIC_STREAM_MAP *qsm,
                                               QUIC_STREAM *qs)
 {
+    (void)qsm;
     switch (qs->send_state) {
     default:
         /* Wrong state - caller error. */
@@ -429,6 +433,7 @@ static void shutdown_flush_done(QUIC_STREAM_MAP *qsm, QUIC_STREAM *qs)
 int ossl_quic_stream_map_notify_totally_acked(QUIC_STREAM_MAP *qsm,
                                               QUIC_STREAM *qs)
 {
+    (void)qsm;
     switch (qs->send_state) {
     default:
         /* Wrong state - caller error. */
@@ -511,6 +516,7 @@ int ossl_quic_stream_map_reset_stream_send_part(QUIC_STREAM_MAP *qsm,
 int ossl_quic_stream_map_notify_reset_stream_acked(QUIC_STREAM_MAP *qsm,
                                                    QUIC_STREAM *qs)
 {
+    (void)qsm;
     switch (qs->send_state) {
     default:
         /* Wrong state - caller error. */
@@ -537,6 +543,8 @@ int ossl_quic_stream_map_notify_size_known_recv_part(QUIC_STREAM_MAP *qsm,
                                                      QUIC_STREAM *qs,
                                                      uint64_t final_size)
 {
+    (void)qsm;
+    (void)final_size;
     switch (qs->recv_state) {
     default:
         /* Wrong state - caller error. */
@@ -553,6 +561,7 @@ int ossl_quic_stream_map_notify_size_known_recv_part(QUIC_STREAM_MAP *qsm,
 int ossl_quic_stream_map_notify_totally_received(QUIC_STREAM_MAP *qsm,
                                                  QUIC_STREAM *qs)
 {
+    (void)qsm;
     switch (qs->recv_state) {
     default:
         /* Wrong state - caller error. */
@@ -570,6 +579,7 @@ int ossl_quic_stream_map_notify_totally_received(QUIC_STREAM_MAP *qsm,
 int ossl_quic_stream_map_notify_totally_read(QUIC_STREAM_MAP *qsm,
                                              QUIC_STREAM *qs)
 {
+    (void)qsm;
     switch (qs->recv_state) {
     default:
         /* Wrong state - caller error. */
@@ -636,6 +646,7 @@ int ossl_quic_stream_map_notify_reset_recv_part(QUIC_STREAM_MAP *qsm,
 int ossl_quic_stream_map_notify_app_read_reset_recv_part(QUIC_STREAM_MAP *qsm,
                                                          QUIC_STREAM *qs)
 {
+    (void)qsm;
     switch (qs->recv_state) {
     default:
         /* Wrong state - caller error. */

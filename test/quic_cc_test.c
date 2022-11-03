@@ -25,6 +25,7 @@ static OSSL_TIME fake_time = {0};
 
 static OSSL_TIME fake_now(void *arg)
 {
+    (void)arg;
     return fake_time;
 }
 
@@ -312,6 +313,10 @@ static int dump_state(const OSSL_CC_METHOD *ccm, OSSL_CC_DATA *cc,
             s->capacity,
             s->spare_capacity,
             (char)state);
+#else
+    (void)cc;
+    (void)ccm;
+    (void)s;
 #endif
 
     return 1;

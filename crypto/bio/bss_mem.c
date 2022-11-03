@@ -36,6 +36,8 @@ static const BIO_METHOD mem_method = {
     mem_new,
     mem_free,
     NULL,                      /* mem_callback_ctrl */
+    NULL,                      /* bsendmmsg */
+    NULL                       /* brecvmmsg */
 };
 
 static const BIO_METHOD secmem_method = {
@@ -51,6 +53,8 @@ static const BIO_METHOD secmem_method = {
     secmem_new,
     mem_free,
     NULL,                      /* mem_callback_ctrl */
+    NULL,                      /* bsendmmsg */
+    NULL                       /* brecvmmsg */
 };
 
 /*

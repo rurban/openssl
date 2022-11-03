@@ -579,7 +579,7 @@ const OPTIONS cmp_options[] = {
      "Accept RAVERIFIED as proof-of-possession (POPO)"},
 
     OPT_V_OPTIONS,
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 typedef union {

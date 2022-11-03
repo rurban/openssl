@@ -530,6 +530,8 @@ int ossl_cipher_generic_stream_final(void *vctx, unsigned char *out,
                                      size_t *outl, size_t outsize)
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
+    (void)out;
+    (void)outsize;
 
     if (!ossl_prov_is_running())
         return 0;

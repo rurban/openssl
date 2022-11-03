@@ -1240,6 +1240,18 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
 {
     OSSL_RECORD_LAYER *rl = OPENSSL_zalloc(sizeof(*rl));
     const OSSL_PARAM *p;
+    (void)key;
+    (void)keylen;
+    (void)iv;
+    (void)ivlen;
+    (void)mackey;
+    (void)mackeylen;
+    (void)taglen;
+    (void)mactype;
+    (void)md;
+    (void)comp;
+    (void)local;
+    (void)peer;
 
     *retrl = NULL;
 
@@ -1379,6 +1391,11 @@ tls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                      OSSL_RECORD_LAYER **retrl)
 {
     int ret;
+    (void)epoch;
+    (void)secret;
+    (void)secretlen;
+    (void)kdfdigest;
+    (void)rlarg;
 
     ret = tls_int_new_record_layer(libctx, propq, vers, role, direction, level,
                                    key, keylen, iv, ivlen, mackey, mackeylen,
@@ -1497,6 +1514,8 @@ size_t tls_get_max_records_default(OSSL_RECORD_LAYER *rl, uint8_t type,
                                    size_t len,
                                    size_t maxfrag, size_t *preffrag)
 {
+    (void)type;
+    (void)maxfrag;
     /*
      * If we have a pipeline capable cipher, and we have been configured to use
      * it, then return the preferred number of pipelines.
@@ -1529,6 +1548,9 @@ int tls_allocate_write_buffers_default(OSSL_RECORD_LAYER *rl,
                                          size_t numtempl,
                                          size_t *prefix)
 {
+    (void)templates;
+    (void)prefix;
+
     if (!tls_setup_write_buffer(rl, numtempl, 0, 0)) {
         /* RLAYERfatal() already called */
         return 0;
@@ -1548,6 +1570,7 @@ int tls_initialise_write_packets_default(OSSL_RECORD_LAYER *rl,
     WPACKET *thispkt;
     size_t j, align;
     TLS_BUFFER *wb;
+    (void)prefixtempl;
 
     for (j = 0; j < numtempl; j++) {
         thispkt = &pkt[j];

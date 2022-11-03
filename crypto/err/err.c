@@ -306,6 +306,7 @@ int ERR_load_strings_const(const ERR_STRING_DATA *str)
 
 int ERR_unload_strings(int lib, ERR_STRING_DATA *str)
 {
+    (void)lib;
 #ifndef OPENSSL_NO_ERR
     if (!RUN_ONCE(&err_string_init, do_err_strings_init))
         return 0;
@@ -319,6 +320,8 @@ int ERR_unload_strings(int lib, ERR_STRING_DATA *str)
     for (; str->error; str++)
         (void)lh_ERR_STRING_DATA_delete(int_error_hash, str);
     CRYPTO_THREAD_unlock(err_string_lock);
+#else
+    (void)str;
 #endif
 
     return 1;
@@ -605,6 +608,7 @@ const char *ERR_lib_error_string(unsigned long e)
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 const char *ERR_func_error_string(unsigned long e)
 {
+    (void)e;
     return NULL;
 }
 #endif
@@ -637,6 +641,7 @@ const char *ERR_reason_error_string(unsigned long e)
     }
     return ((p == NULL) ? NULL : p->string);
 #else
+    (void)e;
     return NULL;
 #endif
 }
@@ -644,6 +649,7 @@ const char *ERR_reason_error_string(unsigned long e)
 static void err_delete_thread_state(void *unused)
 {
     ERR_STATE *state = CRYPTO_THREAD_get_local(&err_thread_local);
+    (void)unused;
     if (state == NULL)
         return;
 
@@ -654,12 +660,14 @@ static void err_delete_thread_state(void *unused)
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0
 void ERR_remove_thread_state(void *dummy)
 {
+    (void)dummy;
 }
 #endif
 
 #ifndef OPENSSL_NO_DEPRECATED_1_0_0
 void ERR_remove_state(unsigned long pid)
 {
+    (void)pid;
 }
 #endif
 

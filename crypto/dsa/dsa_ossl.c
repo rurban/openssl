@@ -225,6 +225,11 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
     BIGNUM *l;
     int ret = 0;
     int q_bits, q_words;
+#ifdef FIPS_MODULE
+    (void)digestname;
+    (void)libctx;
+    (void)propq;
+#endif
 
     if (!dsa->params.p || !dsa->params.q || !dsa->params.g) {
         ERR_raise(ERR_LIB_DSA, DSA_R_MISSING_PARAMETERS);

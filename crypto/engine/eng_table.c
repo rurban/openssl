@@ -203,6 +203,8 @@ ENGINE *ossl_engine_table_select(ENGINE_TABLE **table, int nid,
     ENGINE *ret = NULL;
     ENGINE_PILE tmplate, *fnd = NULL;
     int initres, loop = 0;
+    (void)f;
+    (void)l;
 
 #ifndef OPENSSL_NO_AUTOLOAD_CONFIG
     /* Load the config before trying to check if engines are available */

@@ -639,6 +639,10 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                       OSSL_RECORD_LAYER **retrl)
 {
     int ret;
+    (void)secret;
+    (void)secretlen;
+    (void)kdfdigest;
+    (void)rlarg;
 
     ret = tls_int_new_record_layer(libctx, propq, vers, role, direction, level,
                                    key, keylen, iv, ivlen, mackey, mackeylen,

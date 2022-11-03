@@ -17,6 +17,8 @@
 
 int FuzzerInitialize(int *argc, char ***argv)
 {
+    (void)argc;
+    (void)argv;
     FuzzerSetRand();
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS | OPENSSL_INIT_ASYNC, NULL);
     OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL);

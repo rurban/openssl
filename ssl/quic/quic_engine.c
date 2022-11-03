@@ -61,6 +61,7 @@ static int qeng_init(QUIC_ENGINE *qeng)
 
 static void qeng_cleanup(QUIC_ENGINE *qeng)
 {
+    (void)qeng;
     assert(ossl_list_port_num(&qeng->port_list) == 0);
 }
 

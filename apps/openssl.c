@@ -332,7 +332,7 @@ const OPTIONS help_options[] = {
 
     OPT_PARAMETERS(),
     {"command", 0, 0, "Name of command to display help (optional)"},
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int help_main(int argc, char **argv)
