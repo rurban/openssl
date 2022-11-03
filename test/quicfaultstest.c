@@ -79,6 +79,10 @@ static int add_unknown_frame_cb(QTEST_FAULT *fault, QUIC_PKT_HDR *hdr,
     unsigned char unknown_frame[] = {
         0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
     };
+    (void)hdr;
+    (void)buf;
+    (void)len;
+    (void)cbarg;
 
     /* We only ever add the unknown frame to one packet */
     if (done++)
@@ -165,6 +169,7 @@ static int drop_extensions_cb(QTEST_FAULT *fault,
                                     QTEST_ENCRYPTED_EXTENSIONS *ee,
                                     size_t eelen, void *encextcbarg)
 {
+    (void)eelen;
     int *ext = (int *)encextcbarg;
 
     if (!qtest_fault_delete_extension(fault, *ext, ee->extensions,
@@ -230,6 +235,10 @@ static int docorrupt = 0;
 static int on_packet_cipher_cb(QTEST_FAULT *fault, QUIC_PKT_HDR *hdr,
                                unsigned char *buf, size_t len, void *cbarg)
 {
+    (void)fault;
+    (void)hdr;
+    (void)cbarg;
+
     if (!docorrupt || len == 0)
         return 1;
 
@@ -242,6 +251,9 @@ static int on_packet_cipher_cb(QTEST_FAULT *fault, QUIC_PKT_HDR *hdr,
 static int on_datagram_cb(QTEST_FAULT *fault, BIO_MSG *m, size_t stride,
                           void *cbarg)
 {
+    (void)stride;
+    (void)cbarg;
+
     if (!docorrupt || m->data_len == 0)
         return 1;
 

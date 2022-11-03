@@ -83,6 +83,7 @@ static CRYPTO_RWLOCK *fake_now_lock = NULL;
 
 static OSSL_TIME fake_now_cb(void *arg)
 {
+    (void)arg;
     return qtest_get_time();
 }
 

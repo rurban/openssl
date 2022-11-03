@@ -23,6 +23,10 @@ static size_t ncid_injected;
 static int add_ncid_frame_cb(QTEST_FAULT *fault, QUIC_PKT_HDR *hdr,
                              unsigned char *buf, size_t len, void *cbarg)
 {
+    (void)hdr;
+    (void)buf;
+    (void)len;
+    (void)cbarg;
     /*
      * We inject NEW_CONNECTION_ID frame to trigger change of the DCID.
      * The connection id length must be 8, otherwise the tserver won't be

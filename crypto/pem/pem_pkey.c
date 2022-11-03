@@ -314,6 +314,7 @@ EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
 
 PEM_write_cb_ex_fnsig(PrivateKey, EVP_PKEY, BIO, write_bio)
 {
+    (void)libctx;
     IMPLEMENT_PEM_provided_write_body_vars(pkey, PrivateKey, propq);
 
     IMPLEMENT_PEM_provided_write_body_pass();
@@ -368,6 +369,10 @@ int PEM_write_bio_PrivateKey_traditional(BIO *bp, const EVP_PKEY *x,
 
 static int no_password_cb(char *buf, int num, int rwflag, void *userdata)
 {
+    (void)buf;
+    (void)num;
+    (void)rwflag;
+    (void)userdata;
     return -1;
 }
 

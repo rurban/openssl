@@ -37,7 +37,7 @@ typedef struct {
 
 IMPLEMENT_BLOCK_CIPHER(rc5_32_12_16, ks, RC5_32, EVP_RC5_KEY, NID_rc5,
                        8, RC5_32_KEY_LENGTH, 8, 64,
-                       EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_CTRL_INIT,
+                       (EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_CTRL_INIT),
                        r_32_12_16_init_key, NULL, NULL, NULL, rc5_ctrl)
 
 static int rc5_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
@@ -73,6 +73,8 @@ static int r_32_12_16_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                                const unsigned char *iv, int enc)
 {
     const int key_len = EVP_CIPHER_CTX_get_key_length(ctx);
+    (void)iv;
+    (void)enc;
 
     if (key_len > 255 || key_len < 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_BAD_KEY_LENGTH);

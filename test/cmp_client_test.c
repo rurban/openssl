@@ -319,6 +319,7 @@ static int test_certConf_cb(OSSL_CMP_CTX *ctx, X509 *cert, int fail_info,
                             const char **txt)
 {
     int *reject = OSSL_CMP_CTX_get_certConf_cb_arg(ctx);
+    (void)cert;
 
     if (*reject) {
         *txt = "not to my taste";

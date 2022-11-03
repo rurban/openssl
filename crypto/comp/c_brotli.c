@@ -32,11 +32,13 @@ COMP_METHOD *COMP_brotli(void);
 /* memory allocations functions for brotli initialisation */
 static void *brotli_alloc(void *opaque, size_t size)
 {
+    (void)opaque;
     return OPENSSL_zalloc(size);
 }
 
 static void brotli_free(void *opaque, void *address)
 {
+    (void)opaque;
     OPENSSL_free(address);
 }
 
@@ -220,11 +222,13 @@ static COMP_METHOD brotli_stateful_method = {
 
 static int brotli_oneshot_init(COMP_CTX *ctx)
 {
+    (void)ctx;
     return 1;
 }
 
 static void brotli_oneshot_finish(COMP_CTX *ctx)
 {
+    (void)ctx;
 }
 
 static ossl_ssize_t brotli_oneshot_compress_block(COMP_CTX *ctx, unsigned char *out,
@@ -233,6 +237,7 @@ static ossl_ssize_t brotli_oneshot_compress_block(COMP_CTX *ctx, unsigned char *
 {
     size_t out_size = olen;
     ossl_ssize_t ret;
+    (void)ctx;
 
     if (ilen == 0)
         return 0;
@@ -256,6 +261,7 @@ static ossl_ssize_t brotli_oneshot_expand_block(COMP_CTX *ctx, unsigned char *ou
 {
     size_t out_size = olen;
     ossl_ssize_t ret;
+    (void)ctx;
 
     if (ilen == 0)
         return 0;
@@ -424,7 +430,9 @@ static const BIO_METHOD bio_meth_brotli = {
     bio_brotli_ctrl,
     bio_brotli_new,
     bio_brotli_free,
-    bio_brotli_callback_ctrl
+    bio_brotli_callback_ctrl,
+    NULL,                      /* bsendmmsg */
+    NULL                       /* brecvmmsg */
 };
 #endif
 

@@ -67,6 +67,7 @@ const BIO_POLL_DESCRIPTOR *ossl_quic_reactor_get_poll_w(const QUIC_REACTOR *rtor
 int ossl_quic_reactor_can_support_poll_descriptor(const QUIC_REACTOR *rtor,
                                                   const BIO_POLL_DESCRIPTOR *d)
 {
+    (void)rtor;
     return d->type == BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD;
 }
 

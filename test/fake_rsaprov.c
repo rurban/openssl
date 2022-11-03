@@ -45,6 +45,7 @@ void fake_rsa_restore_store_state(void)
 static void *fake_rsa_keymgmt_new(void *provctx)
 {
     struct fake_rsa_keydata *key;
+    (void)provctx;
 
     if (!TEST_ptr(key = OPENSSL_zalloc(sizeof(struct fake_rsa_keydata))))
         return NULL;
@@ -65,6 +66,7 @@ static void fake_rsa_keymgmt_free(void *keydata)
 
 static int fake_rsa_keymgmt_has(const void *key, int selection)
 {
+    (void)key;
     /* record global for checking */
     has_selection = selection;
 
@@ -84,6 +86,8 @@ static int fake_rsa_keymgmt_import(void *keydata, int selection,
                                    const OSSL_PARAM *p)
 {
     struct fake_rsa_keydata *fake_rsa_key = keydata;
+    (void)selection;
+    (void)p;
 
     /* key was imported */
     fake_rsa_key->status = 1;
@@ -169,6 +173,7 @@ static int fake_rsa_keymgmt_export(void *keydata, int selection,
 {
     OSSL_PARAM *params = NULL;
     int ret;
+    (void)keydata;
 
     if (selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY)
         return 0;
@@ -236,6 +241,9 @@ static void *fake_rsa_gen_init(void *provctx, int selection,
                                const OSSL_PARAM params[])
 {
     unsigned char *gctx = NULL;
+    (void)provctx;
+    (void)selection;
+    (void)params;
 
     if (!TEST_ptr(gctx = OPENSSL_malloc(1)))
         return NULL;
@@ -250,6 +258,8 @@ static void *fake_rsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     unsigned char *gctx = genctx;
     static const unsigned char inited[] = { 1 };
     struct fake_rsa_keydata *keydata;
+    (void)osslcb;
+    (void)cbarg;
 
     if (!TEST_ptr(gctx)
         || !TEST_mem_eq(gctx, sizeof(*gctx), inited, sizeof(inited)))
@@ -299,6 +309,8 @@ static OSSL_FUNC_signature_sign_fn fake_rsa_sig_sign;
 static void *fake_rsa_sig_newctx(void *provctx, const char *propq)
 {
     unsigned char *sigctx = OPENSSL_zalloc(1);
+    (void)provctx;
+    (void)propq;
 
     TEST_ptr(sigctx);
 
@@ -315,6 +327,7 @@ static int fake_rsa_sig_sign_init(void *ctx, void *provkey,
 {
     unsigned char *sigctx = ctx;
     struct fake_rsa_keydata *keydata = provkey;
+    (void)params;
 
     /* we must have a ctx */
     if (!TEST_ptr(sigctx))
@@ -334,6 +347,8 @@ static int fake_rsa_sig_sign(void *ctx, unsigned char *sig,
                              const unsigned char *tbs, size_t tbslen)
 {
     unsigned char *sigctx = ctx;
+    (void)tbs;
+    (void)tbslen;
 
     /* we must have a ctx and init was called upon it */
     if (!TEST_ptr(sigctx) || !TEST_int_eq(*sigctx, 1))
@@ -407,12 +422,14 @@ static int fake_rsa_dgstsgnvfy_init(void *ctx, unsigned char type,
 static int fake_rsa_dgstsgn_init(void *ctx, const char *mdname,
                                  void *provkey, const OSSL_PARAM params[])
 {
+    (void)mdname;
     return fake_rsa_dgstsgnvfy_init(ctx, FAKE_DGSTSGN_SIGN, provkey, params);
 }
 
 static int fake_rsa_dgstvfy_init(void *ctx, const char *mdname,
                                  void *provkey, const OSSL_PARAM params[])
 {
+    (void)mdname;
     return fake_rsa_dgstsgnvfy_init(ctx, FAKE_DGSTSGN_VERIFY, provkey, params);
 }
 
@@ -420,6 +437,8 @@ static int fake_rsa_dgstsgnvfy_update(void *ctx, const unsigned char *data,
                                       size_t datalen)
 {
     unsigned char *sigctx = ctx;
+    (void)data;
+    (void)datalen;
 
     /* we must have a ctx */
     if (!TEST_ptr(sigctx))
@@ -543,6 +562,8 @@ static void *fake_rsa_st_open_ex(void *provctx, const char *uri,
                                  void *pw_cbarg)
 {
     unsigned char *storectx = NULL;
+    (void)provctx;
+    (void)params;
 
     /* First check whether the uri is ours */
     if (strncmp(uri, fake_rsa_scheme, sizeof(fake_rsa_scheme) - 1) != 0)
@@ -599,12 +620,15 @@ static const OSSL_PARAM *fake_rsa_st_settable_ctx_params(void *provctx)
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_END
     };
+    (void)provctx;
     return known_settable_ctx_params;
 }
 
 static int fake_rsa_st_set_ctx_params(void *loaderctx,
                                       const OSSL_PARAM params[])
 {
+    (void)loaderctx;
+    (void)params;
     return 1;
 }
 
@@ -617,6 +641,8 @@ static int fake_rsa_st_load(void *loaderctx,
     int object_type = OSSL_OBJECT_PKEY;
     struct fake_rsa_keydata *key = NULL;
     int rv = 0;
+    (void)pw_cb;
+    (void)pw_cbarg;
 
     switch (*storectx) {
     case 0:
@@ -666,6 +692,12 @@ static int fake_rsa_st_delete(void *loaderctx, const char *uri,
                               const OSSL_PARAM params[],
                               OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
+    (void)loaderctx;
+    (void)uri;
+    (void)params;
+    (void)pw_cb;
+    (void)pw_cbarg;
+
     key_deleted = 1;
     return 1;
 }
@@ -698,14 +730,15 @@ static const OSSL_DISPATCH fake_rsa_store_funcs[] = {
 };
 
 static const OSSL_ALGORITHM fake_rsa_store_algs[] = {
-    { "fake_rsa", "provider=fake-rsa", fake_rsa_store_funcs },
-    { NULL, NULL, NULL }
+    { "fake_rsa", "provider=fake-rsa", fake_rsa_store_funcs, NULL },
+    { NULL, NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM *fake_rsa_query(void *provctx,
                                             int operation_id,
                                             int *no_cache)
 {
+    (void)provctx;
     *no_cache = 0;
     switch (operation_id) {
     case OSSL_OP_SIGNATURE:
@@ -731,6 +764,9 @@ static int fake_rsa_provider_init(const OSSL_CORE_HANDLE *handle,
                                   const OSSL_DISPATCH *in,
                                   const OSSL_DISPATCH **out, void **provctx)
 {
+    (void)handle;
+    (void)in;
+
     if (!TEST_ptr(*provctx = OSSL_LIB_CTX_new()))
         return 0;
     *out = fake_rsa_method;

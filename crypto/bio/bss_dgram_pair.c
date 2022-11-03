@@ -639,6 +639,7 @@ static long dgram_mem_ctrl(BIO *bio, int cmd, long num, void *ptr)
 {
     long ret = 1;
     struct bio_dgram_pair_st *b = bio->ptr;
+    (void)ptr;
 
     if (!ossl_assert(b != NULL))
         return 0;
@@ -1040,6 +1041,7 @@ static int dgram_pair_recvmmsg(BIO *bio, BIO_MSG *msg,
     BIO_MSG *m;
     size_t i;
     struct bio_dgram_pair_st *b = bio->ptr, *readb;
+    (void)flags;
 
     if (num_msg == 0) {
         *num_processed = 0;
@@ -1288,6 +1290,7 @@ static int dgram_pair_sendmmsg(BIO *bio, BIO_MSG *msg,
     BIO_MSG *m;
     size_t i;
     struct bio_dgram_pair_st *b = bio->ptr;
+    (void)flags;
 
     if (num_msg == 0) {
         *num_processed = 0;

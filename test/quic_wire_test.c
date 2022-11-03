@@ -832,6 +832,7 @@ static int encode_case_16b_enc(WPACKET *pkt)
 static int encode_case_16b_dec(PACKET *pkt, ossl_ssize_t fail)
 {
     OSSL_QUIC_FRAME_NEW_CONN_ID f = {0};
+    (void)fail;
 
     if (!TEST_int_eq(ossl_quic_wire_decode_frame_new_conn_id(pkt, &f), 0))
         return 0;

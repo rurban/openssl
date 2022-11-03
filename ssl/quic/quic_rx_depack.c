@@ -45,6 +45,7 @@ static int depack_do_frame_ping(PACKET *pkt, QUIC_CHANNEL *ch,
                                 uint32_t enc_level,
                                 OSSL_ACKM_RX_PKT *ackm_data)
 {
+    (void)ackm_data;
     /* We ignore this frame, apart from eliciting an ACK */
     if (!ossl_quic_wire_decode_frame_ping(pkt)) {
         ossl_quic_channel_raise_protocol_error(ch,
@@ -145,6 +146,7 @@ static int depack_do_frame_reset_stream(PACKET *pkt,
     OSSL_QUIC_FRAME_RESET_STREAM frame_data;
     QUIC_STREAM *stream = NULL;
     uint64_t fce;
+    (void)ackm_data;
 
     if (!ossl_quic_wire_decode_frame_reset_stream(pkt, &frame_data)) {
         ossl_quic_channel_raise_protocol_error(ch,
@@ -220,6 +222,7 @@ static int depack_do_frame_stop_sending(PACKET *pkt,
 {
     OSSL_QUIC_FRAME_STOP_SENDING frame_data;
     QUIC_STREAM *stream = NULL;
+    (void)ackm_data;
 
     if (!ossl_quic_wire_decode_frame_stop_sending(pkt, &frame_data)) {
         ossl_quic_channel_raise_protocol_error(ch,
@@ -328,6 +331,7 @@ static int depack_do_frame_new_token(PACKET *pkt, QUIC_CHANNEL *ch,
 {
     const uint8_t *token;
     size_t token_len;
+    (void)ackm_data;
 
     if (!ossl_quic_wire_decode_frame_new_token(pkt, &token, &token_len)) {
         ossl_quic_channel_raise_protocol_error(ch,
@@ -502,6 +506,7 @@ static int depack_do_frame_stream(PACKET *pkt, QUIC_CHANNEL *ch,
     uint64_t fce;
     size_t rs_avail;
     int rs_fin = 0;
+    (void)ackm_data;
 
     *datalen = 0;
 
@@ -670,6 +675,7 @@ static int depack_do_frame_max_data(PACKET *pkt, QUIC_CHANNEL *ch,
                                     OSSL_ACKM_RX_PKT *ackm_data)
 {
     uint64_t max_data = 0;
+    (void)ackm_data;
 
     if (!ossl_quic_wire_decode_frame_max_data(pkt, &max_data)) {
         ossl_quic_channel_raise_protocol_error(ch,
@@ -691,6 +697,7 @@ static int depack_do_frame_max_stream_data(PACKET *pkt,
     uint64_t stream_id = 0;
     uint64_t max_stream_data = 0;
     QUIC_STREAM *stream;
+    (void)ackm_data;
 
     if (!ossl_quic_wire_decode_frame_max_stream_data(pkt, &stream_id,
                                                      &max_stream_data)) {
@@ -729,6 +736,7 @@ static int depack_do_frame_max_streams(PACKET *pkt,
                                        uint64_t frame_type)
 {
     uint64_t max_streams = 0;
+    (void)ackm_data;
 
     if (!ossl_quic_wire_decode_frame_max_streams(pkt, &max_streams)) {
         ossl_quic_channel_raise_protocol_error(ch,
@@ -777,6 +785,7 @@ static int depack_do_frame_data_blocked(PACKET *pkt,
                                         OSSL_ACKM_RX_PKT *ackm_data)
 {
     uint64_t max_data = 0;
+    (void)ackm_data;
 
     if (!ossl_quic_wire_decode_frame_data_blocked(pkt, &max_data)) {
         ossl_quic_channel_raise_protocol_error(ch,
@@ -797,6 +806,7 @@ static int depack_do_frame_stream_data_blocked(PACKET *pkt,
     uint64_t stream_id = 0;
     uint64_t max_data = 0;
     QUIC_STREAM *stream;
+    (void)ackm_data;
 
     if (!ossl_quic_wire_decode_frame_stream_data_blocked(pkt, &stream_id,
                                                          &max_data)) {
@@ -843,6 +853,7 @@ static int depack_do_frame_streams_blocked(PACKET *pkt,
                                            uint64_t frame_type)
 {
     uint64_t max_data = 0;
+    (void)ackm_data;
 
     if (!ossl_quic_wire_decode_frame_streams_blocked(pkt, &max_data)) {
         ossl_quic_channel_raise_protocol_error(ch,
@@ -875,6 +886,7 @@ static int depack_do_frame_new_conn_id(PACKET *pkt,
                                        OSSL_ACKM_RX_PKT *ackm_data)
 {
     OSSL_QUIC_FRAME_NEW_CONN_ID frame_data;
+    (void)ackm_data;
 
     if (!ossl_quic_wire_decode_frame_new_conn_id(pkt, &frame_data)) {
         ossl_quic_channel_raise_protocol_error(ch,
@@ -894,7 +906,7 @@ static int depack_do_frame_retire_conn_id(PACKET *pkt,
                                           OSSL_ACKM_RX_PKT *ackm_data)
 {
     uint64_t seq_num;
-
+    (void)ackm_data;
     if (!ossl_quic_wire_decode_frame_retire_conn_id(pkt, &seq_num)) {
         ossl_quic_channel_raise_protocol_error(ch,
                                                OSSL_QUIC_ERR_FRAME_ENCODING_ERROR,
@@ -929,6 +941,8 @@ static int depack_do_frame_retire_conn_id(PACKET *pkt,
 
 static void free_path_response(unsigned char *buf, size_t buf_len, void *arg)
 {
+    (void)buf_len;
+    (void)arg;
     OPENSSL_free(buf);
 }
 
@@ -940,6 +954,7 @@ static int depack_do_frame_path_challenge(PACKET *pkt,
     unsigned char *encoded = NULL;
     size_t encoded_len;
     WPACKET wpkt;
+    (void)ackm_data;
 
     if (!ossl_quic_wire_decode_frame_path_challenge(pkt, &frame_data)) {
         ossl_quic_channel_raise_protocol_error(ch,
@@ -992,7 +1007,7 @@ static int depack_do_frame_path_response(PACKET *pkt,
                                          OSSL_ACKM_RX_PKT *ackm_data)
 {
     uint64_t frame_data = 0;
-
+    (void)ackm_data;
     if (!ossl_quic_wire_decode_frame_path_response(pkt, &frame_data)) {
         ossl_quic_channel_raise_protocol_error(ch,
                                                OSSL_QUIC_ERR_FRAME_ENCODING_ERROR,
@@ -1027,6 +1042,7 @@ static int depack_do_frame_handshake_done(PACKET *pkt,
                                           QUIC_CHANNEL *ch,
                                           OSSL_ACKM_RX_PKT *ackm_data)
 {
+    (void)ackm_data;
     if (!ossl_quic_wire_decode_frame_handshake_done(pkt)) {
         /* This can fail only with an internal error. */
         ossl_quic_channel_raise_protocol_error(ch,

@@ -31,22 +31,31 @@
 static int ssl_undefined_function_3(SSL_CONNECTION *sc, unsigned char *r,
                                     unsigned char *s, size_t t, size_t *u)
 {
+    (void)r;
+    (void)s;
+    (void)t;
+    (void)u;
     return ssl_undefined_function(SSL_CONNECTION_GET_SSL(sc));
 }
 
 static int ssl_undefined_function_4(SSL_CONNECTION *sc, int r)
 {
+    (void)r;
     return ssl_undefined_function(SSL_CONNECTION_GET_SSL(sc));
 }
 
 static size_t ssl_undefined_function_5(SSL_CONNECTION *sc, const char *r,
                                        size_t s, unsigned char *t)
 {
+    (void)r;
+    (void)s;
+    (void)t;
     return ssl_undefined_function(SSL_CONNECTION_GET_SSL(sc));
 }
 
 static int ssl_undefined_function_6(int r)
 {
+    (void)r;
     return ssl_undefined_function(NULL);
 }
 
@@ -54,6 +63,13 @@ static int ssl_undefined_function_7(SSL_CONNECTION *sc, unsigned char *r,
                                     size_t s, const char *t, size_t u,
                                     const unsigned char *v, size_t w, int x)
 {
+    (void)r;
+    (void)s;
+    (void)t;
+    (void)u;
+    (void)v;
+    (void)w;
+    (void)x;
     return ssl_undefined_function(SSL_CONNECTION_GET_SSL(sc));
 }
 
@@ -73,6 +89,10 @@ const SSL3_ENC_METHOD ssl3_undef_enc_method = {
     0,                          /* server_finished_label_len */
     ssl_undefined_function_6,
     ssl_undefined_function_7,
+    0U,                         /* enc_flags */
+    NULL,                       /* set_handshake_header */
+    NULL,                       /* close_construct_packet */
+    NULL,                       /* do_write */
 };
 
 struct ssl_async_args {
@@ -2543,6 +2563,12 @@ ossl_ssize_t SSL_sendfile(SSL *s, int fd, off_t offset, size_t size, int flags)
 {
     ossl_ssize_t ret;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+#ifdef OPENSSL_NO_KTLS
+    (void)fd;
+    (void)offset;
+    (void)size;
+    (void)flags;
+#endif
 
     if (sc == NULL)
         return 0;
@@ -4776,6 +4802,7 @@ void SSL_set_connect_state(SSL *s)
 
 int ssl_undefined_function(SSL *s)
 {
+    (void)s;
     ERR_raise(ERR_LIB_SSL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
     return 0;
 }
@@ -4788,6 +4815,7 @@ int ssl_undefined_void_function(void)
 
 int ssl_undefined_const_function(const SSL *s)
 {
+    (void)s;
     return 0;
 }
 
@@ -6217,6 +6245,9 @@ const STACK_OF(SCT) *SSL_get0_peer_scts(SSL *s)
 static int ct_permissive(const CT_POLICY_EVAL_CTX *ctx,
                          const STACK_OF(SCT) *scts, void *unused_arg)
 {
+    (void)ctx;
+    (void)scts;
+    (void)unused_arg;
     return 1;
 }
 
@@ -6225,6 +6256,8 @@ static int ct_strict(const CT_POLICY_EVAL_CTX *ctx,
 {
     int count = scts != NULL ? sk_SCT_num(scts) : 0;
     int i;
+    (void)ctx;
+    (void)unused_arg;
 
     for (i = 0; i < count; ++i) {
         SCT *sct = sk_SCT_value(scts, i);
@@ -7340,6 +7373,11 @@ int SSL_get_rpoll_descriptor(SSL *s, BIO_POLL_DESCRIPTOR *desc)
 #ifndef OPENSSL_NO_QUIC
     if (IS_QUIC(s))
         return ossl_quic_get_rpoll_descriptor(s, desc);
+    return ossl_quic_get_rpoll_descriptor(s, desc);
+#else
+    (void)s;
+    (void)desc;
+    return -1;
 #endif
 
     if (sc == NULL || sc->rbio == NULL)
@@ -7355,6 +7393,11 @@ int SSL_get_wpoll_descriptor(SSL *s, BIO_POLL_DESCRIPTOR *desc)
 #ifndef OPENSSL_NO_QUIC
     if (IS_QUIC(s))
         return ossl_quic_get_wpoll_descriptor(s, desc);
+    return ossl_quic_get_wpoll_descriptor(s, desc);
+#else
+    (void)s;
+    (void)desc;
+    return -1;
 #endif
 
     if (sc == NULL || sc->wbio == NULL)
@@ -7395,6 +7438,8 @@ int SSL_set_blocking_mode(SSL *s, int blocking)
 
     return ossl_quic_conn_set_blocking_mode(s, blocking);
 #else
+    (void)s;
+    (void)blocking;
     return 0;
 #endif
 }
@@ -7407,6 +7452,7 @@ int SSL_get_blocking_mode(SSL *s)
 
     return ossl_quic_conn_get_blocking_mode(s);
 #else
+    (void)s;
     return -1;
 #endif
 }
@@ -7419,6 +7465,8 @@ int SSL_set1_initial_peer_addr(SSL *s, const BIO_ADDR *peer_addr)
 
     return ossl_quic_conn_set_initial_peer_addr(s, peer_addr);
 #else
+    (void)s;
+    (void)peer_addr;
     return 0;
 #endif
 }
@@ -7433,18 +7481,23 @@ int SSL_shutdown_ex(SSL *ssl, uint64_t flags,
 
     return ossl_quic_conn_shutdown(ssl, flags, args, args_len);
 #else
+    (void)flags;
+    (void)args;
+    (void)args_len;
     return SSL_shutdown(ssl);
 #endif
 }
 
 int SSL_stream_conclude(SSL *ssl, uint64_t flags)
 {
+    (void)flags;
 #ifndef OPENSSL_NO_QUIC
     if (!IS_QUIC(ssl))
         return 0;
 
     return ossl_quic_conn_stream_conclude(ssl);
 #else
+    (void)ssl;
     return 0;
 #endif
 }

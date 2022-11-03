@@ -43,10 +43,26 @@ static const EVP_CIPHER r4_cipher = {
     rc4_cipher,
     NULL,
     sizeof(EVP_RC4_KEY),
-    NULL,
-    NULL,
-    NULL,
-    NULL
+    NULL, NULL, NULL, NULL,
+    0,          /* name_id */
+    NULL,       /* type_name */
+    NULL,       /* description */
+    NULL,       /* prov */
+    {0},        /* refcnt */
+    NULL,       /* newctx */
+    NULL,       /* einit */
+    NULL,       /* dinit */
+    NULL,       /* cupdate */
+    NULL,       /* cfinal */
+    NULL,       /* ccipher */
+    NULL,       /* freectx */
+    NULL,       /* dupctx */
+    NULL,       /* get_params */
+    NULL,       /* get_ctx_params */
+    NULL,       /* set_ctx_params */
+    NULL,       /* gettable_params */
+    NULL,       /* gettable_ctx_params */
+    NULL        /* settable_ctx_params */
 };
 
 static const EVP_CIPHER r4_40_cipher = {
@@ -58,10 +74,26 @@ static const EVP_CIPHER r4_40_cipher = {
     rc4_cipher,
     NULL,
     sizeof(EVP_RC4_KEY),
-    NULL,
-    NULL,
-    NULL,
-    NULL
+    NULL, NULL, NULL, NULL,
+    0,                         /* name_id */
+    NULL,                      /* type_name */
+    NULL,                      /* description */
+    NULL,                      /* prov */
+    {0},                       /* refcnt */
+    NULL,                      /* newctx */
+    NULL,                      /* einit */
+    NULL,                      /* dinit */
+    NULL,                      /* cupdate */
+    NULL,                      /* cfinal */
+    NULL,                      /* ccipher */
+    NULL,                      /* freectx */
+    NULL,                      /* dupctx */
+    NULL,                      /* get_params */
+    NULL,                      /* get_ctx_params */
+    NULL,                      /* set_ctx_params */
+    NULL,                      /* gettable_params */
+    NULL,                      /* gettable_ctx_params */
+    NULL                       /* settable_ctx_params */
 };
 
 const EVP_CIPHER *EVP_rc4(void)
@@ -78,6 +110,8 @@ static int rc4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                         const unsigned char *iv, int enc)
 {
     int keylen;
+    (void)iv;
+    (void)enc;
 
     if ((keylen = EVP_CIPHER_CTX_get_key_length(ctx)) <= 0)
         return 0;

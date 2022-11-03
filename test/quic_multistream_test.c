@@ -206,133 +206,134 @@ struct script_op {
 #define ANY_ID UINT64_MAX
 
 #define OP_END  \
-    {OPK_END}
+    {OPK_END, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL}
 #define OP_CHECK(func, arg2)  \
-    {OPK_CHECK, NULL, 0, (func), NULL, (arg2)},
+    {OPK_CHECK, NULL, 0, (func), NULL, (arg2), NULL, NULL, NULL},
 #define OP_C_SET_ALPN(alpn) \
-    {OPK_C_SET_ALPN, (alpn), 0, NULL, NULL},
+    {OPK_C_SET_ALPN, (alpn), 0, NULL, NULL, 0, NULL, NULL, NULL},
 #define OP_C_CONNECT_WAIT() \
-    {OPK_C_CONNECT_WAIT, NULL, 0, NULL, NULL},
+    {OPK_C_CONNECT_WAIT, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL},
 #define OP_C_CONNECT_WAIT_OR_FAIL() \
-    {OPK_C_CONNECT_WAIT, NULL, 1, NULL, NULL},
+    {OPK_C_CONNECT_WAIT, NULL, 1, NULL, NULL, 0, NULL, NULL, NULL},
 #define OP_C_WRITE(stream_name, buf, buf_len)   \
-    {OPK_C_WRITE, (buf), (buf_len), NULL, #stream_name},
+    {OPK_C_WRITE, (buf), (buf_len), NULL, #stream_name, 0, NULL, NULL, NULL},
 #define OP_S_WRITE(stream_name, buf, buf_len)   \
-    {OPK_S_WRITE, (buf), (buf_len), NULL, #stream_name},
+    {OPK_S_WRITE, (buf), (buf_len), NULL, #stream_name, 0, NULL, NULL, NULL},
 #define OP_C_READ_EXPECT(stream_name, buf, buf_len)   \
-    {OPK_C_READ_EXPECT, (buf), (buf_len), NULL, #stream_name},
+    {OPK_C_READ_EXPECT, (buf), (buf_len), NULL, #stream_name, 0, NULL, NULL, NULL},
 #define OP_S_READ_EXPECT(stream_name, buf, buf_len)   \
-    {OPK_S_READ_EXPECT, (buf), (buf_len), NULL, #stream_name},
+    {OPK_S_READ_EXPECT, (buf), (buf_len), NULL, #stream_name, 0, NULL, NULL, NULL},
 #define OP_C_EXPECT_FIN(stream_name) \
-    {OPK_C_EXPECT_FIN, NULL, 0, NULL, #stream_name},
+    {OPK_C_EXPECT_FIN, NULL, 0, NULL, #stream_name, 0, NULL, NULL, NULL},
 #define OP_S_EXPECT_FIN(stream_name) \
-    {OPK_S_EXPECT_FIN, NULL, 0, NULL, #stream_name},
+    {OPK_S_EXPECT_FIN, NULL, 0, NULL, #stream_name, 0, NULL, NULL, NULL},
 #define OP_C_CONCLUDE(stream_name) \
-    {OPK_C_CONCLUDE, NULL, 0, NULL, #stream_name},
+    {OPK_C_CONCLUDE, NULL, 0, NULL, #stream_name, 0, NULL, NULL, NULL},
 #define OP_S_CONCLUDE(stream_name) \
-    {OPK_S_CONCLUDE, NULL, 0, NULL, #stream_name},
+    {OPK_S_CONCLUDE, NULL, 0, NULL, #stream_name, 0, NULL, NULL, NULL},
 #define OP_C_DETACH(stream_name) \
-    {OPK_C_DETACH, NULL, 0, NULL, #stream_name},
+    {OPK_C_DETACH, NULL, 0, NULL, #stream_name, 0, NULL, NULL, NULL},
 #define OP_C_ATTACH(stream_name) \
-    {OPK_C_ATTACH, NULL, 0, NULL, #stream_name},
+    {OPK_C_ATTACH, NULL, 0, NULL, #stream_name, 0, NULL, NULL, NULL},
 #define OP_C_NEW_STREAM_BIDI(stream_name, expect_id) \
-    {OPK_C_NEW_STREAM, NULL, 0, NULL, #stream_name, (expect_id)},
+    {OPK_C_NEW_STREAM, NULL, 0, NULL, #stream_name, (expect_id), NULL, NULL, NULL},
 #define OP_C_NEW_STREAM_BIDI_EX(stream_name, expect_id, flags) \
-    {OPK_C_NEW_STREAM, NULL, (flags), NULL, #stream_name, (expect_id)},
+    {OPK_C_NEW_STREAM, NULL, (flags), NULL, #stream_name, (expect_id), NULL, NULL, NULL},
 #define OP_C_NEW_STREAM_UNI(stream_name, expect_id) \
-    {OPK_C_NEW_STREAM, NULL, SSL_STREAM_FLAG_UNI, \
-     NULL, #stream_name, (expect_id)},
+    {OPK_C_NEW_STREAM, NULL, 1, NULL, #stream_name, (expect_id), NULL, NULL, NULL},
 #define OP_C_NEW_STREAM_UNI_EX(stream_name, expect_id, flags) \
     {OPK_C_NEW_STREAM, NULL, (flags) | SSL_STREAM_FLAG_UNI, \
-     NULL, #stream_name, (expect_id)},
+     NULL, #stream_name, (expect_id), NULL, NULL, NULL},
 #define OP_S_NEW_STREAM_BIDI(stream_name, expect_id) \
-    {OPK_S_NEW_STREAM, NULL, 0, NULL, #stream_name, (expect_id)},
+    {OPK_S_NEW_STREAM, NULL, 0, NULL, #stream_name, (expect_id), NULL, NULL, NULL},
 #define OP_S_NEW_STREAM_UNI(stream_name, expect_id) \
-    {OPK_S_NEW_STREAM, NULL, 1, NULL, #stream_name, (expect_id)},
+    {OPK_S_NEW_STREAM, NULL, 1, NULL, #stream_name, (expect_id), NULL, NULL, NULL},
 #define OP_C_ACCEPT_STREAM_WAIT(stream_name) \
-    {OPK_C_ACCEPT_STREAM_WAIT, NULL, 0, NULL, #stream_name},
+    {OPK_C_ACCEPT_STREAM_WAIT, NULL, 0, NULL, #stream_name, 0, NULL, NULL, NULL},
 #define OP_C_ACCEPT_STREAM_NONE() \
-    {OPK_C_ACCEPT_STREAM_NONE, NULL, 0, NULL, NULL},
+    {OPK_C_ACCEPT_STREAM_NONE, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL},
 #define OP_C_FREE_STREAM(stream_name) \
-    {OPK_C_FREE_STREAM, NULL, 0, NULL, #stream_name},
+    {OPK_C_FREE_STREAM, NULL, 0, NULL, #stream_name, 0, NULL, NULL, NULL},
 #define OP_C_SET_DEFAULT_STREAM_MODE(mode) \
-    {OPK_C_SET_DEFAULT_STREAM_MODE, NULL, (mode), NULL, NULL},
+    {OPK_C_SET_DEFAULT_STREAM_MODE, NULL, (mode), NULL, NULL, 0, NULL, NULL, NULL},
 #define OP_C_SET_INCOMING_STREAM_POLICY(policy) \
-    {OPK_C_SET_INCOMING_STREAM_POLICY, NULL, (policy), NULL, NULL},
+    {OPK_C_SET_INCOMING_STREAM_POLICY, NULL, (policy), NULL, NULL, 0, NULL, NULL, NULL},
 #define OP_C_SHUTDOWN_WAIT(reason, flags) \
-    {OPK_C_SHUTDOWN_WAIT, (reason), (flags), NULL, NULL},
+    {OPK_C_SHUTDOWN_WAIT, (reason), (flags), NULL, NULL, 0, NULL, NULL, NULL},
+#define OP_C_SHUTDOWN() \
+    {OPK_C_SHUTDOWN, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL},
 #define OP_C_EXPECT_CONN_CLOSE_INFO(ec, app, remote)                \
     {OPK_C_EXPECT_CONN_CLOSE_INFO, NULL,                            \
         ((app) ? EXPECT_CONN_CLOSE_APP : 0) |                       \
         ((remote) ? EXPECT_CONN_CLOSE_REMOTE : 0),                  \
-        NULL, NULL, (ec)},
+            NULL, NULL, (ec), NULL, NULL, NULL},
 #define OP_S_EXPECT_CONN_CLOSE_INFO(ec, app, remote) \
     {OPK_S_EXPECT_CONN_CLOSE_INFO, NULL,            \
         ((app) ? EXPECT_CONN_CLOSE_APP : 0) |       \
         ((remote) ? EXPECT_CONN_CLOSE_REMOTE : 0),  \
-        NULL, NULL, (ec)},
+        NULL, NULL, (ec), NULL, NULL, NULL},
 #define OP_S_BIND_STREAM_ID(stream_name, stream_id) \
-    {OPK_S_BIND_STREAM_ID, NULL, 0, NULL, #stream_name, (stream_id)},
+    {OPK_S_BIND_STREAM_ID, NULL, 0, NULL, #stream_name, (stream_id), NULL, NULL, NULL},
 #define OP_C_WAIT_FOR_DATA(stream_name) \
-    {OPK_C_WAIT_FOR_DATA, NULL, 0, NULL, #stream_name},
+    {OPK_C_WAIT_FOR_DATA, NULL, 0, NULL, #stream_name, 0, NULL, NULL, NULL},
 #define OP_C_WRITE_FAIL(stream_name)  \
-    {OPK_C_WRITE_FAIL, NULL, 0, NULL, #stream_name},
+    {OPK_C_WRITE_FAIL, NULL, 0, NULL, #stream_name, 0, NULL, NULL, NULL},
 #define OP_S_WRITE_FAIL(stream_name)  \
-    {OPK_S_WRITE_FAIL, NULL, 0, NULL, #stream_name},
+    {OPK_S_WRITE_FAIL, NULL, 0, NULL, #stream_name, 0, NULL, NULL, NULL},
 #define OP_C_READ_FAIL(stream_name)  \
-    {OPK_C_READ_FAIL, NULL, 0, NULL, #stream_name},
+    {OPK_C_READ_FAIL, NULL, 0, NULL, #stream_name, 0, NULL, NULL, NULL},
 #define OP_S_READ_FAIL(stream_name, allow_zero_len)  \
-    {OPK_S_READ_FAIL, NULL, (allow_zero_len), NULL, #stream_name},
+    {OPK_S_READ_FAIL, NULL, (allow_zero_len), NULL, #stream_name, 0, NULL, NULL, NULL},
 #define OP_C_STREAM_RESET(stream_name, aec)  \
-    {OPK_C_STREAM_RESET, NULL, 0, NULL, #stream_name, (aec)},
+    {OPK_C_STREAM_RESET, NULL, 0, NULL, #stream_name, (aec), NULL, NULL, NULL},
 #define OP_S_ACCEPT_STREAM_WAIT(stream_name)  \
-    {OPK_S_ACCEPT_STREAM_WAIT, NULL, 0, NULL, #stream_name},
+    {OPK_S_ACCEPT_STREAM_WAIT, NULL, 0, NULL, #stream_name, 0, NULL, NULL, NULL},
 #define OP_NEW_THREAD(num_threads, script) \
-    {OPK_NEW_THREAD, (script), (num_threads), NULL, NULL, 0 },
+    {OPK_NEW_THREAD, (script), (num_threads), NULL, NULL, 0, NULL, NULL, NULL},
 #define OP_BEGIN_REPEAT(n)  \
-    {OPK_BEGIN_REPEAT, NULL, (n)},
+    {OPK_BEGIN_REPEAT, NULL, (n), NULL, NULL, 0, NULL, NULL, NULL},
 #define OP_END_REPEAT() \
-    {OPK_END_REPEAT},
+    {OPK_END_REPEAT, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL},
 #define OP_S_UNBIND_STREAM_ID(stream_name) \
-    {OPK_S_UNBIND_STREAM_ID, NULL, 0, NULL, #stream_name},
+    {OPK_S_UNBIND_STREAM_ID, NULL, 0, NULL, #stream_name, 0, NULL, NULL, NULL},
 #define OP_C_READ_FAIL_WAIT(stream_name) \
-    {OPK_C_READ_FAIL_WAIT, NULL, 0, NULL, #stream_name},
+    {OPK_C_READ_FAIL_WAIT, NULL, 0, NULL, #stream_name, 0, NULL, NULL, NULL},
 #define OP_C_CLOSE_SOCKET() \
-    {OPK_C_CLOSE_SOCKET},
+    {OPK_C_CLOSE_SOCKET, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL},
 #define OP_C_EXPECT_SSL_ERR(stream_name, err) \
-    {OPK_C_EXPECT_SSL_ERR, NULL, (err), NULL, #stream_name},
+    {OPK_C_EXPECT_SSL_ERR, NULL, (err), NULL, #stream_name, 0, NULL, NULL, NULL},
 #define OP_EXPECT_ERR_REASON(err) \
-    {OPK_EXPECT_ERR_REASON, NULL, (err)},
+    {OPK_EXPECT_ERR_REASON, NULL, (err), NULL, NULL, 0, NULL, NULL, NULL},
 #define OP_EXPECT_ERR_LIB(lib) \
-    {OPK_EXPECT_ERR_LIB, NULL, (lib)},
+    {OPK_EXPECT_ERR_LIB, NULL, (lib), NULL, NULL, 0, NULL, NULL, NULL},
 #define OP_SLEEP(ms) \
-    {OPK_SLEEP, NULL, 0, NULL, NULL, (ms)},
+    {OPK_SLEEP, NULL, 0, NULL, NULL, (ms), NULL, NULL, NULL},
 #define OP_S_SET_INJECT_PLAIN(f) \
-    {OPK_S_SET_INJECT_PLAIN, NULL, 0, NULL, NULL, 0, (f)},
+    {OPK_S_SET_INJECT_PLAIN, NULL, 0, NULL, NULL, 0, (f), NULL, NULL},
 #define OP_SET_INJECT_WORD(w0, w1) \
-    {OPK_SET_INJECT_WORD, NULL, (w0), NULL, NULL, (w1), NULL},
+    {OPK_SET_INJECT_WORD, NULL, (w0), NULL, NULL, (w1), NULL, NULL, NULL},
 #define OP_C_INHIBIT_TICK(inhibit) \
-    {OPK_C_INHIBIT_TICK, NULL, (inhibit), NULL, NULL, 0, NULL},
+    {OPK_C_INHIBIT_TICK, NULL, (inhibit), NULL, NULL, 0, NULL, NULL, NULL},
 #define OP_C_SET_WRITE_BUF_SIZE(stream_name, size) \
-    {OPK_C_SET_WRITE_BUF_SIZE, NULL, (size), NULL, #stream_name},
+    {OPK_C_SET_WRITE_BUF_SIZE, NULL, (size), NULL, #stream_name, 0, NULL, NULL, NULL},
 #define OP_S_SET_INJECT_HANDSHAKE(f) \
-    {OPK_S_SET_INJECT_HANDSHAKE, NULL, 0, NULL, NULL, 0, NULL, (f)},
+    {OPK_S_SET_INJECT_HANDSHAKE, NULL, 0, NULL, NULL, 0, NULL, (f), NULL},
 #define OP_S_NEW_TICKET() \
-    {OPK_S_NEW_TICKET},
+    {OPK_S_NEW_TICKET, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL},
 #define OP_C_SKIP_IF_UNBOUND(stream_name, n) \
-    {OPK_C_SKIP_IF_UNBOUND, NULL, (n), NULL, #stream_name},
+    {OPK_C_SKIP_IF_UNBOUND, NULL, (n), NULL, #stream_name, 0, NULL, NULL, NULL},
 #define OP_S_SET_INJECT_DATAGRAM(f) \
     {OPK_S_SET_INJECT_DATAGRAM, NULL, 0, NULL, NULL, 0, NULL, NULL, (f)},
 #define OP_S_SHUTDOWN(error_code) \
-    {OPK_S_SHUTDOWN, NULL, (error_code)},
+    {OPK_S_SHUTDOWN, NULL, (error_code), NULL, NULL, 0, NULL, NULL, NULL},
 #define OP_POP_ERR() \
-    {OPK_POP_ERR},
+    {OPK_POP_ERR, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL},
 #define OP_C_WRITE_EX2(stream_name, buf, buf_len, flags) \
-    {OPK_C_WRITE_EX2, (buf), (buf_len), NULL, #stream_name, (flags)},
+    {OPK_C_WRITE_EX2, (buf), (buf_len), NULL, #stream_name, (flags), NULL, NULL, NULL},
 #define OP_CHECK2(func, arg1, arg2) \
-    {OPK_CHECK, NULL, (arg1), (func), NULL, (arg2)},
+    {OPK_CHECK, NULL, (arg1), (func), NULL, (arg2), NULL, NULL, NULL},
 #define OP_SKIP_IF_BLOCKING(n) \
-    {OPK_SKIP_IF_BLOCKING, NULL, (n), NULL, 0},
+    {OPK_SKIP_IF_BLOCKING, NULL, (n), NULL, 0, 0, NULL, NULL, NULL},
 
 static OSSL_TIME get_time(void *arg)
 {
@@ -412,6 +413,7 @@ static int override_key_update(struct helper *h, struct helper_local *hl)
 
 static int trigger_key_update(struct helper *h, struct helper_local *hl)
 {
+    (void)hl;
     if (!TEST_true(SSL_key_update(h->c_conn, SSL_KEY_UPDATE_REQUESTED)))
         return 0;
 
@@ -966,6 +968,7 @@ static int helper_packet_plain_listener(QTEST_FAULT *qtf, QUIC_PKT_HDR *hdr,
                                         void *arg)
 {
     struct helper *h = arg;
+    (void)qtf;
 
     return h->qtf_packet_plain_cb(h, hdr, buf, buf_len);
 }
@@ -975,6 +978,7 @@ static int helper_handshake_listener(QTEST_FAULT *fault,
                                      void *arg)
 {
     struct helper *h = arg;
+    (void)fault;
 
     return h->qtf_handshake_cb(h, buf, buf_len);
 }
@@ -983,6 +987,7 @@ static int helper_datagram_listener(QTEST_FAULT *fault,
                                     BIO_MSG *msg, size_t stride,
                                     void *arg)
 {
+    (void)fault;
     struct helper *h = arg;
 
     return h->qtf_datagram_cb(h, msg, stride);
@@ -2744,6 +2749,7 @@ static int script_20_wait(struct helper *h, volatile uint64_t *counter, uint64_t
 
 static int script_20_trigger1(struct helper *h, struct helper_local *hl)
 {
+    (void)hl;
     return script_20_trigger(h, &h->scratch0);
 }
 
@@ -2754,6 +2760,7 @@ static int script_20_wait1(struct helper *h, struct helper_local *hl)
 
 static int script_20_trigger2(struct helper *h, struct helper_local *hl)
 {
+    (void)hl;
     return script_20_trigger(h, &h->scratch1);
 }
 
@@ -2815,6 +2822,8 @@ static int script_21_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     WPACKET wpkt;
     unsigned char frame_buf[8];
     size_t written;
+    (void)buf;
+    (void)len;
 
     if (h->inject_word0 == 0 || hdr->type != h->inject_word0)
         return 1;
@@ -2863,6 +2872,8 @@ static const struct script_op script_21[] = {
 static int script_22_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
                                   unsigned char *buf, size_t len)
 {
+    (void)buf;
+    (void)len;
     if (h->inject_word0 == 0)
         return 1;
 
@@ -2896,6 +2907,9 @@ static int script_23_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     WPACKET wpkt;
     unsigned char frame_buf[16];
     size_t written;
+    (void)hdr;
+    (void)buf;
+    (void)len;
 
     if (h->inject_word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
         return 1;
@@ -2949,6 +2963,9 @@ static int script_24_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     WPACKET wpkt;
     unsigned char frame_buf[16];
     size_t written;
+    (void)hdr;
+    (void)buf;
+    (void)len;
 
     if (h->inject_word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
         return 1;
@@ -3059,6 +3076,9 @@ static int script_28_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     WPACKET wpkt;
     unsigned char frame_buf[32];
     size_t written;
+    (void)hdr;
+    (void)buf;
+    (void)len;
 
     if (h->inject_word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
         return 1;
@@ -3194,6 +3214,9 @@ static int script_32_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     unsigned char frame_buf[64];
     size_t written;
     uint64_t type = OSSL_QUIC_FRAME_TYPE_STREAM_OFF_LEN, offset, flen, i;
+    (void)hdr;
+    (void)buf;
+    (void)len;
 
     if (hdr->type != QUIC_PKT_TYPE_1RTT)
         return 1;
@@ -3411,6 +3434,9 @@ static int script_39_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     uint64_t seq_no = 0, retire_prior_to = 0;
     QUIC_CONN_ID new_cid = {0};
     QUIC_CHANNEL *ch = ossl_quic_tserver_get_channel(h->s_priv);
+    (void)hdr;
+    (void)buf;
+    (void)len;
 
     if (hdr->type != QUIC_PKT_TYPE_1RTT)
         return 1;
@@ -3557,6 +3583,9 @@ static int script_41_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     WPACKET wpkt;
     unsigned char frame_buf[16];
     size_t written;
+    (void)hdr;
+    (void)buf;
+    (void)len;
 
     if (h->inject_word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
         return 1;
@@ -3593,6 +3622,8 @@ static void script_41_trace(int write_p, int version, int content_type,
     int was_minimal;
     struct helper *h = arg;
     PACKET pkt;
+    (void)write_p;
+    (void)ssl;
 
     if (version != OSSL_QUIC1_VERSION
         || content_type != SSL3_RT_QUIC_FRAME_FULL
@@ -3624,12 +3655,14 @@ static void script_41_trace(int write_p, int version, int content_type,
 
 static int script_41_setup(struct helper *h, struct helper_local *hl)
 {
+    (void)hl;
     ossl_quic_tserver_set_msg_callback(ACQUIRE_S(), script_41_trace, h);
     return 1;
 }
 
 static int script_41_check(struct helper *h, struct helper_local *hl)
 {
+    (void)hl;
     /* At least one valid challenge/response echo? */
     if (!TEST_uint64_t_gt(h->scratch0, 0))
         return 0;
@@ -3671,6 +3704,9 @@ static int script_42_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     unsigned char frame_buf[64];
     size_t written;
     WPACKET wpkt;
+    (void)hdr;
+    (void)buf;
+    (void)len;
 
     if (h->inject_word0 == 0)
         return 1;
@@ -3751,6 +3787,9 @@ static int script_44_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     WPACKET wpkt;
     unsigned char frame_buf[16];
     size_t written;
+    (void)hdr;
+    (void)buf;
+    (void)len;
 
     if (h->inject_word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
         return 1;
@@ -3797,6 +3836,7 @@ static const struct script_op script_44[] = {
 /* 45. PING must generate ACK */
 static int force_ping(struct helper *h, struct helper_local *hl)
 {
+    (void)hl;
     QUIC_CHANNEL *ch = ossl_quic_tserver_get_channel(ACQUIRE_S());
 
     h->scratch0 = ossl_quic_channel_get_diag_num_rx_ack(ch);
@@ -3811,6 +3851,7 @@ static int wait_incoming_acks_increased(struct helper *h, struct helper_local *h
 {
     QUIC_CHANNEL *ch = ossl_quic_tserver_get_channel(ACQUIRE_S());
     uint16_t count;
+    (void)hl;
 
     count = ossl_quic_channel_get_diag_num_rx_ack(ch);
 
@@ -3854,6 +3895,9 @@ static int script_46_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     uint64_t type = 0, largest_acked = 0, first_range = 0, range_count = 0;
     uint64_t agap = 0, alen = 0;
     uint64_t ect0 = 0, ect1 = 0, ecnce = 0;
+    (void)hdr;
+    (void)buf;
+    (void)len;
 
     if (h->inject_word0 == 0)
         return 1;
@@ -4063,6 +4107,9 @@ static int script_52_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     size_t written;
     WPACKET wpkt;
     uint64_t type = h->inject_word1;
+    (void)hdr;
+    (void)buf;
+    (void)len;
 
     if (h->inject_word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
         return 1;
@@ -4152,6 +4199,9 @@ static int script_53_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     uint64_t offset = 0, data_len = 100;
     unsigned char *frame_buf = NULL;
     size_t frame_len, i;
+    (void)hdr;
+    (void)buf;
+    (void)len;
 
     if (h->inject_word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
         return 1;
@@ -4225,6 +4275,7 @@ static int script_54_inject_handshake(struct helper *h,
                                       unsigned char *buf, size_t buf_len)
 {
     size_t i;
+    (void)h;
 
     for (i = 0; i < buf_len; ++i)
         buf[i] ^= 0xff;
@@ -4324,6 +4375,9 @@ static int script_58_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     unsigned char frame_buf[64];
     size_t written;
     WPACKET wpkt;
+    (void)hdr;
+    (void)buf;
+    (void)len;
 
     if (h->inject_word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
         return 1;
@@ -4401,6 +4455,8 @@ static char long_reason[2048];
 
 static int init_reason(struct helper *h, struct helper_local *hl)
 {
+    (void)h;
+    (void)hl;
     memset(long_reason, '~', sizeof(long_reason));
     memcpy(long_reason, "This is a long reason string.", 29);
     long_reason[OSSL_NELEM(long_reason) - 1] = '\0';
@@ -4410,6 +4466,7 @@ static int init_reason(struct helper *h, struct helper_local *hl)
 static int check_shutdown_reason(struct helper *h, struct helper_local *hl)
 {
     const QUIC_TERMINATE_CAUSE *tc = ossl_quic_tserver_get_terminate_cause(ACQUIRE_S());
+    (void)hl;
 
     if (tc == NULL) {
         h->check_spin_again = 1;
@@ -4447,6 +4504,9 @@ static int script_61_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     WPACKET wpkt;
     unsigned char frame_buf[32];
     size_t written;
+    (void)hdr;
+    (void)buf;
+    (void)len;
 
     if (h->inject_word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
         return 1;
@@ -4570,6 +4630,9 @@ static int script_65_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     unsigned char frame_buf[64];
     size_t written;
     WPACKET wpkt;
+    (void)hdr;
+    (void)buf;
+    (void)len;
 
     if (h->inject_word0 == 0)
         return 1;
@@ -4627,6 +4690,9 @@ static int script_66_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     WPACKET wpkt;
     unsigned char frame_buf[64];
     size_t written;
+    (void)hdr;
+    (void)buf;
+    (void)len;
 
     if (h->inject_word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
         return 1;
@@ -4725,6 +4791,7 @@ static int script_68_inject_handshake(struct helper *h, unsigned char *msg,
         0, 0, 1,                             /* Length of message */
         SSL_KEY_UPDATE_NOT_REQUESTED         /* update_not_requested */
     };
+    (void)msglen;
 
     /* We transform the NewSessionTicket message into something else */
     switch(h->inject_word0) {
@@ -4851,6 +4918,7 @@ static const struct script_op script_71[] = {
 /* 72. Test that APL stops handing out streams after limit reached (bidi) */
 static int script_72_check(struct helper *h, struct helper_local *hl)
 {
+    (void)hl;
     if (!TEST_uint64_t_ge(h->fail_count, 50))
         return 0;
 
@@ -4931,6 +4999,7 @@ static int server_gen_version_neg(struct helper *h, BIO_MSG *msg, size_t stride)
     WPACKET wpkt;
     BUF_MEM *buf = NULL;
     uint32_t version;
+    (void)stride;
 
     switch (h->inject_word0) {
     case 0:
@@ -5004,6 +5073,7 @@ static const struct script_op script_75[] = {
 /* 76. Test peer-initiated shutdown wait */
 static int script_76_check(struct helper *h, struct helper_local *hl)
 {
+    (void)hl;
     if (!TEST_false(SSL_shutdown_ex(h->c_conn,
                                     SSL_SHUTDOWN_FLAG_WAIT_PEER
                                     | SSL_SHUTDOWN_FLAG_NO_BLOCK,
@@ -5060,12 +5130,15 @@ static size_t new_session_count;
 
 static int on_new_session(SSL *s, SSL_SESSION *sess)
 {
+    (void)s;
+    (void)sess;
     ++new_session_count;
     return 0; /* do not ref session, we aren't keeping it */
 }
 
 static int setup_session(struct helper *h, struct helper_local *hl)
 {
+    (void)hl;
     SSL_CTX_set_session_cache_mode(h->c_ctx, SSL_SESS_CACHE_BOTH);
     SSL_CTX_sess_set_new_cb(h->c_ctx, on_new_session);
     return 1;
@@ -5073,6 +5146,8 @@ static int setup_session(struct helper *h, struct helper_local *hl)
 
 static int trigger_late_session_ticket(struct helper *h, struct helper_local *hl)
 {
+    (void)h;
+    (void)hl;
     new_session_count = 0;
 
     if (!TEST_true(ossl_quic_tserver_new_ticket(ACQUIRE_S())))
@@ -5083,6 +5158,8 @@ static int trigger_late_session_ticket(struct helper *h, struct helper_local *hl
 
 static int check_got_session_ticket(struct helper *h, struct helper_local *hl)
 {
+    (void)h;
+    (void)hl;
     if (!TEST_size_t_gt(new_session_count, 0))
         return 0;
 

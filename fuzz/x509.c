@@ -17,6 +17,8 @@
 
 int FuzzerInitialize(int *argc, char ***argv)
 {
+    (void)argc;
+    (void)argv;
     FuzzerSetRand();
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS
        | OPENSSL_INIT_ADD_ALL_CIPHERS | OPENSSL_INIT_ADD_ALL_DIGESTS, NULL);
@@ -27,6 +29,8 @@ int FuzzerInitialize(int *argc, char ***argv)
 
 static int cb(int ok, X509_STORE_CTX *ctx)
 {
+    (void)ok;
+    (void)ctx;
     return 1;
 }
 

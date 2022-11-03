@@ -262,6 +262,7 @@ void *ossl_thread_event_ctx_new(OSSL_LIB_CTX *libctx)
 {
     THREAD_EVENT_HANDLER **hands = NULL;
     CRYPTO_THREAD_LOCAL *tlocal = OPENSSL_zalloc(sizeof(*tlocal));
+    (void)libctx;
 
     if (tlocal == NULL)
         return NULL;
@@ -369,6 +370,7 @@ int ossl_init_thread_start(const void *index, void *arg,
     THREAD_EVENT_HANDLER *hand;
 #ifdef FIPS_MODULE
     OSSL_LIB_CTX *ctx = arg;
+    (void)index;
 
     /*
      * In FIPS mode the list of THREAD_EVENT_HANDLERs is unique per combination

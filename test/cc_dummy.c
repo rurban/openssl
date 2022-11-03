@@ -21,6 +21,8 @@ static OSSL_CC_DATA *dummy_new(OSSL_TIME (*now_cb)(void *arg),
                                void *now_cb_arg)
 {
     OSSL_CC_DUMMY *d = OPENSSL_zalloc(sizeof(*d));
+    (void)now_cb;
+    (void)now_cb_arg;
 
     if (d == NULL)
         return NULL;
@@ -36,7 +38,7 @@ static void dummy_free(OSSL_CC_DATA *cc)
 
 static void dummy_reset(OSSL_CC_DATA *cc)
 {
-
+    (void)cc;
 }
 
 static int dummy_set_input_params(OSSL_CC_DATA *cc, const OSSL_PARAM *params)
@@ -96,41 +98,53 @@ static void dummy_update_diag(OSSL_CC_DUMMY *d)
 
 static uint64_t dummy_get_tx_allowance(OSSL_CC_DATA *cc)
 {
+    (void)cc;
     return SIZE_MAX;
 }
 
 static OSSL_TIME dummy_get_wakeup_deadline(OSSL_CC_DATA *cc)
 {
+    (void)cc;
     return ossl_time_infinite();
 }
 
 static int dummy_on_data_sent(OSSL_CC_DATA *cc,
                               uint64_t num_bytes)
 {
+    (void)cc;
+    (void)num_bytes;
     return 1;
 }
 
 static int dummy_on_data_acked(OSSL_CC_DATA *cc,
                                const OSSL_CC_ACK_INFO *info)
 {
+    (void)cc;
+    (void)info;
     return 1;
 }
 
 static int dummy_on_data_lost(OSSL_CC_DATA *cc,
                               const OSSL_CC_LOSS_INFO *info)
 {
+    (void)cc;
+    (void)info;
     return 1;
 }
 
 static int dummy_on_data_lost_finished(OSSL_CC_DATA *cc,
                                        uint32_t flags)
 {
+    (void)cc;
+    (void)flags;
     return 1;
 }
 
 static int dummy_on_data_invalidated(OSSL_CC_DATA *cc,
                                      uint64_t num_bytes)
 {
+    (void)cc;
+    (void)num_bytes;
     return 1;
 }
 
@@ -148,4 +162,5 @@ const OSSL_CC_METHOD ossl_cc_dummy_method = {
     dummy_on_data_lost,
     dummy_on_data_lost_finished,
     dummy_on_data_invalidated,
+    NULL // on_ecn
 };

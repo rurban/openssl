@@ -73,6 +73,7 @@ static int sha1_int_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
 static int shake_ctrl(EVP_MD_CTX *evp_ctx, int cmd, int p1, void *p2)
 {
     KECCAK1600_CTX *ctx;
+    (void)p2;
 
     if (evp_ctx == NULL)
         return 0;

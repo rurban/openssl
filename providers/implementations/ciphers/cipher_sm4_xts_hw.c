@@ -94,6 +94,8 @@ static const PROV_CIPHER_HW sm4_generic_xts = {
 #else
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_sm4_xts(size_t keybits)
 {
+    (void)keybits;
+
     return &sm4_generic_xts;
 }
 #endif

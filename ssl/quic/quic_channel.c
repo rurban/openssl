@@ -2639,6 +2639,8 @@ void ossl_quic_channel_local_close(QUIC_CHANNEL *ch, uint64_t app_error_code,
 
 static void free_token(const unsigned char *buf, size_t buf_len, void *arg)
 {
+    (void)buf_len;
+    (void)arg;
     OPENSSL_free((unsigned char *)buf);
 }
 
@@ -2959,6 +2961,8 @@ void ossl_quic_channel_on_remote_conn_close(QUIC_CHANNEL *ch,
 
 static void free_frame_data(unsigned char *buf, size_t buf_len, void *arg)
 {
+    (void)buf_len;
+    (void)arg;
     OPENSSL_free(buf);
 }
 

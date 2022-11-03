@@ -577,6 +577,7 @@ int ossl_quic_init(SSL *s)
 void ossl_quic_deinit(SSL *s)
 {
     /* No-op. */
+    (void)s;
 }
 
 /* SSL_clear (ssl_reset method) */
@@ -1244,6 +1245,7 @@ int ossl_quic_conn_shutdown(SSL *s, uint64_t flags,
     int stream_flush = ((flags & SSL_SHUTDOWN_FLAG_NO_STREAM_FLUSH) == 0);
     int no_block = ((flags & SSL_SHUTDOWN_FLAG_NO_BLOCK) != 0);
     int wait_peer = ((flags & SSL_SHUTDOWN_FLAG_WAIT_PEER) != 0);
+    (void)args_len;
 
     if (!expect_quic(s, &ctx))
         return -1;
@@ -1345,6 +1347,7 @@ err:
 long ossl_quic_ctrl(SSL *s, int cmd, long larg, void *parg)
 {
     QCTX ctx;
+    //QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
     if (!expect_quic(s, &ctx))
         return 0;
@@ -2097,6 +2100,7 @@ int ossl_quic_get_error(const SSL *s, int i)
 {
     QCTX ctx;
     int net_error, last_error;
+    (void)i;
 
     if (!expect_quic(s, &ctx))
         return 0;
@@ -3619,6 +3623,7 @@ int ossl_quic_stream_reset(SSL *ssl,
     QUIC_STREAM *qs;
     uint64_t error_code;
     int ok, err;
+    (void)args_len;
 
     if (!expect_quic_with_stream_lock(ssl, /*remote_init=*/0, /*io=*/0, &ctx))
         return 0;
@@ -3741,6 +3746,7 @@ static int quic_get_stream_error_code(SSL *ssl, int is_write,
 {
     QCTX ctx;
     int state;
+    (void)is_write;
 
     if (!expect_quic_with_stream_lock(ssl, /*remote_init=*/-1, /*io=*/0, &ctx))
         return -1;
@@ -3823,6 +3829,7 @@ int ossl_quic_get_conn_close_info(SSL *ssl,
 {
     QCTX ctx;
     const QUIC_TERMINATE_CAUSE *tc;
+    (void)info_len;
 
     if (!expect_quic_conn_only(ssl, &ctx))
         return -1;
@@ -3887,6 +3894,7 @@ int ossl_quic_key_update(SSL *ssl, int update_type)
  */
 int ossl_quic_get_key_update_type(const SSL *s)
 {
+    (void)s;
     /*
      * We always handle key updates immediately so a key update is never
      * pending.
@@ -3935,6 +3943,8 @@ long ossl_quic_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
 int ossl_quic_renegotiate_check(SSL *ssl, int initok)
 {
     /* We never do renegotiation. */
+    (void)ssl;
+    (void)initok;
     return 0;
 }
 
@@ -3960,6 +3970,7 @@ int ossl_quic_num_ciphers(void)
 
 const SSL_CIPHER *ossl_quic_get_cipher(unsigned int u)
 {
+    (void)u;
     return NULL;
 }
 

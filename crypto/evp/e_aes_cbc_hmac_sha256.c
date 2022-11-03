@@ -68,6 +68,7 @@ static int aesni_cbc_hmac_sha256_init_key(EVP_CIPHER_CTX *ctx,
 {
     EVP_AES_HMAC_SHA256 *key = data(ctx);
     int ret;
+    (void)iv;
 
     if (enc)
         ret = aesni_set_encrypt_key(inkey,
@@ -896,17 +897,36 @@ static EVP_CIPHER aesni_128_cbc_hmac_sha256_cipher = {
     NID_undef,
 # endif
     AES_BLOCK_SIZE, 16, AES_BLOCK_SIZE,
-    EVP_CIPH_CBC_MODE | EVP_CIPH_FLAG_DEFAULT_ASN1 |
-        EVP_CIPH_FLAG_AEAD_CIPHER | EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK,
+    (EVP_CIPH_CBC_MODE | EVP_CIPH_FLAG_DEFAULT_ASN1 |
+     EVP_CIPH_FLAG_AEAD_CIPHER | EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK),
     EVP_ORIG_GLOBAL,
     aesni_cbc_hmac_sha256_init_key,
     aesni_cbc_hmac_sha256_cipher,
-    NULL,
+    NULL,                      /* cleanup */
     sizeof(EVP_AES_HMAC_SHA256),
     EVP_CIPH_FLAG_DEFAULT_ASN1 ? NULL : EVP_CIPHER_set_asn1_iv,
     EVP_CIPH_FLAG_DEFAULT_ASN1 ? NULL : EVP_CIPHER_get_asn1_iv,
     aesni_cbc_hmac_sha256_ctrl,
-    NULL
+    NULL,                      /* app_data */
+    0,                         /* name_id */
+    NULL,                      /* type_name */
+    NULL,                      /* description */
+    NULL,                      /* prov */
+    {0},                       /* refcnt */
+    NULL,                      /* newctx */
+    NULL,                      /* einit */
+    NULL,                      /* dinit */
+    NULL,                      /* cupdate */
+    NULL,                      /* cfinal */
+    NULL,                      /* ccipher */
+    NULL,                      /* freectx */
+    NULL,                      /* dupctx */
+    NULL,                      /* get_params */
+    NULL,                      /* get_ctx_params */
+    NULL,                      /* set_ctx_params */
+    NULL,                      /* gettable_params */
+    NULL,                      /* gettable_ctx_params */
+    NULL                       /* settable_ctx_params */
 };
 
 static EVP_CIPHER aesni_256_cbc_hmac_sha256_cipher = {
@@ -926,7 +946,26 @@ static EVP_CIPHER aesni_256_cbc_hmac_sha256_cipher = {
     EVP_CIPH_FLAG_DEFAULT_ASN1 ? NULL : EVP_CIPHER_set_asn1_iv,
     EVP_CIPH_FLAG_DEFAULT_ASN1 ? NULL : EVP_CIPHER_get_asn1_iv,
     aesni_cbc_hmac_sha256_ctrl,
-    NULL
+    NULL,                      /* app_data */
+    0,                         /* name_id */
+    NULL,                      /* type_name */
+    NULL,                      /* description */
+    NULL,                      /* prov */
+    {0},                       /* refcnt */
+    NULL,                      /* newctx */
+    NULL,                      /* einit */
+    NULL,                      /* dinit */
+    NULL,                      /* cupdate */
+    NULL,                      /* cfinal */
+    NULL,                      /* ccipher */
+    NULL,                      /* freectx */
+    NULL,                      /* dupctx */
+    NULL,                      /* get_params */
+    NULL,                      /* get_ctx_params */
+    NULL,                      /* set_ctx_params */
+    NULL,                      /* gettable_params */
+    NULL,                      /* gettable_ctx_params */
+    NULL                       /* settable_ctx_params */
 };
 
 const EVP_CIPHER *EVP_aes_128_cbc_hmac_sha256(void)

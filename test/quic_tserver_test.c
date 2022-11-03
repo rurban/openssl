@@ -36,6 +36,7 @@ static unsigned char scratch_buf[2048];
 static OSSL_TIME fake_now(void *arg)
 {
     OSSL_TIME t;
+    (void)arg;
 
     if (!CRYPTO_THREAD_read_lock(fake_time_lock))
         return ossl_time_zero();
@@ -48,6 +49,7 @@ static OSSL_TIME fake_now(void *arg)
 
 static OSSL_TIME real_now(void *arg)
 {
+    (void)arg;
     return ossl_time_now();
 }
 

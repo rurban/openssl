@@ -59,7 +59,7 @@ const OPTIONS dsaparam_options[] = {
     OPT_PARAMETERS(),
     {"numbits", 0, 0, "Number of bits if generating parameters or key (optional)"},
     {"numqbits", 0, 0, "Number of bits in the subprime parameter q if generating parameters or key (optional)"},
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int dsaparam_main(int argc, char **argv)

@@ -19,12 +19,14 @@
 /* Disable the security checks in the default provider */
 int ossl_securitycheck_enabled(OSSL_LIB_CTX *libctx)
 {
+    (void)libctx;
     return 0;
 }
 
 /* Disable the ems check in the default provider */
 int ossl_tls1_prf_ems_check_enabled(OSSL_LIB_CTX *libctx)
 {
+    (void)libctx;
     return 0;
 }
 
@@ -32,6 +34,7 @@ int ossl_digest_rsa_sign_get_md_nid(OSSL_LIB_CTX *ctx, const EVP_MD *md,
                                     ossl_unused int sha1_allowed)
 {
     int mdnid;
+    (void)sha1_allowed;
 
     static const OSSL_ITEM name_to_nid[] = {
         { NID_md5,       OSSL_DIGEST_NAME_MD5       },

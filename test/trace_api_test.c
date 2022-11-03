@@ -145,6 +145,10 @@ static int trace_cb_called;
 static size_t trace_cb(const char *buffer, size_t count,
                        int category, int cmd, void *data)
 {
+    (void)buffer;
+    (void)cmd;
+    (void)data;
+
     trace_cb_called = 1;
     if (!TEST_true(category == OSSL_TRACE_CATEGORY_TRACE))
         trace_cb_failure = 1;

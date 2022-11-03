@@ -106,7 +106,28 @@ quic_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     uint32_t enc_level;
     int qdir;
     uint32_t suite_id = 0;
-
+    (void)libctx;
+    (void)propq;
+    (void)vers;
+    (void)role;
+    (void)epoch;
+    (void)key;
+    (void)keylen;
+    (void)iv;
+    (void)ivlen;
+    (void)mackey;
+    (void)mackeylen;
+    (void)taglen;
+    (void)mactype;
+    (void)md;
+    (void)comp;
+    (void)prev;
+    (void)next;
+    (void)local;
+    (void)peer;
+    (void)settings;
+    (void)options;
+    
     if (rl == NULL) {
         QUIC_TLS_FATAL(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
@@ -206,6 +227,7 @@ static int quic_free(OSSL_RECORD_LAYER *rl)
 
 static int quic_unprocessed_read_pending(OSSL_RECORD_LAYER *rl)
 {
+    (void)rl;
     /*
      * Read ahead isn't really a thing for QUIC so we never have unprocessed
      * data pending
@@ -215,6 +237,7 @@ static int quic_unprocessed_read_pending(OSSL_RECORD_LAYER *rl)
 
 static int quic_processed_read_pending(OSSL_RECORD_LAYER *rl)
 {
+    (void)rl;
     /*
      * This is currently only ever used by:
      * - SSL_has_pending()
@@ -235,6 +258,11 @@ static size_t quic_get_max_records(OSSL_RECORD_LAYER *rl, uint8_t type,
                                    size_t len,
                                    size_t maxfrag, size_t *preffrag)
 {
+    (void)rl;
+    (void)type;
+    (void)len;
+    (void)maxfrag;
+    (void)preffrag;
     return 1;
 }
 
@@ -362,6 +390,10 @@ static int quic_read_record(OSSL_RECORD_LAYER *rl, void **rechandle,
                             size_t *datalen, uint16_t *epoch,
                             unsigned char *seq_num)
 {
+    /* epoch/seq_num are not relevant for TLS */
+    (void)epoch;
+    (void)seq_num;
+
     if (rl->recread != 0 || rl->recunreleased != 0)
         return OSSL_RECORD_RETURN_FATAL;
 
@@ -382,7 +414,6 @@ static int quic_read_record(OSSL_RECORD_LAYER *rl, void **rechandle,
     *rversion = TLS1_3_VERSION;
     *type = SSL3_RT_HANDSHAKE;
     rl->recread = rl->recunreleased = *datalen;
-    /* epoch/seq_num are not relevant for TLS */
 
     if (rl->msg_callback != NULL) {
         unsigned char dummyrec[SSL3_RT_HEADER_LENGTH];
@@ -457,16 +488,22 @@ static int quic_set_protocol_version(OSSL_RECORD_LAYER *rl, int version)
 static void quic_set_plain_alerts(OSSL_RECORD_LAYER *rl, int allow)
 {
     /* We don't care */
+    (void)rl;
+    (void)allow;
 }
 
 static void quic_set_first_handshake(OSSL_RECORD_LAYER *rl, int first)
 {
     /* We don't care */
+    (void)rl;
+    (void)first;
 }
 
 static void quic_set_max_pipelines(OSSL_RECORD_LAYER *rl, size_t max_pipelines)
 {
     /* We don't care */
+    (void)rl;
+    (void)max_pipelines;
 }
 
 static void quic_get_state(OSSL_RECORD_LAYER *rl, const char **shortstr,
@@ -498,18 +535,23 @@ static int quic_set_options(OSSL_RECORD_LAYER *rl, const OSSL_PARAM *options)
      * We don't support any options yet - but we might do at some point so
      * this could be useful.
      */
+    (void)rl;
+    (void)options;
     return 1;
 }
 
 static const COMP_METHOD *quic_get_compression(OSSL_RECORD_LAYER *rl)
 {
     /* We only support TLSv1.3 which doesn't have compression */
+    (void)rl;
     return NULL;
 }
 
 static void quic_set_max_frag_len(OSSL_RECORD_LAYER *rl, size_t max_frag_len)
 {
     /* This really doesn't make any sense for QUIC. Ignore it */
+    (void)rl;
+    (void)max_frag_len;
 }
 
 static int quic_alloc_buffers(OSSL_RECORD_LAYER *rl)
@@ -518,6 +560,7 @@ static int quic_alloc_buffers(OSSL_RECORD_LAYER *rl)
      * This is a hint only. We don't support it (yet), so just ignore the
      * request
      */
+    (void)rl;
     return 1;
 }
 
@@ -527,6 +570,7 @@ static int quic_free_buffers(OSSL_RECORD_LAYER *rl)
      * This is a hint only. We don't support it (yet), so just ignore the
      * request
      */
+    (void)rl;
     return 1;
 }
 
@@ -602,6 +646,12 @@ static int add_transport_params_cb(SSL *s, unsigned int ext_type,
                                    void *add_arg)
 {
     QUIC_TLS *qtls = add_arg;
+    (void)s;
+    (void)ext_type;
+    (void)context;
+    (void)x;
+    (void)chainidx;
+    (void)al;
 
     *out = qtls->local_transport_params;
     *outlen = qtls->local_transport_params_len;
@@ -613,6 +663,11 @@ static void free_transport_params_cb(SSL *s, unsigned int ext_type,
                                      const unsigned char *out,
                                      void *add_arg)
 {
+    (void)s;
+    (void)ext_type;
+    (void)context;
+    (void)out;
+    (void)add_arg;
 }
 
 static int parse_transport_params_cb(SSL *s, unsigned int ext_type,
@@ -623,6 +678,12 @@ static int parse_transport_params_cb(SSL *s, unsigned int ext_type,
                                      int *al, void *parse_arg)
 {
     QUIC_TLS *qtls = parse_arg;
+    (void)s;
+    (void)ext_type;
+    (void)context;
+    (void)x;
+    (void)chainidx;
+    (void)al;
 
     return qtls->args.got_transport_params_cb(in, inlen,
                                               qtls->args.got_transport_params_cb_arg);

@@ -1318,6 +1318,7 @@ static int ssl_print_raw_public_key(BIO *bio, const SSL *ssl, int server,
     size_t clen;
     const unsigned char *msg = *pmsg;
     size_t msglen = *pmsglen;
+    (void)server;
 
     if (msglen < 3)
         return 0;
@@ -1393,6 +1394,9 @@ static int ssl_print_compressed_certificates(BIO *bio, const SSL_CONNECTION *sc,
     COMP_METHOD *method;
     COMP_CTX *comp = NULL;
     unsigned char* ucdata = NULL;
+#else
+    (void)sc;
+    (void)server;
 #endif
 
     if (msglen < 8)
@@ -1721,6 +1725,8 @@ void SSL_trace(int write_p, int version, int content_type,
          * fallback to standard TLS handling
          */
     }
+#else
+    (void)version;
 #endif
 
     if (sc == NULL)

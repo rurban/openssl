@@ -382,6 +382,7 @@ static int tls_prov_get_capabilities(void *provctx, const char *capability,
     int i;
     const char *dummy_base = "dummy";
     const size_t dummy_name_max_size = strlen(dummy_base) + 3;
+    (void)provctx;
 
     if (strcmp(capability, "TLS-GROUP") == 0) {
         /* Register our 2 groups */
@@ -551,8 +552,8 @@ static const OSSL_ALGORITHM tls_prov_keyexch[] = {
      * Obviously this is not FIPS approved, but in order to test in conjunction
      * with the FIPS provider we pretend that it is.
      */
-    { "XOR", "provider=tls-provider,fips=yes", xor_keyexch_functions },
-    { NULL, NULL, NULL }
+    { "XOR", "provider=tls-provider,fips=yes", xor_keyexch_functions, NULL },
+    { NULL, NULL, NULL, NULL }
 };
 
 /*
@@ -680,14 +681,15 @@ static const OSSL_ALGORITHM tls_prov_kem[] = {
      * Obviously this is not FIPS approved, but in order to test in conjunction
      * with the FIPS provider we pretend that it is.
      */
-    { "XOR", "provider=tls-provider,fips=yes", xor_kem_functions },
-    { NULL, NULL, NULL }
+    { "XOR", "provider=tls-provider,fips=yes", xor_kem_functions, NULL },
+    { NULL, NULL, NULL, NULL }
 };
 
 /* Key Management for the dummy XOR key exchange algorithm */
 
 static void *xor_newkey(void *provctx)
 {
+    (void)provctx;
     XORKEY *ret = OPENSSL_zalloc(sizeof(XORKEY));
 
     if (ret == NULL)
@@ -820,6 +822,7 @@ static const OSSL_PARAM xor_params[] = {
 
 static const OSSL_PARAM *xor_gettable_params(void *provctx)
 {
+    (void)provctx;
     return xor_params;
 }
 
@@ -913,6 +916,7 @@ static int xor_match(const void *keydata1, const void *keydata2, int selection)
 
 static const OSSL_PARAM *xor_settable_params(void *provctx)
 {
+    (void)provctx;
     return xor_known_settable_params;
 }
 
@@ -976,6 +980,8 @@ static void *xor_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     struct xor_gen_ctx *gctx = genctx;
     XORKEY *key = xor_newkey(NULL);
     size_t i;
+    (void)osslcb;
+    (void)cbarg;
 
     if (key == NULL)
         return NULL;
@@ -1207,6 +1213,8 @@ static XORKEY *xor_key_op(const X509_ALGOR *palg,
 {
     XORKEY *key = NULL;
     int nid = NID_undef;
+    (void)libctx;
+    (void)propq;
 
     if (palg != NULL) {
         int ptype;
@@ -1300,13 +1308,12 @@ static const OSSL_ALGORITHM tls_prov_keymgmt[] = {
      * with the FIPS provider we pretend that it is.
      */
     { "XOR", "provider=tls-provider,fips=yes",
-             xor_keymgmt_functions },
+             xor_keymgmt_functions, NULL },
     { XORSIGALG_NAME, "provider=tls-provider,fips=yes",
-             xor_xorhmacsig_keymgmt_functions },
-    { XORSIGALG_HASH_NAME,
-    "provider=tls-provider,fips=yes",
-             xor_xorhmacsha2sig_keymgmt_functions },
-    { NULL, NULL, NULL }
+             xor_xorhmacsig_keymgmt_functions, NULL },
+    { XORSIGALG_HASH_NAME, "provider=tls-provider,fips=yes",
+             xor_xorhmacsha2sig_keymgmt_functions, NULL },
+    { NULL, NULL, NULL, NULL }
 };
 
 struct key2any_ctx_st {
@@ -1356,6 +1363,8 @@ static PKCS8_PRIV_KEY_INFO *key_to_p8info(const void *key, int key_nid,
     int derlen;
     /* The final PKCS#8 info */
     PKCS8_PRIV_KEY_INFO *p8info = NULL;
+    (void)params;
+    (void)params_type;
 
     if ((p8info = PKCS8_PRIV_KEY_INFO_new()) == NULL
         || (derlen = k2d(key, &der)) <= 0
@@ -1418,6 +1427,8 @@ static X509_PUBKEY *xorx_key_to_pubkey(const void *key, int key_nid,
     int derlen;
     /* The final X509_PUBKEY */
     X509_PUBKEY *xpk = NULL;
+    (void)params;
+    (void)params_type;
 
     if ((xpk = X509_PUBKEY_new()) == NULL
         || (derlen = k2d(key, &der)) <= 0
@@ -1632,6 +1643,7 @@ static int prepare_xorx_params(const void *xorxkey, int nid, int save,
 {
     ASN1_OBJECT *params = NULL;
     XORKEY *k = (XORKEY*)xorxkey;
+    (void)save;
 
     if (k->tls_name && OBJ_sn2nid(k->tls_name) != nid) {
         ERR_raise(ERR_LIB_USER, XORPROV_R_INVALID_KEY);
@@ -1972,6 +1984,7 @@ static int key2any_encode(struct key2any_ctx_st *ctx, OSSL_CORE_BIO *cout,
     static int impl##_to_##kind##_##output##_does_selection(void *ctx,      \
                                                             int selection)  \
     {                                                                       \
+        (void)ctx;                                                          \
         return key2any_check_selection(selection,                           \
                                        DO_ENC_##kind##_selection_mask);     \
     }                                                                       \
@@ -2059,20 +2072,20 @@ static const OSSL_ALGORITHM tls_prov_encoder[] = {
  * Obviously this is not FIPS approved, but in order to test in conjunction
  * with the FIPS provider we pretend that it is.
  */
-#define ENCODER_TEXT(_name, _sym)                                \
+#define ENCODER_TEXT(_name, _sym)                                       \
     { _name,                                                            \
-      "provider=" ENCODER_PROVIDER ",fips=yes,output=text",      \
-      (xor_##_sym##_to_text_encoder_functions) }
+      "provider=" ENCODER_PROVIDER ",fips=yes,output=text",             \
+      (xor_##_sym##_to_text_encoder_functions), NULL }
 #define ENCODER(_name, _sym, _fips, _output)                            \
     { _name,                                                            \
-      "provider=" ENCODER_PROVIDER ",fips=yes,output=" #_output, \
-      (xor_##_sym##_to_##_output##_encoder_functions) }
+      "provider=" ENCODER_PROVIDER ",fips=yes,output=" #_output,        \
+      (xor_##_sym##_to_##_output##_encoder_functions), NULL }
 
-#define ENCODER_w_structure(_name, _sym, _output, _structure)    \
+#define ENCODER_w_structure(_name, _sym, _output, _structure)           \
     { _name,                                                            \
-      "provider=" ENCODER_PROVIDER ",fips=yes,output=" #_output  \
+      "provider=" ENCODER_PROVIDER ",fips=yes,output=" #_output         \
       ",structure=" ENCODER_STRUCTURE_##_structure,                     \
-      (xor_##_sym##_to_##_structure##_##_output##_encoder_functions) }
+      (xor_##_sym##_to_##_structure##_##_output##_encoder_functions), NULL }
 
 /*
  * Entries for human text "encoders"
@@ -2105,7 +2118,7 @@ ENCODER_w_structure(XORSIGALG_HASH_NAME, xorhmacsha2sig,
 ENCODER_w_structure(XORSIGALG_HASH_NAME, xorhmacsha2sig,
                     pem, SubjectPublicKeyInfo),
 #undef ENCODER_PROVIDER
-    { NULL, NULL, NULL }
+{ NULL, NULL, NULL, NULL }
 };
 
 struct der2key_ctx_st;           /* Forward declaration */
@@ -2333,6 +2346,8 @@ static int xor_der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     long der_len = 0;
     void *key = NULL;
     int ok = 0;
+    (void)pw_cb;
+    (void)pw_cbarg;
 
     ctx->selection = selection;
     /*
@@ -2466,12 +2481,15 @@ static int der2key_export_object(void *vctx,
 static void *xorx_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
                            struct der2key_ctx_st *ctx)
 {
+    (void)key;
     return xor_der2key_decode_p8(der, der_len, ctx,
                              (key_from_pkcs8_t *)xor_key_from_pkcs8);
 }
 
 static void xorx_key_adjust(void *key, struct der2key_ctx_st *ctx)
 {
+    (void)key;
+    (void)ctx;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -2531,6 +2549,7 @@ static void xorx_key_adjust(void *key, struct der2key_ctx_st *ctx)
     static int kind##_der2##keytype##_does_selection(void *provctx,     \
                                                      int selection)     \
     {                                                                   \
+        (void)provctx;                                                  \
         return der2key_check_selection(selection,                       \
                                        &kind##_##keytype##_desc);       \
     }                                                                   \
@@ -2566,21 +2585,21 @@ static const OSSL_ALGORITHM tls_prov_decoder[] = {
  */
 
 #define DECODER(_name, _input, _output)                          \
-    { _name,                                                            \
+    { _name,                                                     \
       "provider=" DECODER_PROVIDER ",fips=yes,input=" #_input,   \
-      (xor_##_input##_to_##_output##_decoder_functions) }
+      (xor_##_input##_to_##_output##_decoder_functions), NULL }
 #define DECODER_w_structure(_name, _input, _structure, _output)  \
-    { _name,                                                            \
+    { _name,                                                     \
       "provider=" DECODER_PROVIDER ",fips=yes,input=" #_input    \
-      ",structure=" DECODER_STRUCTURE_##_structure,                     \
-      (xor_##_structure##_##_input##_to_##_output##_decoder_functions) }
+      ",structure=" DECODER_STRUCTURE_##_structure,              \
+      (xor_##_structure##_##_input##_to_##_output##_decoder_functions), NULL }
 
 DECODER_w_structure(XORSIGALG_NAME, der, PrivateKeyInfo, xorhmacsig),
 DECODER_w_structure(XORSIGALG_NAME, der, SubjectPublicKeyInfo, xorhmacsig),
 DECODER_w_structure(XORSIGALG_HASH_NAME, der, PrivateKeyInfo, xorhmacsha2sig),
 DECODER_w_structure(XORSIGALG_HASH_NAME, der, SubjectPublicKeyInfo, xorhmacsha2sig),
 #undef DECODER_PROVIDER
-    { NULL, NULL, NULL }
+{ NULL, NULL, NULL, NULL }
 };
 
 #define OSSL_MAX_NAME_SIZE 50
@@ -2721,12 +2740,14 @@ static int xor_sig_signverify_init(void *vpxor_sigctx, void *vxorsig,
 static int xor_sig_sign_init(void *vpxor_sigctx, void *vxorsig,
                              const OSSL_PARAM params[])
 {
+    (void)params;
     return xor_sig_signverify_init(vpxor_sigctx, vxorsig, EVP_PKEY_OP_SIGN);
 }
 
 static int xor_sig_verify_init(void *vpxor_sigctx, void *vxorsig,
                                const OSSL_PARAM params[])
 {
+    (void)params;
     return xor_sig_signverify_init(vpxor_sigctx, vxorsig, EVP_PKEY_OP_VERIFY);
 }
 
@@ -2739,6 +2760,7 @@ static int xor_sig_sign(void *vpxor_sigctx, unsigned char *sig, size_t *siglen,
     size_t max_sig_len = EVP_MAX_MD_SIZE;
     size_t xor_sig_len = 0;
     int rv = 0;
+    (void)sigsize;
 
     if (xorkey == NULL || !xorkey->hasprivkey) {
         ERR_raise(ERR_LIB_USER, XORPROV_R_NO_PRIVATE_KEY);
@@ -2847,12 +2869,14 @@ static int xor_sig_digest_signverify_init(void *vpxor_sigctx, const char *mdname
 static int xor_sig_digest_sign_init(void *vpxor_sigctx, const char *mdname,
                                       void *vxorsig, const OSSL_PARAM params[])
 {
+    (void)params;
     return xor_sig_digest_signverify_init(vpxor_sigctx, mdname, vxorsig,
                                           EVP_PKEY_OP_SIGN);
 }
 
 static int xor_sig_digest_verify_init(void *vpxor_sigctx, const char *mdname, void *vxorsig, const OSSL_PARAM params[])
 {
+    (void)params;
     return xor_sig_digest_signverify_init(vpxor_sigctx, mdname,
                                           vxorsig, EVP_PKEY_OP_VERIFY);
 }
@@ -3122,18 +3146,19 @@ static const OSSL_ALGORITHM tls_prov_signature[] = {
      * with the FIPS provider we pretend that it is.
      */
     { XORSIGALG_NAME, "provider=tls-provider,fips=yes",
-                           xor_signature_functions },
+                           xor_signature_functions, NULL },
     { XORSIGALG_HASH_NAME, "provider=tls-provider,fips=yes",
-                           xor_signature_functions },
+                           xor_signature_functions, NULL },
     { XORSIGALG12_NAME, "provider=tls-provider,fips=yes",
-                           xor_signature_functions },
-    { NULL, NULL, NULL }
+                           xor_signature_functions, NULL },
+    { NULL, NULL, NULL, NULL }
 };
 
 
 static const OSSL_ALGORITHM *tls_prov_query(void *provctx, int operation_id,
                                             int *no_cache)
 {
+    (void)provctx;
     *no_cache = 0;
     switch (operation_id) {
     case OSSL_OP_KEYMGMT:
