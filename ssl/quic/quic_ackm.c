@@ -928,6 +928,8 @@ static int ackm_in_persistent_congestion(OSSL_ACKM *ackm,
                                          const OSSL_ACKM_TX_PKT *lpkt)
 {
     /* TODO(QUIC FUTURE): Persistent congestion not currently implemented. */
+    (void)ackm;
+    (void)lpkt;
     return 0;
 }
 
@@ -937,8 +939,9 @@ static void ackm_on_pkts_lost(OSSL_ACKM *ackm, int pkt_space,
     const OSSL_ACKM_TX_PKT *p, *pnext;
     OSSL_RTT_INFO rtt;
     QUIC_PN largest_pn_lost = 0;
-    OSSL_CC_LOSS_INFO loss_info = {0};
+    OSSL_CC_LOSS_INFO loss_info = {{0}, 0};
     uint32_t flags = 0;
+    (void)pkt_space;
 
     for (p = lpkt; p != NULL; p = pnext) {
         pnext = p->lnext;
@@ -984,7 +987,7 @@ static void ackm_on_pkts_acked(OSSL_ACKM *ackm, const OSSL_ACKM_TX_PKT *apkt)
 {
     const OSSL_ACKM_TX_PKT *anext;
     QUIC_PN last_pn_acked = 0;
-    OSSL_CC_ACK_INFO ainfo = {0};
+    OSSL_CC_ACK_INFO ainfo = {{0}, 0};
 
     for (; apkt != NULL; apkt = anext) {
         if (apkt->is_inflight) {
@@ -1114,6 +1117,8 @@ int ossl_ackm_on_tx_packet(OSSL_ACKM *ackm, OSSL_ACKM_TX_PKT *pkt)
 
 int ossl_ackm_on_rx_datagram(OSSL_ACKM *ackm, size_t num_bytes)
 {
+    (void)ackm;
+    (void)num_bytes;
     /* No-op on the client. */
     return 1;
 }
@@ -1147,6 +1152,7 @@ int ossl_ackm_on_rx_ack_frame(OSSL_ACKM *ackm, const OSSL_QUIC_FRAME_ACK *ack,
 {
     OSSL_ACKM_TX_PKT *na_pkts, *lost_pkts;
     int must_set_timer = 0;
+    (void)rx_time;
 
     if (ackm->largest_acked_pkt[pkt_space] == QUIC_PN_INVALID)
         ackm->largest_acked_pkt[pkt_space] = ack->ack_ranges[0].end;

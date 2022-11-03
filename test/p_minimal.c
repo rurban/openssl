@@ -20,5 +20,9 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
                        const OSSL_DISPATCH **out,
                        void **provctx)
 {
+    (void)handle;
+    (void)oin;
+    (void)out;
+    (void)provctx;
     return 1;
 }

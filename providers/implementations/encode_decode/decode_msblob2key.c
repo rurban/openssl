@@ -81,6 +81,7 @@ static void msblob2key_freectx(void *vctx)
 
 static int msblob2key_does_selection(void *provctx, int selection)
 {
+    (void)provctx;
     if (selection == 0)
         return 1;
 

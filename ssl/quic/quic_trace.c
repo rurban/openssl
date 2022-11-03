@@ -558,6 +558,8 @@ int ossl_quic_trace(int write_p, int version, int content_type,
 {
     BIO *bio = arg;
     PACKET pkt;
+    (void)version;
+    (void)ssl;
 
     switch (content_type) {
     case SSL3_RT_QUIC_DATAGRAM:

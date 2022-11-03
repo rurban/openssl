@@ -201,7 +201,7 @@ static STRINT_PAIR cert_type_list[] = {
     {"ECDSA fixed ECDH", TLS_CT_ECDSA_FIXED_ECDH},
     {"GOST01 Sign", TLS_CT_GOST01_SIGN},
     {"GOST12 Sign", TLS_CT_GOST12_IANA_SIGN},
-    {NULL}
+    {NULL, 0}
 };
 
 static void ssl_print_client_cert_types(BIO *bio, SSL *s)
@@ -436,6 +436,8 @@ long bio_dump_callback(BIO *bio, int cmd, const char *argp, size_t len,
     BIO *out;
     BIO_MMSG_CB_ARGS *mmsgargs;
     size_t i;
+    (void)argi;
+    (void)argl;
 
     out = (BIO *)BIO_get_callback_arg(bio);
     if (out == NULL)
@@ -551,7 +553,7 @@ static STRINT_PAIR ssl_versions[] = {
     {"TLS 1.3", TLS1_3_VERSION},
     {"DTLS 1.0", DTLS1_VERSION},
     {"DTLS 1.0 (bad)", DTLS1_BAD_VER},
-    {NULL}
+    {NULL, 0}
 };
 
 static STRINT_PAIR alert_types[] = {
@@ -588,7 +590,7 @@ static STRINT_PAIR alert_types[] = {
     {" bad_certificate_hash_value", 114},
     {" unknown_psk_identity", 115},
     {" certificate_required", 116},
-    {NULL}
+    {NULL, 0}
 };
 
 static STRINT_PAIR handshakes[] = {
@@ -615,7 +617,7 @@ static STRINT_PAIR handshakes[] = {
     {", NextProto", SSL3_MT_NEXT_PROTO},
 #endif
     {", MessageHash", SSL3_MT_MESSAGE_HASH},
-    {NULL}
+    {NULL, 0}
 };
 
 void msg_cb(int write_p, int version, int content_type, const void *buf,
@@ -626,6 +628,7 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
     char tmpbuf[128];
     const char *str_version, *str_content_type = "", *str_details1 = "", *str_details2 = "";
     const unsigned char* bp = buf;
+    (void)ssl;
 
     if (version == SSL3_VERSION ||
         version == TLS1_VERSION ||
@@ -746,7 +749,7 @@ static STRINT_PAIR tlsext_types[] = {
     {"psk kex modes", TLSEXT_TYPE_psk_kex_modes},
     {"certificate authorities", TLSEXT_TYPE_certificate_authorities},
     {"post handshake auth", TLSEXT_TYPE_post_handshake_auth},
-    {NULL}
+    {NULL, 0}
 };
 
 /* from rfc8446 4.2.3. + gost (https://tools.ietf.org/id/draft-smyshlyaev-tls12-gost-suites-04.html) */
@@ -772,7 +775,7 @@ static STRINT_PAIR signature_tls13_scheme_list[] = {
     {"gostr34102001",          0xeded /* TLSEXT_SIGALG_gostr34102001_gostr3411 */},
     {"gostr34102012_256",      0xeeee /* TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256 */},
     {"gostr34102012_512",      0xefef /* TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512 */},
-    {NULL}
+    {NULL, 0}
 };
 
 /* from rfc5246 7.4.1.4.1. */
@@ -781,7 +784,7 @@ static STRINT_PAIR signature_tls12_alg_list[] = {
     {"RSA",       TLSEXT_signature_rsa       /* 1 */},
     {"DSA",       TLSEXT_signature_dsa       /* 2 */},
     {"ECDSA",     TLSEXT_signature_ecdsa     /* 3 */},
-    {NULL}
+    {NULL, 0}
 };
 
 /* from rfc5246 7.4.1.4.1. */
@@ -793,7 +796,7 @@ static STRINT_PAIR signature_tls12_hash_list[] = {
     {"SHA256", TLSEXT_hash_sha256 /* 4 */},
     {"SHA384", TLSEXT_hash_sha384 /* 5 */},
     {"SHA512", TLSEXT_hash_sha512 /* 6 */},
-    {NULL}
+    {NULL, 0}
 };
 
 void tlsext_cb(SSL *s, int client_server, int type,
@@ -801,6 +804,7 @@ void tlsext_cb(SSL *s, int client_server, int type,
 {
     BIO *bio = arg;
     const char *extname = lookup(type, tlsext_types, "unknown");
+    (void)s;
 
     BIO_printf(bio, "TLS %s extension \"%s\" (id=%d), len=%d\n",
                client_server ? "server" : "client", extname, type, len);
@@ -936,7 +940,7 @@ static STRINT_PAIR chain_flags[] = {
     {"Explicitly sign with EE key", CERT_PKEY_EXPLICIT_SIGN},
     {"Issuer Name", CERT_PKEY_ISSUER_NAME},
     {"Certificate Type", CERT_PKEY_CERT_TYPE},
-    {NULL}
+    {NULL, 0}
 };
 
 static void print_chain_flags(SSL *s, int flags)
@@ -1437,7 +1441,7 @@ static STRINT_PAIR callback_types[] = {
     {"Peer chain CA digest", SSL_SECOP_PEER_CA_MD},
     {"SSL compression", SSL_SECOP_COMPRESSION},
     {"Session ticket", SSL_SECOP_TICKET},
-    {NULL}
+    {NULL, 0}
 };
 
 static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
@@ -1569,6 +1573,7 @@ void ssl_ctx_security_debug(SSL_CTX *ctx, int verbose)
 
 static void keylog_callback(const SSL *ssl, const char *line)
 {
+    (void)ssl;
     if (bio_keylog == NULL) {
         BIO_printf(bio_err, "Keylog callback is invoked without valid file!\n");
         return;

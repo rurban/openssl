@@ -111,6 +111,7 @@ static int blake##variantsize##_internal_init(void *ctx, const OSSL_PARAM params
 static void *blake##variantsize##_newctx(void *prov_ctx) \
 { \
     struct blake##variant##_md_data_st *ctx; \
+    (void)prov_ctx; \
  \
     ctx = ossl_prov_is_running() ? OPENSSL_zalloc(sizeof(*ctx)) : NULL; \
     return ctx; \

@@ -343,6 +343,7 @@ static const OSSL_PARAM dsa_params[] = {
 
 static const OSSL_PARAM *dsa_gettable_params(void *provctx)
 {
+    (void)provctx;
     return dsa_params;
 }
 

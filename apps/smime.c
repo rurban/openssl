@@ -126,7 +126,7 @@ const OPTIONS smime_options[] = {
 
     OPT_PARAMETERS(),
     {"cert", 0, 0, "Recipient certs, used when encrypting"},
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 static const char *operation_name(int operation)

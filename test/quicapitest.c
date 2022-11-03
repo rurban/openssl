@@ -1006,6 +1006,12 @@ static int dgram_ctr = 0;
 static void dgram_cb(int write_p, int version, int content_type,
                      const void *buf, size_t msglen, SSL *ssl, void *arg)
 {
+    (void)version;
+    (void)buf;
+    (void)msglen;
+    (void)ssl;
+    (void)arg;
+
     if (!write_p)
         return;
 
@@ -1124,6 +1130,8 @@ static SSL_SESSION *serverpsk = NULL, *clientpsk = NULL;
 static int use_session_cb(SSL *ssl, const EVP_MD *md, const unsigned char **id,
                           size_t *idlen, SSL_SESSION **sess)
 {
+    (void)ssl;
+    (void)md;
     use_session_cb_cnt++;
 
     if (clientpsk == NULL)
@@ -1141,6 +1149,7 @@ static int use_session_cb(SSL *ssl, const EVP_MD *md, const unsigned char **id,
 static int find_session_cb(SSL *ssl, const unsigned char *identity,
                            size_t identity_len, SSL_SESSION **sess)
 {
+    (void)ssl;
     find_session_cb_cnt++;
 
     if (serverpsk == NULL)
@@ -1565,9 +1574,9 @@ enum {
 };
 
 #define TPARAM_CHECK_DUP(name, reason) \
-    { QUIC_TPARAM_##name, TPARAM_OP_DUP, (reason) },
+    { QUIC_TPARAM_##name, TPARAM_OP_DUP, (reason), NULL, 0 },
 #define TPARAM_CHECK_DROP(name, reason) \
-    { QUIC_TPARAM_##name, TPARAM_OP_DROP, (reason) },
+    { QUIC_TPARAM_##name, TPARAM_OP_DROP, (reason), NULL, 0 },
 #define TPARAM_CHECK_INJECT(name, buf, buf_len, reason) \
     { QUIC_TPARAM_##name, TPARAM_OP_INJECT, (reason), \
       (buf), (buf_len) },
@@ -1589,7 +1598,7 @@ enum {
 #define TPARAM_CHECK_INJECT_RAW_A(buf, reason) \
     TPARAM_CHECK_INJECT_RAW(buf, sizeof(buf), reason)
 #define TPARAM_CHECK_MUTATE(name, reason) \
-    { QUIC_TPARAM_##name, TPARAM_OP_MUTATE, (reason) },
+    { QUIC_TPARAM_##name, TPARAM_OP_MUTATE, (reason), NULL, 0 },
 #define TPARAM_CHECK_INT(name, reason) \
     TPARAM_CHECK_DROP_INJECT(name, NULL, 0, reason) \
     TPARAM_CHECK_DROP_INJECT_A(name, bogus_int, reason) \
@@ -1904,6 +1913,7 @@ static int tparam_on_enc_ext(QTEST_FAULT *qtf, QTEST_ENCRYPTED_EXTENSIONS *ee,
     unsigned char *tp_p;
     size_t tp_len, written, old_len, eb_len;
     uint64_t id;
+    (void)ee_len;
 
     if (!TEST_ptr(old_bufm = BUF_MEM_new()))
         goto err;

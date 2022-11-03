@@ -18,22 +18,38 @@ static int i2r_NO_ASSERTION(X509V3_EXT_METHOD *method,
                             void *su, BIO *out,
                             int indent)
 {
+    (void)method;
+    (void)su;
+    (void)out;
+    (void)indent;
+
     return 1;
 }
 
 static void *r2i_NO_ASSERTION(X509V3_EXT_METHOD *method,
                               X509V3_CTX *ctx, const char *value)
 {
+    (void)method;
+    (void)ctx;
+    (void)value;
+
     return ASN1_NULL_new();
 }
 
 static char *i2s_NO_ASSERTION(const X509V3_EXT_METHOD *method, void *val)
 {
+    (void)method;
+    (void)val;
+
     return OPENSSL_strdup("NULL");
 }
 
 static void *s2i_NO_ASSERTION(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx, const char *str)
 {
+    (void)method;
+    (void)ctx;
+    (void)str;
+
     return ASN1_NULL_new();
 }
 

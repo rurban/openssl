@@ -54,6 +54,8 @@ static const BIO_METHOD trace_method = {
     NULL,                        /* create */
     trace_free,                  /* free */
     NULL,                        /* callback_ctrl */
+    NULL,                        /* bsendmmsg */
+    NULL                         /* brecvmmsg */
 };
 
 struct trace_data_st {
@@ -86,6 +88,8 @@ static int trace_puts(BIO *channel, const char *str)
 static long trace_ctrl(BIO *channel, int cmd, long argl, void *argp)
 {
     struct trace_data_st *ctx = BIO_get_data(channel);
+    (void)argl;
+    (void)argp;
 
     switch (cmd) {
     case OSSL_TRACE_CTRL_BEGIN:
@@ -358,7 +362,10 @@ void ossl_trace_cleanup(void)
 
 int OSSL_trace_set_channel(int category, BIO *channel)
 {
-#ifndef OPENSSL_NO_TRACE
+#ifdef OPENSSL_NO_TRACE
+    (void)category;
+    (void)channel;
+#else
     if (category >= 0 && category < OSSL_TRACE_CATEGORY_NUM)
         return set_trace_data(category, SIMPLE_CHANNEL, &channel, NULL, NULL,
                               trace_attach_cb, trace_detach_cb);
@@ -392,7 +399,11 @@ static int trace_attach_w_callback_cb(int category, int type, const void *data)
 
 int OSSL_trace_set_callback(int category, OSSL_trace_cb callback, void *data)
 {
-#ifndef OPENSSL_NO_TRACE
+#ifdef OPENSSL_NO_TRACE
+    (void)category;
+    (void)callback;
+    (void)data;
+#else
     BIO *channel = NULL;
     struct trace_data_st *trace_data = NULL;
 
@@ -428,7 +439,10 @@ int OSSL_trace_set_callback(int category, OSSL_trace_cb callback, void *data)
 
 int OSSL_trace_set_prefix(int category, const char *prefix)
 {
-#ifndef OPENSSL_NO_TRACE
+#ifdef OPENSSL_NO_TRACE
+    (void)category;
+    (void)prefix;
+#else
     if (category >= 0 && category < OSSL_TRACE_CATEGORY_NUM)
         return set_trace_data(category, 0, NULL, &prefix, NULL,
                               trace_attach_cb, trace_detach_cb);
@@ -438,7 +452,10 @@ int OSSL_trace_set_prefix(int category, const char *prefix)
 
 int OSSL_trace_set_suffix(int category, const char *suffix)
 {
-#ifndef OPENSSL_NO_TRACE
+#ifdef OPENSSL_NO_TRACE
+    (void)category;
+    (void)suffix;
+#else
     if (category >= 0 && category < OSSL_TRACE_CATEGORY_NUM)
         return set_trace_data(category, 0, NULL, NULL, &suffix,
                               trace_attach_cb, trace_detach_cb);
@@ -460,7 +477,9 @@ static int ossl_trace_get_category(int category)
 int OSSL_trace_enabled(int category)
 {
     int ret = 0;
-#ifndef OPENSSL_NO_TRACE
+#ifdef OPENSSL_NO_TRACE
+    (void)category;
+#else
     category = ossl_trace_get_category(category);
     if (category >= 0)
         ret = trace_channels[category].bio != NULL;
@@ -471,7 +490,9 @@ int OSSL_trace_enabled(int category)
 BIO *OSSL_trace_begin(int category)
 {
     BIO *channel = NULL;
-#ifndef OPENSSL_NO_TRACE
+#ifdef OPENSSL_NO_TRACE
+    (void)category;
+#else
     char *prefix = NULL;
 
     category = ossl_trace_get_category(category);
@@ -504,7 +525,10 @@ BIO *OSSL_trace_begin(int category)
 
 void OSSL_trace_end(int category, BIO *channel)
 {
-#ifndef OPENSSL_NO_TRACE
+#ifdef OPENSSL_NO_TRACE
+    (void)category;
+    (void)channel;
+#else
     char *suffix = NULL;
 
     category = ossl_trace_get_category(category);

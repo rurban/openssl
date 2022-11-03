@@ -99,6 +99,8 @@ static const BIO_METHOD methods_slg = {
     slg_new,
     slg_free,
     NULL,                      /* slg_callback_ctrl */
+    NULL,                      /* no bsendmmsg */
+    NULL                       /* no brecvmmsg */
 };
 
 const BIO_METHOD *BIO_s_log(void)
@@ -390,6 +392,7 @@ static void xcloselog(BIO *bp)
 
 static void xopenlog(BIO *bp, char *name, int level)
 {
+    (void)bp;
 #  ifdef WATT32                 /* djgpp/DOS */
     openlog(name, LOG_PID | LOG_CONS | LOG_NDELAY, level);
 #  else
@@ -399,11 +402,13 @@ static void xopenlog(BIO *bp, char *name, int level)
 
 static void xsyslog(BIO *bp, int priority, const char *string)
 {
+    (void)bp;
     syslog(priority, "%s", string);
 }
 
 static void xcloselog(BIO *bp)
 {
+    (void)bp;
     closelog();
 }
 

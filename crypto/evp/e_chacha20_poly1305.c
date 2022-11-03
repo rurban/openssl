@@ -39,6 +39,7 @@ static int chacha_init_key(EVP_CIPHER_CTX *ctx,
 {
     EVP_CHACHA_KEY *key = data(ctx);
     unsigned int i;
+    (void)enc;
 
     if (user_key)
         for (i = 0; i < CHACHA_KEY_SIZE; i+=4) {
@@ -127,19 +128,38 @@ static int chacha_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 static const EVP_CIPHER chacha20 = {
     NID_chacha20,
-    1,                      /* block_size */
-    CHACHA_KEY_SIZE,        /* key_len */
-    CHACHA_CTR_SIZE,        /* iv_len, 128-bit counter in the context */
+    1,               /* block_size */
+    CHACHA_KEY_SIZE, /* key_len */
+    CHACHA_CTR_SIZE, /* iv_len, 128-bit counter in the context */
     EVP_CIPH_CUSTOM_IV | EVP_CIPH_ALWAYS_CALL_INIT,
     EVP_ORIG_GLOBAL,
     chacha_init_key,
     chacha_cipher,
     NULL,
     sizeof(EVP_CHACHA_KEY),
-    NULL,
-    NULL,
-    NULL,
-    NULL
+    NULL,       /* set_asn1_parameters */
+    NULL,       /* get_asn1_parameters */
+    NULL,       /* ctrl */
+    NULL,       /* app_data */
+    0,          /* name_id */
+    NULL,       /* type_name */
+    NULL,       /* description */
+    NULL,       /* prov */
+    {0},        /* refcnt */
+    NULL,       /* newctx */
+    NULL,       /* einit */
+    NULL,       /* dinit */
+    NULL,       /* cupdate */
+    NULL,       /* cfinal */
+    NULL,       /* ccipher */
+    NULL,       /* freectx */
+    NULL,       /* dupctx */
+    NULL,       /* get_params */
+    NULL,       /* get_ctx_params */
+    NULL,       /* set_ctx_params */
+    NULL,       /* gettable_params */
+    NULL,       /* gettable_ctx_params */
+    NULL        /* settable_ctx_params */
 };
 
 const EVP_CIPHER *EVP_chacha20(void)
@@ -612,10 +632,10 @@ static EVP_CIPHER chacha20_poly1305 = {
     1,                  /* block_size */
     CHACHA_KEY_SIZE,    /* key_len */
     12,                 /* iv_len, 96-bit nonce in the context */
-    EVP_CIPH_FLAG_AEAD_CIPHER | EVP_CIPH_CUSTOM_IV |
-    EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT |
-    EVP_CIPH_CUSTOM_COPY | EVP_CIPH_FLAG_CUSTOM_CIPHER |
-    EVP_CIPH_CUSTOM_IV_LENGTH,
+    (EVP_CIPH_FLAG_AEAD_CIPHER | EVP_CIPH_CUSTOM_IV |
+     EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT |
+     EVP_CIPH_CUSTOM_COPY | EVP_CIPH_FLAG_CUSTOM_CIPHER |
+     EVP_CIPH_CUSTOM_IV_LENGTH),
     EVP_ORIG_GLOBAL,
     chacha20_poly1305_init_key,
     chacha20_poly1305_cipher,
@@ -624,7 +644,26 @@ static EVP_CIPHER chacha20_poly1305 = {
     NULL,       /* set_asn1_parameters */
     NULL,       /* get_asn1_parameters */
     chacha20_poly1305_ctrl,
-    NULL        /* app_data */
+    NULL,       /* app_data */
+    0,          /* name_id */
+    NULL,       /* type_name */
+    NULL,       /* description */
+    NULL,       /* prov */
+    {0},        /* refcnt */
+    NULL,       /* newctx */
+    NULL,       /* einit */
+    NULL,       /* dinit */
+    NULL,       /* cupdate */
+    NULL,       /* cfinal */
+    NULL,       /* ccipher */
+    NULL,       /* freectx */
+    NULL,       /* dupctx */
+    NULL,       /* get_params */
+    NULL,       /* get_ctx_params */
+    NULL,       /* set_ctx_params */
+    NULL,       /* gettable_params */
+    NULL,       /* gettable_ctx_params */
+    NULL        /* settable_ctx_params */
 };
 
 const EVP_CIPHER *EVP_chacha20_poly1305(void)

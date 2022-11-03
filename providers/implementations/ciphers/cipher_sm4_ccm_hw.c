@@ -25,6 +25,7 @@ static int ccm_sm4_initkey(PROV_CCM_CTX *ctx,
                            const unsigned char *key, size_t keylen)
 {
     PROV_SM4_CCM_CTX *actx = (PROV_SM4_CCM_CTX *)ctx;
+    (void)keylen;
 
 #ifdef HWSM4_CAPABLE
     if (HWSM4_CAPABLE) {
@@ -64,6 +65,7 @@ static const PROV_CCM_HW ccm_sm4 = {
 #else
 const PROV_CCM_HW *ossl_prov_sm4_hw_ccm(size_t keybits)
 {
+    (void)keybits;
     return &ccm_sm4;
 }
 #endif

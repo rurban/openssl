@@ -41,7 +41,11 @@ const OPTIONS *test_get_options(void)
 
 static int passcb(char *buf, int size, int rwflag, void *userdata)
 {
-    strcpy(buf, "pass");
+    (void)rwflag;
+    (void)userdata;
+
+    strncpy(buf, "pass", size);
+    buf[size - 1] = '\0';
     return strlen(buf);
 }
 

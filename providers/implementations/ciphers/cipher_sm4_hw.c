@@ -14,6 +14,7 @@ static int cipher_hw_sm4_initkey(PROV_CIPHER_CTX *ctx,
 {
     PROV_SM4_CTX *sctx =  (PROV_SM4_CTX *)ctx;
     SM4_KEY *ks = &sctx->ks.ks;
+    (void)keylen;
 
     ctx->ks = ks;
     if (ctx->enc
@@ -130,6 +131,7 @@ static const PROV_CIPHER_HW sm4_##mode = {                                     \
 PROV_CIPHER_HW_declare(mode)                                                   \
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_sm4_##mode(size_t keybits)           \
 {                                                                              \
+    (void)keybits;                                                             \
     PROV_CIPHER_HW_select(mode)                                                \
     return &sm4_##mode;                                                        \
 }

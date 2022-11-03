@@ -69,6 +69,7 @@ static int changepass(PKCS12 *p12, EVP_PKEY *key, X509 *cert, STACK_OF(X509) *ca
     X509 *cert2 = NULL;
     STACK_OF(X509) *ca2 = NULL;
     BIO *bio = NULL;
+    (void)ca;
 
     if (!TEST_true(PKCS12_newpass(p12, in_pass, "NEWPASS")))
         goto err;
@@ -137,6 +138,7 @@ err:
 static int pkcs12_create_cb(PKCS12_SAFEBAG *bag, void *cbarg)
 {
     int cb_ret = *((int*)cbarg);
+    (void)bag;
     return cb_ret;
 }
 
@@ -248,7 +250,7 @@ const OPTIONS *test_get_options(void)
         { "has-cert",   OPT_IN_HAS_CERT, 'n', "Whether the input file does contain an user certificate" },
         { "has-ca",   OPT_IN_HAS_CA,   'n', "Whether the input file does contain other certificate" },
         { "legacy",  OPT_LEGACY,  '-', "Test the legacy APIs" },
-        { NULL }
+        { NULL, 0, 0, NULL }
     };
     return options;
 }

@@ -1484,6 +1484,7 @@ static int sstream_is_pending(QUIC_SSTREAM *sstream)
 /* Determine how many bytes we should use for the encoded PN. */
 static size_t txp_determine_pn_len(OSSL_QUIC_TX_PACKETISER *txp)
 {
+    (void)txp;
     return 4; /* TODO(QUIC FUTURE) */
 }
 
@@ -1674,6 +1675,7 @@ static void on_confirm_notify(uint64_t frame_type, uint64_t stream_id,
                               QUIC_TXPIM_PKT *pkt, void *arg)
 {
     OSSL_QUIC_TX_PACKETISER *txp = arg;
+    (void)pkt;
 
     switch (frame_type) {
         case OSSL_QUIC_FRAME_TYPE_STOP_SENDING:
@@ -1714,6 +1716,7 @@ static int txp_pkt_append_padding(struct txp_pkt *pkt,
                                   OSSL_QUIC_TX_PACKETISER *txp, size_t num_bytes)
 {
     WPACKET *wpkt;
+    (void)txp;
 
     if (num_bytes == 0)
         return 1;
@@ -1968,6 +1971,7 @@ static int determine_crypto_len(struct tx_helper *h,
 {
     size_t orig_len;
     size_t base_hdr_len; /* CRYPTO header length without length field */
+    (void)h;
 
     if (chdr->len > SIZE_MAX)
         return 0;
@@ -1993,6 +1997,7 @@ static int determine_stream_len(struct tx_helper *h,
 {
     size_t orig_len;
     size_t base_hdr_len; /* STREAM header length without length field */
+    (void)h;
 
     if (shdr->len > SIZE_MAX)
         return 0;
@@ -2027,6 +2032,7 @@ static int txp_generate_crypto_frames(OSSL_QUIC_TX_PACKETISER *txp,
     WPACKET *wpkt;
     QUIC_TXPIM_CHUNK chunk = {0};
     size_t i, space_left;
+    (void)h;
 
     for (i = 0;; ++i) {
         space_left = tx_helper_get_space_left(h);
@@ -2115,6 +2121,8 @@ static int txp_plan_stream_chunk(OSSL_QUIC_TX_PACKETISER *txp,
                                  uint64_t consumed)
 {
     uint64_t fc_credit, fc_swm, fc_limit;
+    (void)txp;
+    (void)h;
 
     chunk->num_stream_iovec = OSSL_NELEM(chunk->iov);
     chunk->valid = ossl_quic_sstream_get_stream_frame(sstream, skip,

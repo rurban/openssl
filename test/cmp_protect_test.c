@@ -108,6 +108,7 @@ static int verify_signature(OSSL_CMP_MSG *msg,
                             EVP_PKEY *pkey, EVP_MD *digest)
 {
     OSSL_CMP_PROTECTEDPART prot_part;
+    (void)digest;
 
     prot_part.header = OSSL_CMP_MSG_get0_header(msg);
     prot_part.body = msg->body;

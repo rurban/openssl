@@ -154,7 +154,7 @@ const OPTIONS pkcs12_options[] = {
     {"macsaltlen", OPT_MACSALTLEN, 'p', "Specify the salt len for MAC"},
     {"nomac", OPT_NOMAC, '-', "Don't generate MAC"},
     {"jdktrust", OPT_JDKTRUST, 's', "Mark certificate in PKCS#12 store as trusted for JDK compatibility"},
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int pkcs12_main(int argc, char **argv)
