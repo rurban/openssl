@@ -1578,8 +1578,23 @@ unless ($disabled{msan} || defined $detected_sanitizers{msan}) {
 
 unless ($disabled{"fuzz-libfuzzer"} && $disabled{"fuzz-afl"}
         && $disabled{asan} && $disabled{ubsan} && $disabled{msan}) {
-    push @{$config{cflags}}, "-fno-omit-frame-pointer", "-g";
-    push @{$config{cxxflags}}, "-fno-omit-frame-pointer", "-g" if $config{CXX};
+    my @args = qw(-fno-omit-frame-pointer -g
+                  -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION);
+    if (!$disabled{"fuzz-libfuzzer"}) {
+        push @args, "-fsanitize=fuzzer-no-link";
+        if (!$withargs{fuzzer_lib}) {
+            my $libdir = `$config{CC} -print-runtime-dir`;
+            chomp $libdir;
+            my @triple = split '-', $target;
+            pop @triple if $triple[$#triple] eq 'clang';
+            my $arch = $triple[$#triple];
+            my $libfuzz = "$libdir/libclang_rt.fuzzer-$arch.a";
+            $libfuzz = "$libdir/libclang_rt.fuzzer-x86_64.a" unless -e $libfuzz;
+            $withargs{fuzzer_lib} = $libfuzz if -e $libfuzz;
+        }
+    }
+    push @{$config{cflags}}, @args;
+    push @{$config{cxxflags}}, @args if $config{CXX};
 }
 #
 # Platform fix-ups

@@ -17,16 +17,10 @@ since version 6.0:
 
     sudo apt-get install clang
 
-Configure `openssl` for fuzzing. For now, you'll still need to pass in the path
-to the `libFuzzer` library file while configuring; this is represented as
-`$PATH_TO_LIBFUZZER` below. A typical value would be
-`/usr/lib/llvm-7/lib/clang/7.0.1/lib/linux/libclang_rt.fuzzer-x86_64.a`.
+Configure `openssl` for fuzzing.
 
     CC=clang ./config enable-fuzz-libfuzzer \
-            --with-fuzzer-lib=$PATH_TO_LIBFUZZER \
             -DPEDANTIC enable-asan enable-ubsan no-shared \
-            -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION \
-            -fsanitize=fuzzer-no-link \
             enable-ec_nistp_64_gcc_128 -fno-sanitize=alignment \
             enable-weak-ssl-ciphers enable-rc5 enable-md2 \
             enable-ssl3 enable-ssl3-method enable-nextprotoneg \
