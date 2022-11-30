@@ -1191,9 +1191,13 @@ check-format: ## Evaluate C code according to OpenSSL coding standards
 generate_apps:
 	( cd $(SRCDIR); $(PERL) VMS/VMSify-conf.pl \
 				< apps/openssl.cnf > apps/openssl-vms.cnf )
+apps/openssl-vms.cnf: VMS/VMSify-conf.pl apps/openssl.cnf
+	$(MAKE) generate_apps
 
 generate_crypto_bn:
 	( cd $(SRCDIR); $(PERL) crypto/bn/bn_prime.pl > crypto/bn/bn_prime.h )
+crypto/bn/bn_prime.h: crypto/bn/bn_prime.pl
+	$(MAKE) generate_crypto_bn
 
 generate_crypto_objects:
 	( cd $(SRCDIR); $(PERL) crypto/objects/objects.pl -n \
@@ -1214,18 +1218,32 @@ generate_crypto_objects:
 				> crypto/objects/obj_xref.h )
 	( cd $(SRCDIR);	sed -e '1,8d' crypto/objects/obj_compat.h >> include/openssl/obj_mac.h )
 
+include/openssl/obj_mac.h \
+crypto/objects/obj_dat.h \
+crypto/objects/obj_xref.h: crypto/objects/obj_mac.num \
+  crypto/objects/objects.txt \
+  crypto/objects/obj_xref.txt
+	$(MAKE) generate_crypto_objects
+
 generate_crypto_conf:
 	( cd $(SRCDIR); $(PERL) crypto/conf/keysets.pl \
 			        > crypto/conf/conf_def.h )
+crypto/conf/conf_def.h: crypto/conf/keysets.pl
+	$(MAKE) generate_crypto_conf
 
 generate_crypto_asn1:
 	( cd $(SRCDIR); $(PERL) crypto/asn1/charmap.pl \
 			        > crypto/asn1/charmap.h )
+crypto/asn1/charmap.h: crypto/asn1/charmap.pl
+	$(MAKE) generate_crypto_asn1
 
 generate_fuzz_oids:
 	( cd $(SRCDIR); $(PERL) fuzz/mkfuzzoids.pl \
 				crypto/objects/obj_dat.h \
 				> fuzz/oids.txt )
+fuzz/oids.txt: crypto/objects/obj_dat.h fuzz/mkfuzzoids.pl
+	$(MAKE) generate_fuzz_oids
+
 
 generate_doc_buildinfo:
 	( $(PERL) -I$(BLDDIR) -Mconfigdata \
