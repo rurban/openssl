@@ -93,7 +93,8 @@ struct app_verify_arg {
 
 static char *psk_key = NULL;    /* by default PSK is not used */
 #ifndef OPENSSL_NO_PSK
-static unsigned int psk_client_callback(SSL *ssl, const char *hint,
+static unsigned int psk_client_callback(UNUSED_SHIM(SSL *, ssl),
+                                        const char *hint,
                                         char *identity,
                                         unsigned int max_identity_len,
                                         unsigned char *psk,
@@ -3084,7 +3085,8 @@ static int psk_key2bn(const char *pskkey, unsigned char *psk,
     return ret;
 }
 
-static unsigned int psk_client_callback(SSL *ssl, const char *hint,
+static unsigned int psk_client_callback(UNUSED_SHIM(SSL *, ssl),
+                                        UNUSED_SHIM(const char *, hint),
                                         char *identity,
                                         unsigned int max_identity_len,
                                         unsigned char *psk,
@@ -3092,8 +3094,6 @@ static unsigned int psk_client_callback(SSL *ssl, const char *hint,
 {
     int ret;
     unsigned int psk_len = 0;
-    (void)ssl;
-    (void)hint;
 
     ret = BIO_snprintf(identity, max_identity_len, "Client_identity");
     if (ret < 0)

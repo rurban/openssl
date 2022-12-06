@@ -3263,13 +3263,13 @@ static int use_session_cb(SSL *ssl, const EVP_MD *md, const unsigned char **id,
 }
 
 #ifndef OPENSSL_NO_PSK
-static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *id,
+static unsigned int psk_client_cb(UNUSED_SHIM(SSL *, ssl),
+                                  const char *hint, char *id,
                                   unsigned int max_id_len,
                                   unsigned char *psk,
                                   unsigned int max_psk_len)
 {
     unsigned int psklen = 0;
-    (void)ssl;
     (void)hint;
 
     psk_client_cb_cnt++;

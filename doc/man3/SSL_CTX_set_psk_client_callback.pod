@@ -25,7 +25,7 @@ SSL_set_psk_use_session_callback
  void SSL_set_psk_use_session_callback(SSL *s, SSL_psk_use_session_cb_func cb);
 
 
- typedef unsigned int (*SSL_psk_client_cb_func)(SSL *ssl,
+ typedef unsigned int (*SSL_psk_client_cb_func)(SSL *ssl /*UNUSED*/,
                                                 const char *hint,
                                                 char *identity,
                                                 unsigned int max_identity_len,

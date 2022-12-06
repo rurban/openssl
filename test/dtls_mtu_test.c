@@ -22,14 +22,12 @@
 
 static int debug = 0;
 
-static unsigned int clnt_psk_callback(SSL *ssl, const char *hint,
+static unsigned int clnt_psk_callback(UNUSED_SHIM(SSL *, ssl),
+                                      UNUSED_SHIM(const char *, hint),
                                       char *ident, unsigned int max_ident_len,
                                       unsigned char *psk,
                                       unsigned int max_psk_len)
 {
-    (void)ssl;
-    (void)hint;
-
     BIO_snprintf(ident, max_ident_len, "psk");
 
     if (max_psk_len > 20)

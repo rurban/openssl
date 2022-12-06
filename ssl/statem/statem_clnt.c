@@ -3010,7 +3010,7 @@ static int tls_construct_cke_psk_preamble(SSL_CONNECTION *s, WPACKET *pkt)
 
     memset(identity, 0, sizeof(identity));
 
-    psklen = s->psk_client_callback(SSL_CONNECTION_GET_SSL(s),
+    psklen = s->psk_client_callback(SSL_CONNECTION_GET_SSL(s) /*UNUSED*/,
                                     s->session->psk_identity_hint,
                                     identity, sizeof(identity) - 1,
                                     psk, sizeof(psk));

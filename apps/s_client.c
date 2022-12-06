@@ -137,7 +137,8 @@ static int restore_errno(void)
 static char *psk_identity = "Client_identity";
 
 #ifndef OPENSSL_NO_PSK
-static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *identity,
+static unsigned int psk_client_cb(UNUSED_SHIM(SSL *, ssl),
+                                  const char *hint, char *identity,
                                   unsigned int max_identity_len,
                                   unsigned char *psk,
                                   unsigned int max_psk_len)
@@ -145,7 +146,6 @@ static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *identity,
     int ret;
     long key_len;
     unsigned char *key;
-    (void)ssl;
 
     if (c_debug)
         BIO_printf(bio_c_out, "psk_client_cb\n");
