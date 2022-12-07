@@ -843,7 +843,7 @@ int OSSL_CMP_try_certreq(OSSL_CMP_CTX *ctx, int req_type,
             return res;
     }
     res = cert_response(ctx, 0 /* no sleep */, rid, &rep, checkAfter,
-                        req_type, rep_type);
+                        0, 0);
 
  err:
     OSSL_CMP_MSG_free(rep);
@@ -877,7 +877,7 @@ X509 *OSSL_CMP_exec_certreq(OSSL_CMP_CTX *ctx, int req_type,
     if (!save_senderNonce_if_waiting(ctx, rep, rid))
         return 0;
 
-    if (cert_response(ctx, 1 /* sleep */, rid, &rep, NULL, req_type, rep_type)
+    if (cert_response(ctx, 1 /* sleep */, rid, &rep, NULL, 0, 0)
         <= 0)
         goto err;
 
