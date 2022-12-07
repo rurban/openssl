@@ -29,7 +29,7 @@ int ossl_dsa_generate_ffc_parameters(DSA *dsa, int type, int pbits, int qbits,
     int ret = 0, res;
 
 #ifdef FIPS_MODULE
-    (void)type;
+    UNUSED(type);
 #else
     if (type == DSA_PARAMGEN_TYPE_FIPS_186_2)
         ret = ossl_ffc_params_FIPS186_2_generate(dsa->libctx, &dsa->params,

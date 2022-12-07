@@ -336,21 +336,21 @@ static int dsa_param_encode(const EVP_PKEY *pkey, unsigned char **pder)
 }
 
 static int dsa_param_print(BIO *bp, const EVP_PKEY *pkey, int indent,
-                           ASN1_PCTX *ctx)
+                           UNUSED_SHIM(ASN1_PCTX*, ctx))
 {
     (void)ctx;
     return do_dsa_print(bp, pkey->pkey.dsa, indent, 0);
 }
 
 static int dsa_pub_print(BIO *bp, const EVP_PKEY *pkey, int indent,
-                         ASN1_PCTX *ctx)
+                         UNUSED_SHIM(ASN1_PCTX*, ctx))
 {
     (void)ctx;
     return do_dsa_print(bp, pkey->pkey.dsa, indent, 1);
 }
 
 static int dsa_priv_print(BIO *bp, const EVP_PKEY *pkey, int indent,
-                          ASN1_PCTX *ctx)
+                          UNUSED_SHIM(ASN1_PCTX*, ctx))
 {
     (void)ctx;
     return do_dsa_print(bp, pkey->pkey.dsa, indent, 2);
@@ -375,8 +375,9 @@ static int old_dsa_priv_encode(const EVP_PKEY *pkey, unsigned char **pder)
     return i2d_DSAPrivateKey(pkey->pkey.dsa, pder);
 }
 
-static int dsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
-                         const ASN1_STRING *sig, int indent, ASN1_PCTX *pctx)
+static int dsa_sig_print(BIO *bp, UNUSED_SHIM(const X509_ALGOR*, sigalg),
+                         const ASN1_STRING *sig, int indent,
+                         UNUSED_SHIM(ASN1_PCTX*, pctx))
 {
     DSA_SIG *dsa_sig;
     const unsigned char *p;
@@ -414,7 +415,8 @@ static int dsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
     return X509_signature_dump(bp, sig, indent);
 }
 
-static int dsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
+static int dsa_pkey_ctrl(UNUSED_SHIM(EVP_PKEY*, pkey), int op,
+                         UNUSED_SHIM(long, arg1), void *arg2)
 {
     (void)pkey;
     (void)arg1;
@@ -436,7 +438,8 @@ static size_t dsa_pkey_dirty_cnt(const EVP_PKEY *pkey)
 
 static int dsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
                               OSSL_FUNC_keymgmt_import_fn *importer,
-                              OSSL_LIB_CTX *libctx, const char *propq)
+                              UNUSED_SHIM(OSSL_LIB_CTX*, libctx),
+                              UNUSED_SHIM(const char*, propq))
 {
     DSA *dsa = from->pkey.dsa;
     OSSL_PARAM_BLD *tmpl;

@@ -30,7 +30,8 @@ void ossl_dsa_set0_libctx(DSA *d, OSSL_LIB_CTX *libctx);
 int ossl_dsa_generate_ffc_parameters(DSA *dsa, int type, int pbits, int qbits,
                                      BN_GENCB *cb);
 
-int ossl_dsa_sign_int(int type, const unsigned char *dgst, int dlen,
+int ossl_dsa_sign_int(UNUSED_SHIM(int, type),
+                      const unsigned char *dgst, int dlen,
                       unsigned char *sig, unsigned int *siglen, DSA *dsa,
                       unsigned int nonce_type, const char *digestname,
                       OSSL_LIB_CTX *libctx, const char *propq);

@@ -69,7 +69,7 @@ int ossl_dsa_is_foreign(const DSA *dsa)
     if (dsa->engine != NULL || DSA_get_method((DSA *)dsa) != DSA_OpenSSL())
         return 1;
 #else
-    (void)dsa;
+    UNUSED(dsa);
 #endif
     return 0;
 }
@@ -123,7 +123,8 @@ DSA *ossl_dsa_dup(const DSA *dsa, int selection)
 
 #ifndef FIPS_MODULE
 DSA *ossl_dsa_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
-                             OSSL_LIB_CTX *libctx, const char *propq)
+                             UNUSED_SHIM(OSSL_LIB_CTX*, libctx),
+                             UNUSED_SHIM(const char*, propq))
 {
     const unsigned char *p, *pm;
     int pklen, pmlen;

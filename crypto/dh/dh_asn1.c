@@ -22,8 +22,9 @@
 #include "crypto/dh.h"
 
 /* Override the default free and new methods */
-static int dh_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                 void *exarg)
+static int dh_cb(int operation, ASN1_VALUE **pval,
+                 UNUSED_SHIM(const ASN1_ITEM*, it),
+                 UNUSED_SHIM(void*, exarg))
 {
     (void)it;
     (void)exarg;

@@ -22,8 +22,9 @@
 #include "crypto/asn1_dsa.h"
 
 /* Override the default free and new methods */
-static int dsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                  void *exarg)
+static int dsa_cb(int operation, ASN1_VALUE **pval,
+                  UNUSED_SHIM(const ASN1_ITEM*, it),
+                  UNUSED_SHIM(void*, exarg))
 {
     (void)it;
     (void)exarg;

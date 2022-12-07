@@ -372,21 +372,21 @@ static int dh_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 }
 
 static int dh_param_print(BIO *bp, const EVP_PKEY *pkey, int indent,
-                          ASN1_PCTX *ctx)
+                          UNUSED_SHIM(ASN1_PCTX*, ctx))
 {
     (void)ctx;
     return do_dh_print(bp, pkey->pkey.dh, indent, 0);
 }
 
 static int dh_public_print(BIO *bp, const EVP_PKEY *pkey, int indent,
-                           ASN1_PCTX *ctx)
+                           UNUSED_SHIM(ASN1_PCTX*, ctx))
 {
     (void)ctx;
     return do_dh_print(bp, pkey->pkey.dh, indent, 1);
 }
 
 static int dh_private_print(BIO *bp, const EVP_PKEY *pkey, int indent,
-                            ASN1_PCTX *ctx)
+                            UNUSED_SHIM(ASN1_PCTX*, ctx))
 {
     (void)ctx;
     return do_dh_print(bp, pkey->pkey.dh, indent, 2);
@@ -419,7 +419,9 @@ static int dh_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
     }
 }
 
-static int dhx_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
+static int dhx_pkey_ctrl(UNUSED_SHIM(EVP_PKEY*, pkey), int op,
+                         UNUSED_SHIM(long, arg1),
+                         UNUSED_SHIM(void*, arg2))
 {
     (void)pkey;
     (void)arg1;
@@ -458,7 +460,8 @@ static size_t dh_pkey_dirty_cnt(const EVP_PKEY *pkey)
 
 static int dh_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
                              OSSL_FUNC_keymgmt_import_fn *importer,
-                             OSSL_LIB_CTX *libctx, const char *propq)
+                             UNUSED_SHIM(OSSL_LIB_CTX*, libctx),
+                             UNUSED_SHIM(const char*, propq))
 {
     DH *dh = from->pkey.dh;
     OSSL_PARAM_BLD *tmpl;

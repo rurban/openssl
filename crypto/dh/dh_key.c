@@ -27,7 +27,8 @@
 #endif
 
 static int generate_key(DH *dh);
-static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
+static int dh_bn_mod_exp(UNUSED_SHIM(const DH*, dh),
+                         BIGNUM *r,
                          const BIGNUM *a, const BIGNUM *p,
                          const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 static int dh_init(DH *dh);
@@ -186,7 +187,8 @@ const DH_METHOD *DH_get_default_method(void)
     return default_DH_method;
 }
 
-static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
+static int dh_bn_mod_exp(UNUSED_SHIM(const DH*, dh),
+                         BIGNUM *r,
                          const BIGNUM *a, const BIGNUM *p,
                          const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
 {

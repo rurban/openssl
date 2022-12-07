@@ -150,7 +150,8 @@ int DSA_SIG_set0(DSA_SIG *sig, BIGNUM *r, BIGNUM *s)
     return 1;
 }
 
-int ossl_dsa_sign_int(int type, const unsigned char *dgst, int dlen,
+int ossl_dsa_sign_int(UNUSED_SHIM(int, type),
+                      const unsigned char *dgst, int dlen,
                       unsigned char *sig, unsigned int *siglen, DSA *dsa,
                       unsigned int nonce_type, const char *digestname,
                       OSSL_LIB_CTX *libctx, const char *propq)
@@ -173,10 +174,11 @@ int ossl_dsa_sign_int(int type, const unsigned char *dgst, int dlen,
     return 1;
 }
 
-int DSA_sign(int type, const unsigned char *dgst, int dlen,
+int DSA_sign(UNUSED_SHIM(int, type),
+             const unsigned char *dgst, int dlen,
              unsigned char *sig, unsigned int *siglen, DSA *dsa)
 {
-    return ossl_dsa_sign_int(type, dgst, dlen, sig, siglen, dsa,
+    return ossl_dsa_sign_int(0, dgst, dlen, sig, siglen, dsa,
                              0, NULL, NULL, NULL);
 }
 
@@ -187,7 +189,8 @@ int DSA_sign(int type, const unsigned char *dgst, int dlen,
  *      0: incorrect signature
  *     -1: error
  */
-int DSA_verify(int type, const unsigned char *dgst, int dgst_len,
+int DSA_verify(UNUSED_SHIM(int, type),
+               const unsigned char *dgst, int dgst_len,
                const unsigned char *sigbuf, int siglen, DSA *dsa)
 {
     DSA_SIG *s;

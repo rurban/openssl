@@ -128,7 +128,7 @@ OSSL_DEPRECATEDIN_3_0 int DSA_set_method(DSA *dsa, const DSA_METHOD *);
 OSSL_DEPRECATEDIN_3_0 const DSA_METHOD *DSA_get_method(DSA *d);
 
 OSSL_DEPRECATEDIN_3_0 DSA *DSA_new(void);
-OSSL_DEPRECATEDIN_3_0 DSA *DSA_new_method(ENGINE *engine);
+OSSL_DEPRECATEDIN_3_0 DSA *DSA_new_method(ENGINE* engine);
 OSSL_DEPRECATEDIN_3_0 void DSA_free(DSA *r);
 /* "up" the DSA object's reference count */
 OSSL_DEPRECATEDIN_3_0 int DSA_up_ref(DSA *r);
@@ -138,10 +138,12 @@ OSSL_DEPRECATEDIN_3_0 int DSA_security_bits(const DSA *d);
         /* next 4 return -1 on error */
 OSSL_DEPRECATEDIN_3_0 int DSA_sign_setup(DSA *dsa, BN_CTX *ctx_in,
                                          BIGNUM **kinvp, BIGNUM **rp);
-OSSL_DEPRECATEDIN_3_0 int DSA_sign(int type, const unsigned char *dgst,
+OSSL_DEPRECATEDIN_3_0 int DSA_sign(UNUSED_SHIM(int, type),
+                                   const unsigned char *dgst,
                                    int dlen, unsigned char *sig,
                                    unsigned int *siglen, DSA *dsa);
-OSSL_DEPRECATEDIN_3_0 int DSA_verify(int type, const unsigned char *dgst,
+OSSL_DEPRECATEDIN_3_0 int DSA_verify(UNUSED_SHIM(int, type),
+                                     const unsigned char *dgst,
                                      int dgst_len, const unsigned char *sigbuf,
                                      int siglen, DSA *dsa);
 

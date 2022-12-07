@@ -126,7 +126,7 @@ int ossl_dh_is_foreign(const DH *dh)
     if (dh->engine != NULL || ossl_dh_get_method(dh) != DH_OpenSSL())
         return 1;
 #else
-    (void)dh;
+    UNUSED(dh);
 #endif
     return 0;
 }
@@ -181,7 +181,8 @@ DH *ossl_dh_dup(const DH *dh, int selection)
 
 #ifndef FIPS_MODULE
 DH *ossl_dh_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
-                           OSSL_LIB_CTX *libctx, const char *propq)
+                           UNUSED_SHIM(OSSL_LIB_CTX*, libctx),
+                           UNUSED_SHIM(const char*, propq))
 {
     const unsigned char *p, *pm;
     int pklen, pmlen;
