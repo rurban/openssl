@@ -26,9 +26,6 @@ static int dh_cb(int operation, ASN1_VALUE **pval,
                  UNUSED_SHIM(const ASN1_ITEM*, it),
                  UNUSED_SHIM(void*, exarg))
 {
-    (void)it;
-    (void)exarg;
-
     if (operation == ASN1_OP_NEW_PRE) {
         *pval = (ASN1_VALUE *)DH_new();
         if (*pval != NULL)

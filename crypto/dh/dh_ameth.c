@@ -374,21 +374,18 @@ static int dh_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 static int dh_param_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                           UNUSED_SHIM(ASN1_PCTX*, ctx))
 {
-    (void)ctx;
     return do_dh_print(bp, pkey->pkey.dh, indent, 0);
 }
 
 static int dh_public_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                            UNUSED_SHIM(ASN1_PCTX*, ctx))
 {
-    (void)ctx;
     return do_dh_print(bp, pkey->pkey.dh, indent, 1);
 }
 
 static int dh_private_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                             UNUSED_SHIM(ASN1_PCTX*, ctx))
 {
-    (void)ctx;
     return do_dh_print(bp, pkey->pkey.dh, indent, 2);
 }
 
@@ -423,10 +420,6 @@ static int dhx_pkey_ctrl(UNUSED_SHIM(EVP_PKEY*, pkey), int op,
                          UNUSED_SHIM(long, arg1),
                          UNUSED_SHIM(void*, arg2))
 {
-    (void)pkey;
-    (void)arg1;
-    (void)arg2;
-
     switch (op) {
     default:
         return -2;
@@ -472,8 +465,6 @@ static int dh_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     OSSL_PARAM *params = NULL;
     int selection = 0;
     int rv = 0;
-    (void)libctx;
-    (void)propq;
 
     if (p == NULL || g == NULL)
         return 0;

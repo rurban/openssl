@@ -338,21 +338,18 @@ static int dsa_param_encode(const EVP_PKEY *pkey, unsigned char **pder)
 static int dsa_param_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                            UNUSED_SHIM(ASN1_PCTX*, ctx))
 {
-    (void)ctx;
     return do_dsa_print(bp, pkey->pkey.dsa, indent, 0);
 }
 
 static int dsa_pub_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                          UNUSED_SHIM(ASN1_PCTX*, ctx))
 {
-    (void)ctx;
     return do_dsa_print(bp, pkey->pkey.dsa, indent, 1);
 }
 
 static int dsa_priv_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                           UNUSED_SHIM(ASN1_PCTX*, ctx))
 {
-    (void)ctx;
     return do_dsa_print(bp, pkey->pkey.dsa, indent, 2);
 }
 
@@ -381,8 +378,6 @@ static int dsa_sig_print(BIO *bp, UNUSED_SHIM(const X509_ALGOR*, sigalg),
 {
     DSA_SIG *dsa_sig;
     const unsigned char *p;
-    (void)sigalg;
-    (void)pctx;
 
     if (sig == NULL) {
         if (BIO_puts(bp, "\n") <= 0)
@@ -418,9 +413,6 @@ static int dsa_sig_print(BIO *bp, UNUSED_SHIM(const X509_ALGOR*, sigalg),
 static int dsa_pkey_ctrl(UNUSED_SHIM(EVP_PKEY*, pkey), int op,
                          UNUSED_SHIM(long, arg1), void *arg2)
 {
-    (void)pkey;
-    (void)arg1;
-
     switch (op) {
     case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
         *(int *)arg2 = NID_sha256;
@@ -449,8 +441,6 @@ static int dsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     OSSL_PARAM *params;
     int selection = 0;
     int rv = 0;
-    (void)libctx;
-    (void)propq;
 
     if (p == NULL || q == NULL || g == NULL)
         return 0;
