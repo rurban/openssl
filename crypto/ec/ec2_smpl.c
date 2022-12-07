@@ -100,7 +100,8 @@ int ossl_ec_GF2m_simple_group_copy(EC_GROUP *dest, const EC_GROUP *src)
 /* Set the curve parameters of an EC_GROUP structure. */
 int ossl_ec_GF2m_simple_group_set_curve(EC_GROUP *group,
                                         const BIGNUM *p, const BIGNUM *a,
-                                        const BIGNUM *b, BN_CTX *ctx)
+                                        const BIGNUM *b,
+                                        UNUSED_SHIM(BN_CTX*, ctx))
 {
     int ret = 0, i;
     (void)ctx;
@@ -140,7 +141,8 @@ int ossl_ec_GF2m_simple_group_set_curve(EC_GROUP *group,
  * then there values will not be set but the method will return with success.
  */
 int ossl_ec_GF2m_simple_group_get_curve(const EC_GROUP *group, BIGNUM *p,
-                                        BIGNUM *a, BIGNUM *b, BN_CTX *ctx)
+                                        BIGNUM *a, BIGNUM *b,
+                                        UNUSED_SHIM(BN_CTX*, ctx))
 {
     int ret = 0;
     (void)ctx;
@@ -275,7 +277,7 @@ int ossl_ec_GF2m_simple_point_copy(EC_POINT *dest, const EC_POINT *src)
  * Set an EC_POINT to the point at infinity. A point at infinity is
  * represented by having Z=0.
  */
-int ossl_ec_GF2m_simple_point_set_to_infinity(const EC_GROUP *group,
+int ossl_ec_GF2m_simple_point_set_to_infinity(UNUSED_SHIM(const EC_GROUP*, group),
                                               EC_POINT *point)
 {
     (void)group;
@@ -289,15 +291,14 @@ int ossl_ec_GF2m_simple_point_set_to_infinity(const EC_GROUP *group,
  * Set the coordinates of an EC_POINT using affine coordinates. Note that
  * the simple implementation only uses affine coordinates.
  */
-int ossl_ec_GF2m_simple_point_set_affine_coordinates(const EC_GROUP *group,
-                                                     EC_POINT *point,
-                                                     const BIGNUM *x,
-                                                     const BIGNUM *y,
-                                                     BN_CTX *ctx)
+int ossl_ec_GF2m_simple_point_set_affine_coordinates
+    (UNUSED_SHIM(const EC_GROUP*, group),
+     EC_POINT *point,
+     const BIGNUM *x,
+     const BIGNUM *y,
+     UNUSED_SHIM(BN_CTX*, ctx))
 {
     int ret = 0;
-    (void)group;
-    (void)ctx;
 
     if (x == NULL || y == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_PASSED_NULL_PARAMETER);
@@ -327,7 +328,7 @@ int ossl_ec_GF2m_simple_point_set_affine_coordinates(const EC_GROUP *group,
 int ossl_ec_GF2m_simple_point_get_affine_coordinates(const EC_GROUP *group,
                                                      const EC_POINT *point,
                                                      BIGNUM *x, BIGNUM *y,
-                                                     BN_CTX *ctx)
+                                                     UNUSED_SHIM(BN_CTX*, ctx))
 {
     int ret = 0;
     (void)ctx;
@@ -502,7 +503,7 @@ int ossl_ec_GF2m_simple_invert(const EC_GROUP *group, EC_POINT *point,
 }
 
 /* Indicates whether the given point is the point at infinity. */
-int ossl_ec_GF2m_simple_is_at_infinity(const EC_GROUP *group,
+int ossl_ec_GF2m_simple_is_at_infinity(UNUSED_SHIM(const EC_GROUP*, group),
                                        const EC_POINT *point)
 {
     (void)group;

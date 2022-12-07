@@ -55,7 +55,7 @@ static int group_order_tests(EC_GROUP *group)
         || !TEST_ptr(S = EC_POINT_new(group)))
         goto err;
 
-    if (!TEST_true(EC_GROUP_get_order(group, order, ctx))
+    if (!TEST_true(EC_GROUP_get_order(group, order, NULL))
         || !TEST_true(EC_POINT_mul(group, Q, order, NULL, NULL, ctx))
         || !TEST_true(EC_POINT_is_at_infinity(group, Q))
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -545,7 +545,7 @@ static int prime_field_tests(void)
     points[2] = Q;
     points[3] = Q;
 
-    if (!TEST_true(EC_GROUP_get_order(group, z, ctx))
+    if (!TEST_true(EC_GROUP_get_order(group, z, NULL))
         || !TEST_true(BN_add(y, z, BN_value_one()))
         || !TEST_BN_even(y)
         || !TEST_true(BN_rshift1(y, y)))

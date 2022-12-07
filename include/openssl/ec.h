@@ -239,7 +239,8 @@ BN_MONT_CTX *EC_GROUP_get_mont_data(const EC_GROUP *group);
  *  \param  ctx    unused
  *  \return 1 on success and 0 if an error occurred
  */
-int EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx);
+int EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order,
+                       UNUSED_SHIM(BN_CTX*, ctx));
 
 /** Gets the order of an EC_GROUP
  *  \param  group  EC_GROUP object

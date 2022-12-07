@@ -443,7 +443,8 @@ BN_MONT_CTX *EC_GROUP_get_mont_data(const EC_GROUP *group)
     return group->mont_data;
 }
 
-int EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx)
+int EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order,
+                       UNUSED_SHIM(BN_CTX*, ctx))
 {
     (void)ctx;
     if (group->order == NULL)

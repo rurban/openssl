@@ -39,7 +39,7 @@ void gf_sub_RAW(gf out, const gf a, const gf b)
     gf_weak_reduce(out);
 }
 
-void gf_bias(gf a, int amt)
+void gf_bias(UNUSED_SHIM(gf, a), UNUSED_SHIM(int, amt))
 {
     (void)a;
     (void)amt;
