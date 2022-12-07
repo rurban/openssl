@@ -38,10 +38,10 @@ struct ssl_conf_cmd_st {
 static struct ssl_conf_name_st *ssl_names;
 static size_t ssl_names_count;
 
-static void ssl_module_free(CONF_IMODULE *md)
+static void ssl_module_free(UNUSED_SHIM(CONF_IMODULE*, md))
 {
     size_t i, j;
-    (void)md;
+
     if (ssl_names == NULL)
         return;
     for (i = 0; i < ssl_names_count; i++) {
@@ -78,7 +78,7 @@ static int ssl_module_init(CONF_IMODULE *md, const CONF *cnf)
         goto err;
     }
     cnt = sk_CONF_VALUE_num(cmd_lists);
-    ssl_module_free(md);
+    ssl_module_free(NULL);
     ssl_names = OPENSSL_zalloc(sizeof(*ssl_names) * cnt);
     if (ssl_names == NULL)
         goto err;
@@ -127,7 +127,7 @@ static int ssl_module_init(CONF_IMODULE *md, const CONF *cnf)
     rv = 1;
  err:
     if (rv == 0)
-        ssl_module_free(md);
+        ssl_module_free(NULL);
     return rv;
 }
 
