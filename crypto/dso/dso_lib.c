@@ -10,12 +10,9 @@
 #include "dso_local.h"
 #include "internal/refcount.h"
 
-static DSO *DSO_new_method(DSO_METHOD *meth)
+static DSO *DSO_new_method(UNUSED_SHIM(DSO_METHOD*, meth))
 {
-    DSO *ret;
-    (void)meth;
-
-    ret = OPENSSL_zalloc(sizeof(*ret));
+    DSO *ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL)
         return NULL;
     ret->meth_data = sk_void_new_null();
@@ -102,13 +99,15 @@ int DSO_up_ref(DSO *dso)
     return ((i > 1) ? 1 : 0);
 }
 
-DSO *DSO_load(DSO *dso, const char *filename, DSO_METHOD *meth, int flags)
+DSO *DSO_load(DSO *dso, const char *filename,
+              UNUSED_SHIM(DSO_METHOD*, meth),
+              int flags)
 {
     DSO *ret;
     int allocated = 0;
 
     if (dso == NULL) {
-        ret = DSO_new_method(meth);
+        ret = DSO_new_method(NULL);
         if (ret == NULL) {
             ERR_raise(ERR_LIB_DSO, ERR_R_DSO_LIB);
             goto err;

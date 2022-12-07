@@ -42,7 +42,7 @@ static int dlfcn_load(DSO *dso);
 static int dlfcn_unload(DSO *dso);
 static DSO_FUNC_TYPE dlfcn_bind_func(DSO *dso, const char *symname);
 static char *dlfcn_name_converter(DSO *dso, const char *filename);
-static char *dlfcn_merger(DSO *dso, const char *filespec1,
+static char *dlfcn_merger(UNUSED_SHIM(DSO*, dso), const char *filespec1,
                           const char *filespec2);
 static int dlfcn_pathbyaddr(void *addr, char *path, int sz);
 static void *dlfcn_globallookup(const char *name);
@@ -192,7 +192,7 @@ static DSO_FUNC_TYPE dlfcn_bind_func(DSO *dso, const char *symname)
     return u.sym;
 }
 
-static char *dlfcn_merger(DSO *dso, const char *filespec1,
+static char *dlfcn_merger(UNUSED_SHIM(DSO*, dso), const char *filespec1,
                           const char *filespec2)
 {
     char *merged;

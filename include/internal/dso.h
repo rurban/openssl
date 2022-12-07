@@ -121,7 +121,9 @@ char *DSO_merge(DSO *dso, const char *filespec1, const char *filespec2);
  * constructed DSO after its init() function but before the load operation.
  * If 'dso' is non-NULL, 'flags' is ignored.
  */
-DSO *DSO_load(DSO *dso, const char *filename, DSO_METHOD *meth, int flags);
+DSO *DSO_load(DSO *dso, const char *filename,
+              UNUSED_SHIM(DSO_METHOD*, meth),
+              int flags);
 
 /* This function binds to a function inside a shared library. */
 DSO_FUNC_TYPE DSO_bind_func(DSO *dso, const char *symname);
