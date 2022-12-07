@@ -390,9 +390,8 @@ static void xcloselog(BIO *bp)
 
 # else                          /* Unix/Watt32 */
 
-static void xopenlog(BIO *bp, char *name, int level)
+static void xopenlog(UNUSED_SHIM(BIO*, bp), char *name, int level)
 {
-    (void)bp;
 #  ifdef WATT32                 /* djgpp/DOS */
     openlog(name, LOG_PID | LOG_CONS | LOG_NDELAY, level);
 #  else
@@ -400,15 +399,13 @@ static void xopenlog(BIO *bp, char *name, int level)
 #  endif
 }
 
-static void xsyslog(BIO *bp, int priority, const char *string)
+static void xsyslog(UNUSED_SHIM(BIO*, bp), int priority, const char *string)
 {
-    (void)bp;
     syslog(priority, "%s", string);
 }
 
-static void xcloselog(BIO *bp)
+static void xcloselog(UNUSED_SHIM(BIO*, bp))
 {
-    (void)bp;
     closelog();
 }
 

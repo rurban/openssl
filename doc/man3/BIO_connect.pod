@@ -9,7 +9,7 @@ socket communication setup routines
 
  #include <openssl/bio.h>
 
- int BIO_socket(int domain, int socktype, int protocol, int options);
+ int BIO_socket(int domain, int socktype, int protocol, int options /*UNUSED*/);
  int BIO_bind(int sock, const BIO_ADDR *addr, int options);
  int BIO_connect(int sock, const BIO_ADDR *addr, int options);
  int BIO_listen(int sock, const BIO_ADDR *addr, int options);

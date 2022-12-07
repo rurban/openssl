@@ -26,35 +26,32 @@
 #define INTxx_FLAG_ZERO_DEFAULT (1<<0)
 #define INTxx_FLAG_SIGNED       (1<<1)
 
-static int uint64_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
+static int uint64_new(ASN1_VALUE **pval, UNUSED_SHIM(const ASN1_ITEM*, it))
 {
-    (void)it;
     if ((*pval = (ASN1_VALUE *)OPENSSL_zalloc(sizeof(uint64_t))) == NULL)
         return 0;
     return 1;
 }
 
-static void uint64_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
+static void uint64_free(ASN1_VALUE **pval, UNUSED_SHIM(const ASN1_ITEM*, it))
 {
-    (void)it;
     OPENSSL_free(*pval);
     *pval = NULL;
 }
 
-static void uint64_clear(ASN1_VALUE **pval, const ASN1_ITEM *it)
+static void uint64_clear(ASN1_VALUE **pval, UNUSED_SHIM(const ASN1_ITEM*, it))
 {
-    (void)it;
     **(uint64_t **)pval = 0;
 }
 
-static int uint64_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
+static int uint64_i2c(const ASN1_VALUE **pval, unsigned char *cont,
+                      UNUSED_SHIM(int*, putype),
                       const ASN1_ITEM *it)
 {
     uint64_t utmp;
     int neg = 0;
     /* this exists to bypass broken gcc optimization */
     char *cp = (char *)*pval;
-    (void)putype;
 
     /* use memcpy, because we may not be uint64_t aligned */
     memcpy(&utmp, cp, sizeof(utmp));
@@ -73,15 +70,14 @@ static int uint64_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
 }
 
 static int uint64_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
-                      int utype, char *free_cont, const ASN1_ITEM *it)
+                      UNUSED_SHIM(int, utype), UNUSED_SHIM(char*, free_cont),
+                      const ASN1_ITEM *it)
 {
     uint64_t utmp = 0;
     char *cp;
     int neg = 0;
-    (void)utype;
-    (void)free_cont;
 
-    if (*pval == NULL && !uint64_new(pval, it))
+    if (*pval == NULL && !uint64_new(pval, NULL))
         return 0;
 
     cp = (char *)*pval;
@@ -116,10 +112,8 @@ static int uint64_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
 }
 
 static int uint64_print(BIO *out, const ASN1_VALUE **pval, const ASN1_ITEM *it,
-                        int indent, const ASN1_PCTX *pctx)
+                        UNUSED_SHIM(int, indent), UNUSED_SHIM(const ASN1_PCTX*, pctx))
 {
-    (void)indent;
-    (void)pctx;
     if ((it->size & INTxx_FLAG_SIGNED) == INTxx_FLAG_SIGNED)
         return BIO_printf(out, "%jd\n", **(int64_t **)pval);
     return BIO_printf(out, "%ju\n", **(uint64_t **)pval);
@@ -127,35 +121,32 @@ static int uint64_print(BIO *out, const ASN1_VALUE **pval, const ASN1_ITEM *it,
 
 /* 32-bit variants */
 
-static int uint32_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
+static int uint32_new(ASN1_VALUE **pval, UNUSED_SHIM(const ASN1_ITEM*, it))
 {
-    (void)it;
     if ((*pval = (ASN1_VALUE *)OPENSSL_zalloc(sizeof(uint32_t))) == NULL)
         return 0;
     return 1;
 }
 
-static void uint32_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
+static void uint32_free(ASN1_VALUE **pval, UNUSED_SHIM(const ASN1_ITEM*, it))
 {
-    (void)it;
     OPENSSL_free(*pval);
     *pval = NULL;
 }
 
-static void uint32_clear(ASN1_VALUE **pval, const ASN1_ITEM *it)
+static void uint32_clear(ASN1_VALUE **pval, UNUSED_SHIM(const ASN1_ITEM*, it))
 {
-    (void)it;
     **(uint32_t **)pval = 0;
 }
 
-static int uint32_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
+static int uint32_i2c(const ASN1_VALUE **pval, unsigned char *cont,
+                      UNUSED_SHIM(int*, putype),
                       const ASN1_ITEM *it)
 {
     uint32_t utmp;
     int neg = 0;
     /* this exists to bypass broken gcc optimization */
     char *cp = (char *)*pval;
-    (void)putype;
 
     /* use memcpy, because we may not be uint32_t aligned */
     memcpy(&utmp, cp, sizeof(utmp));
@@ -181,14 +172,13 @@ static int uint32_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
 #define ABS_INT32_MIN ((uint32_t)INT32_MAX + 1)
 
 static int uint32_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
-                      int utype, char *free_cont, const ASN1_ITEM *it)
+                      UNUSED_SHIM(int, utype), UNUSED_SHIM(char*, free_cont),
+                      const ASN1_ITEM *it)
 {
     uint64_t utmp = 0;
     uint32_t utmp2 = 0;
     char *cp;
     int neg = 0;
-    (void)utype;
-    (void)free_cont;
 
     if (*pval == NULL && !uint64_new(pval, it))
         return 0;
@@ -231,10 +221,8 @@ static int uint32_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
 }
 
 static int uint32_print(BIO *out, const ASN1_VALUE **pval, const ASN1_ITEM *it,
-                        int indent, const ASN1_PCTX *pctx)
+                        UNUSED_SHIM(int, indent), UNUSED_SHIM(const ASN1_PCTX*, pctx))
 {
-    (void)indent;
-    (void)pctx;
     if ((it->size & INTxx_FLAG_SIGNED) == INTxx_FLAG_SIGNED)
         return BIO_printf(out, "%d\n", (int)**(int32_t **)pval);
     return BIO_printf(out, "%u\n", (unsigned int)**(uint32_t **)pval);

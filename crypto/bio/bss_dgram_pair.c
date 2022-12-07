@@ -184,10 +184,10 @@ static int dgram_pair_init(BIO *bio);
 static int dgram_mem_init(BIO *bio);
 static int dgram_pair_free(BIO *bio);
 static int dgram_pair_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
-                               size_t num_msg, uint64_t flags,
+                               size_t num_msg, UNUSED_SHIM(uint64_t, flags),
                                size_t *num_processed);
 static int dgram_pair_recvmmsg(BIO *b, BIO_MSG *msg, size_t stride,
-                               size_t num_msg, uint64_t flags,
+                               size_t num_msg, UNUSED_SHIM(uint64_t, flags),
                                size_t *num_processed);
 
 static int dgram_pair_ctrl_destroy_bio_pair(BIO *bio1);
@@ -1033,7 +1033,7 @@ static int dgram_pair_read(BIO *bio, char *buf, int sz_)
 /* Threadsafe */
 static int dgram_pair_recvmmsg(BIO *bio, BIO_MSG *msg,
                                size_t stride, size_t num_msg,
-                               uint64_t flags,
+                               UNUSED_SHIM(uint64_t, flags),
                                size_t *num_processed)
 {
     int ret;
@@ -1041,7 +1041,7 @@ static int dgram_pair_recvmmsg(BIO *bio, BIO_MSG *msg,
     BIO_MSG *m;
     size_t i;
     struct bio_dgram_pair_st *b = bio->ptr, *readb;
-    (void)flags;
+    //UNUSED(flags);
 
     if (num_msg == 0) {
         *num_processed = 0;
@@ -1200,7 +1200,8 @@ static size_t dgram_pair_write_inner(struct bio_dgram_pair_st *b,
  * response code.
  */
 static ossl_ssize_t dgram_pair_write_actual(BIO *bio, const char *buf, size_t sz,
-                                            const BIO_ADDR *local, const BIO_ADDR *peer,
+                                            const BIO_ADDR *local,
+                                            const BIO_ADDR *peer,
                                             int is_multi)
 {
     static const BIO_ADDR zero_addr;
@@ -1284,13 +1285,14 @@ static int dgram_pair_write(BIO *bio, const char *buf, int sz_)
 /* Threadsafe */
 static int dgram_pair_sendmmsg(BIO *bio, BIO_MSG *msg,
                                size_t stride, size_t num_msg,
-                               uint64_t flags, size_t *num_processed)
+                               UNUSED_SHIM(uint64_t, flags),
+                               size_t *num_processed)
 {
     ossl_ssize_t ret, l;
     BIO_MSG *m;
     size_t i;
     struct bio_dgram_pair_st *b = bio->ptr;
-    (void)flags;
+    //UNUSED(flags);
 
     if (num_msg == 0) {
         *num_processed = 0;

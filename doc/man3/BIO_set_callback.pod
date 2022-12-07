@@ -22,7 +22,7 @@ BIO_debug_callback_ex, BIO_callback_fn_ex, BIO_callback_fn
  char *BIO_get_callback_arg(const BIO *b);
 
  long BIO_debug_callback_ex(BIO *bio, int oper, const char *argp, size_t len,
-                            int argi, long argl, int ret, size_t *processed);
+                            int argi, UNUSED(long argl), int ret, size_t *processed);
 
 The following functions have been deprecated since OpenSSL 3.0, and can be
 hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,

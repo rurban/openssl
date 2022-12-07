@@ -94,7 +94,7 @@ int SMIME_write_CMS(BIO *bio, CMS_ContentInfo *cms, BIO *data, int flags)
                                econt_nid, mdalgs,
                                ASN1_ITEM_rptr(CMS_ContentInfo),
                                ossl_cms_ctx_get0_libctx(ctx),
-                               ossl_cms_ctx_get0_propq(ctx));
+                               NULL /*ossl_cms_ctx_get0_propq(ctx)*/);
 }
 
 CMS_ContentInfo *SMIME_read_CMS_ex(BIO *bio, int flags, BIO **bcont,

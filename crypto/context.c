@@ -157,7 +157,7 @@ static int context_init(OSSL_LIB_CTX *ctx)
         goto err;
 
 #ifndef FIPS_MODULE
-    ctx->bio_core = ossl_bio_core_globals_new(ctx);
+    ctx->bio_core = ossl_bio_core_globals_new(ctx /*UNUSED*/);
     if (ctx->bio_core == NULL)
         goto err;
 #endif
@@ -430,11 +430,11 @@ OSSL_LIB_CTX *OSSL_LIB_CTX_new(void)
 }
 
 #ifndef FIPS_MODULE
-OSSL_LIB_CTX *OSSL_LIB_CTX_new_from_dispatch(const OSSL_CORE_HANDLE *handle,
-                                             const OSSL_DISPATCH *in)
+OSSL_LIB_CTX *
+OSSL_LIB_CTX_new_from_dispatch(UNUSED_SHIM(const OSSL_CORE_HANDLE *, handle),
+                               const OSSL_DISPATCH *in)
 {
     OSSL_LIB_CTX *ctx = OSSL_LIB_CTX_new();
-    (void)handle;
 
     if (ctx == NULL)
         return NULL;
@@ -450,7 +450,7 @@ OSSL_LIB_CTX *OSSL_LIB_CTX_new_from_dispatch(const OSSL_CORE_HANDLE *handle,
 OSSL_LIB_CTX *OSSL_LIB_CTX_new_child(const OSSL_CORE_HANDLE *handle,
                                      const OSSL_DISPATCH *in)
 {
-    OSSL_LIB_CTX *ctx = OSSL_LIB_CTX_new_from_dispatch(handle, in);
+    OSSL_LIB_CTX *ctx = OSSL_LIB_CTX_new_from_dispatch(NULL/*ignored*/, in);
 
     if (ctx == NULL)
         return NULL;
@@ -527,7 +527,7 @@ OSSL_LIB_CTX *ossl_lib_ctx_get_concrete(OSSL_LIB_CTX *ctx)
 int ossl_lib_ctx_is_default(OSSL_LIB_CTX *ctx)
 {
 #ifdef FIPS_MODULE
-    (void)ctx;
+    UNUSED(ctx);
 #else
     if (ctx == NULL || ctx == get_default_context())
         return 1;
@@ -538,7 +538,7 @@ int ossl_lib_ctx_is_default(OSSL_LIB_CTX *ctx)
 int ossl_lib_ctx_is_global_default(OSSL_LIB_CTX *ctx)
 {
 #ifdef FIPS_MODULE
-    (void)ctx;
+    UNUSED(ctx);
 #else
     if (ossl_lib_ctx_get_concrete(ctx) == &default_context_int)
         return 1;
@@ -648,7 +648,7 @@ OSSL_EX_DATA_GLOBAL *ossl_lib_ctx_get_ex_data_global(OSSL_LIB_CTX *ctx)
 const char *ossl_lib_ctx_get_descriptor(OSSL_LIB_CTX *libctx)
 {
 #ifdef FIPS_MODULE
-    (void)libctx;
+    UNUSED(libctx);
     return "FIPS internal library context";
 #else
     if (ossl_lib_ctx_is_global_default(libctx))

@@ -14,7 +14,7 @@ OSSL_LIB_CTX_get0_global_default, OSSL_LIB_CTX_set0_default
  typedef struct ossl_lib_ctx_st OSSL_LIB_CTX;
 
  OSSL_LIB_CTX *OSSL_LIB_CTX_new(void);
- OSSL_LIB_CTX *OSSL_LIB_CTX_new_from_dispatch(const OSSL_CORE_HANDLE *handle,
+ OSSL_LIB_CTX *OSSL_LIB_CTX_new_from_dispatch(UNUSED(const OSSL_CORE_HANDLE *handle),
                                               const OSSL_DISPATCH *in);
  OSSL_LIB_CTX *OSSL_LIB_CTX_new_child(const OSSL_CORE_HANDLE *handle,
                                       const OSSL_DISPATCH *in);
@@ -39,8 +39,8 @@ OSSL_LIB_CTX_new() creates a new OpenSSL library context.
 
 OSSL_LIB_CTX_new_from_dispatch() creates a new OpenSSL library context
 initialised to use callbacks from the OSSL_DISPATCH structure. This is primarily
-useful for provider authors. The I<handle> and dispatch structure arguments
-passed should be the same ones as passed to a provider's
+useful for provider authors. The I<handle> argument is ignored, the dispatch
+structure argument passed in should be the same ones as passed to a provider's
 OSSL_provider_init function. Some OpenSSL functions, such as
 L<BIO_new_from_core_bio(3)>, require the library context to be created in this
 way in order to work.

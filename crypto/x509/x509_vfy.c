@@ -77,15 +77,13 @@ static void crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl, X509 **pissuer,
 static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
                            unsigned int *preasons);
 static int check_crl_path(X509_STORE_CTX *ctx, X509 *x);
-static int check_crl_chain(X509_STORE_CTX *ctx,
-                           STACK_OF(X509) *cert_path,
+static int check_crl_chain(STACK_OF(X509) *cert_path,
                            STACK_OF(X509) *crl_path);
 
 static int internal_verify(X509_STORE_CTX *ctx);
 
-static int null_callback(int ok, X509_STORE_CTX *e)
+static int null_callback(int ok, UNUSED_SHIM(X509_STORE_CTX*, e))
 {
-    (void)e;
     return ok;
 }
 
@@ -1406,7 +1404,7 @@ static int check_crl_path(X509_STORE_CTX *ctx, X509 *x)
         goto err;
 
     /* Check chain is acceptable */
-    ret = check_crl_chain(ctx, ctx->chain, crl_ctx.chain);
+    ret = check_crl_chain(ctx->chain, crl_ctx.chain);
  err:
     X509_STORE_CTX_cleanup(&crl_ctx);
     return ret;
@@ -1420,13 +1418,11 @@ static int check_crl_path(X509_STORE_CTX *ctx, X509 *x)
  * though some discussions remain... until this is resolved we use the
  * RFC5280 version
  */
-static int check_crl_chain(X509_STORE_CTX *ctx,
-                           STACK_OF(X509) *cert_path,
+static int check_crl_chain(STACK_OF(X509) *cert_path,
                            STACK_OF(X509) *crl_path)
 {
     X509 *cert_ta = sk_X509_value(cert_path, sk_X509_num(cert_path) - 1);
     X509 *crl_ta = sk_X509_value(crl_path, sk_X509_num(crl_path) - 1);
-    (void)ctx;
 
     return X509_cmp(cert_ta, crl_ta) == 0;
 }

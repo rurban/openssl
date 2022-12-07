@@ -12,7 +12,7 @@ SMIME_write_ASN1_ex, SMIME_write_ASN1
  int SMIME_write_ASN1_ex(BIO *out, ASN1_VALUE *val, BIO *data, int flags,
                          int ctype_nid, int econt_nid,
                          STACK_OF(X509_ALGOR) *mdalgs, const ASN1_ITEM *it,
-                         OSSL_LIB_CTX *libctx, const char *propq);
+                         OSSL_LIB_CTX *libctx, UNUSED_SHIM(const char*, propq));
 
  int SMIME_write_ASN1(BIO *out,
      ASN1_VALUE *val, BIO *data, int flags, int ctype_nid, int econt_nid,
@@ -30,8 +30,8 @@ I<flags> is an optional set of flags. I<ctype_nid> is the NID of the content
 type, I<econt_nid> is the NID of the embedded content type and I<mdalgs> is a
 list of signed data digestAlgorithms. Valid values that can be used by the
 ASN.1 structure I<it> are ASN1_ITEM_rptr(PKCS7) or ASN1_ITEM_rptr(CMS_ContentInfo).
-The library context I<libctx> and the property query I<propq> are used when
-retrieving algorithms from providers.
+The library context I<libctx> is used when retrieving algorithms from providers.
+The property query I<propq> is unused and can be passed a C<NULL>.
 
 =head1 NOTES
 
@@ -72,7 +72,7 @@ L<SMIME_write_PKCS7(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020,2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

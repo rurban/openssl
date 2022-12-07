@@ -12,23 +12,27 @@
 #include "bio_local.h"
 #include "internal/cryptlib.h"
 
-static int null_write(BIO *h, const char *buf, int num);
-static int null_read(BIO *h, char *buf, int size);
-static int null_puts(BIO *h, const char *str);
-static int null_gets(BIO *h, char *str, int size);
-static long null_ctrl(BIO *h, int cmd, long arg1, void *arg2);
+static int null_write(UNUSED_SHIM(BIO*, b), UNUSED_SHIM(const char*, in), int inl);
+static int null_read(UNUSED_SHIM(BIO*, b), UNUSED_SHIM(char*, out),
+                     UNUSED_SHIM(int, outl));
+static int null_puts(UNUSED_SHIM(BIO*, b), const char *str);
+static int null_gets(UNUSED_SHIM(BIO*, b),
+                     UNUSED_SHIM(char*, buf),
+                     UNUSED_SHIM(int, size));
+static long null_ctrl(UNUSED_SHIM(BIO*, b), int cmd, UNUSED_SHIM(long, num),
+                      UNUSED_SHIM(void*, ptr));
 static const BIO_METHOD null_method = {
     BIO_TYPE_NULL,
     "NULL",
-    bwrite_conv,
-    null_write,
-    bread_conv,
-    null_read,
+    bwrite_conv,              /* bwrite */
+    null_write,               /* bwrite_old */
+    bread_conv,               /* bread */
+    null_read,                /* bread_old */
     null_puts,
     null_gets,
     null_ctrl,
-    NULL,
-    NULL,
+    NULL,                     /* create */
+    NULL,                     /* destroy */
     NULL,                     /* null_callback_ctrl */
     NULL,                     /* bsendmmsg */
     NULL                      /* brecvmmsg */
@@ -39,26 +43,20 @@ const BIO_METHOD *BIO_s_null(void)
     return &null_method;
 }
 
-static int null_read(BIO *b, char *out, int outl)
+static int null_read(UNUSED_SHIM(BIO*, b), UNUSED_SHIM(char*, out),
+                     UNUSED_SHIM(int, outl))
 {
-    (void)b;
-    (void)out;
-    (void)outl;
     return 0;
 }
 
-static int null_write(BIO *b, const char *in, int inl)
+static int null_write(UNUSED_SHIM(BIO*, b), UNUSED_SHIM(const char*, in), int inl)
 {
-    (void)b;
-    (void)in;
     return inl;
 }
 
-static long null_ctrl(BIO *b, int cmd, long num, void *ptr)
+static long null_ctrl(UNUSED_SHIM(BIO*, b), int cmd, UNUSED_SHIM(long, num),
+                      UNUSED_SHIM(void*, ptr))
 {
-    (void)b;
-    (void)num;
-    (void)ptr;
     long ret = 1;
 
     switch (cmd) {
@@ -82,17 +80,15 @@ static long null_ctrl(BIO *b, int cmd, long num, void *ptr)
     return ret;
 }
 
-static int null_gets(BIO *bp, char *buf, int size)
+static int null_gets(UNUSED_SHIM(BIO*, b),
+                     UNUSED_SHIM(char*, buf),
+                     UNUSED_SHIM(int, size))
 {
-    (void)bp;
-    (void)buf;
-    (void)size;
     return 0;
 }
 
-static int null_puts(BIO *bp, const char *str)
+static int null_puts(UNUSED_SHIM(BIO*, b), const char *str)
 {
-    (void)bp;
     if (str == NULL)
         return 0;
     return strlen(str);

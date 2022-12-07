@@ -694,7 +694,7 @@ int i2a_ASN1_ENUMERATED(BIO *bp, const ASN1_ENUMERATED *a);
 int a2i_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *bs, char *buf, int size);
 int i2a_ASN1_OBJECT(BIO *bp, const ASN1_OBJECT *a);
 int a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size);
-int i2a_ASN1_STRING(BIO *bp, const ASN1_STRING *a, int type);
+int i2a_ASN1_STRING(BIO *bp, const ASN1_STRING *a, UNUSED_SHIM(int, type));
 int i2t_ASN1_OBJECT(char *buf, int buf_len, const ASN1_OBJECT *a);
 
 int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num);
@@ -786,7 +786,8 @@ int ASN1_STRING_print_ex_fp(FILE *fp, const ASN1_STRING *str, unsigned long flag
 
 int ASN1_STRING_to_UTF8(unsigned char **out, const ASN1_STRING *in);
 
-void *ASN1_d2i_bio(void *(*xnew) (void), d2i_of_void *d2i, BIO *in, void **x);
+void *ASN1_d2i_bio(void *(*xnew) (void) __attribute__unused__,
+                   d2i_of_void *d2i, BIO *in, void **x);
 
 #  define ASN1_d2i_bio_of(type,xnew,d2i,in,x) \
     ((type*)ASN1_d2i_bio( CHECKED_NEW_OF(type, xnew), \
@@ -814,7 +815,7 @@ int ASN1_STRING_print(BIO *bp, const ASN1_STRING *v);
 int ASN1_STRING_print_ex(BIO *out, const ASN1_STRING *str, unsigned long flags);
 int ASN1_buf_print(BIO *bp, const unsigned char *buf, size_t buflen, int off);
 int ASN1_bn_print(BIO *bp, const char *number, const BIGNUM *num,
-                  unsigned char *buf, int off);
+                  UNUSED_SHIM(unsigned char*, buf), int indent);
 int ASN1_parse(BIO *bp, const unsigned char *pp, long len, int indent);
 int ASN1_parse_dump(BIO *bp, const unsigned char *pp, long len, int indent,
                     int dump);
@@ -937,7 +938,7 @@ int SMIME_write_ASN1(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
 int SMIME_write_ASN1_ex(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
                         int ctype_nid, int econt_nid,
                         STACK_OF(X509_ALGOR) *mdalgs, const ASN1_ITEM *it,
-                        OSSL_LIB_CTX *libctx, const char *propq);
+                        OSSL_LIB_CTX *libctx, UNUSED_SHIM(const char*, propq));
 ASN1_VALUE *SMIME_read_ASN1(BIO *bio, BIO **bcont, const ASN1_ITEM *it);
 ASN1_VALUE *SMIME_read_ASN1_ex(BIO *bio, int flags, BIO **bcont,
                                const ASN1_ITEM *it, ASN1_VALUE **x,

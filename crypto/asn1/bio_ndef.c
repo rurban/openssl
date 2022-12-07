@@ -126,12 +126,12 @@ BIO *BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
     return NULL;
 }
 
-static int ndef_prefix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
+static int ndef_prefix(UNUSED_SHIM(BIO*, b),
+                       unsigned char **pbuf, int *plen, void *parg)
 {
     NDEF_SUPPORT *ndef_aux;
     unsigned char *p;
     int derlen;
-    (void)b;
 
     if (parg == NULL)
         return 0;
@@ -156,11 +156,10 @@ static int ndef_prefix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
     return 1;
 }
 
-static int ndef_prefix_free(BIO *b, unsigned char **pbuf, int *plen,
-                            void *parg)
+static int ndef_prefix_free(UNUSED_SHIM(BIO*, b),
+                            unsigned char **pbuf, int *plen, void *parg)
 {
     NDEF_SUPPORT *ndef_aux;
-    (void)b;
 
     if (parg == NULL)
         return 0;
@@ -189,14 +188,14 @@ static int ndef_suffix_free(BIO *b, unsigned char **pbuf, int *plen,
     return 1;
 }
 
-static int ndef_suffix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
+static int ndef_suffix(UNUSED_SHIM(BIO*, b),
+                       unsigned char **pbuf, int *plen, void *parg)
 {
     NDEF_SUPPORT *ndef_aux;
     unsigned char *p;
     int derlen;
     const ASN1_AUX *aux;
     ASN1_STREAM_ARG sarg;
-    (void)b;
 
     if (parg == NULL)
         return 0;

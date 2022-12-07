@@ -935,8 +935,8 @@ int X509v3_addr_canonize(IPAddrBlocks *addr)
 /*
  * v2i handler for the IPAddrBlocks extension.
  */
-static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
-                              struct v3_ext_ctx *ctx,
+static void *v2i_IPAddrBlocks(UNUSED_SHIM(const X509V3_EXT_METHOD*, method),
+                              UNUSED_SHIM(X509V3_CTX*, ctx),
                               STACK_OF(CONF_VALUE) *values)
 {
     static const char v4addr_chars[] = "0123456789.";
@@ -944,8 +944,6 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
     IPAddrBlocks *addr = NULL;
     char *s = NULL, *t;
     int i;
-    (void)method;
-    (void)ctx;
 
     if ((addr = sk_IPAddressFamily_new(IPAddressFamily_cmp)) == NULL) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);

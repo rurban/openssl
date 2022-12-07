@@ -202,18 +202,16 @@ uint32_t OPENSSL_rdtsc(void)
     return 0;
 }
 
-size_t OPENSSL_instrument_bus(unsigned int *out, size_t cnt)
+size_t OPENSSL_instrument_bus(UNUSED_SHIM(unsigned int*, out),
+                              UNUSED_SHIM(size_t, cnt))
 {
-    (void)out;
-    (void)cnt;
     return 0;
 }
 
-size_t OPENSSL_instrument_bus2(unsigned int *out, size_t cnt, size_t max)
+size_t OPENSSL_instrument_bus2(UNUSED_SHIM(unsigned int*, out),
+                               UNUSED_SHIM(size_t, cnt),
+                               UNUSED_SHIM(size_t, max))
 {
-    (void)out;
-    (void)cnt;
-    (void)max;
     return 0;
 }
 #endif

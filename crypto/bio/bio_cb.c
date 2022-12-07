@@ -17,7 +17,8 @@
 #include <openssl/err.h>
 
 long BIO_debug_callback_ex(BIO *bio, int cmd, const char *argp, size_t len,
-                           int argi, long argl, int ret, size_t *processed)
+                           int argi, UNUSED_SHIM(long, argl), int ret,
+                           size_t *processed)
 {
     BIO *b;
     char buf[256];
@@ -26,7 +27,6 @@ long BIO_debug_callback_ex(BIO *bio, int cmd, const char *argp, size_t len,
     size_t l = 0;
     BIO_MMSG_CB_ARGS *args;
     long ret_ = ret;
-    (void)argl;
 
     if (processed != NULL)
         l = *processed;
@@ -122,14 +122,14 @@ long BIO_debug_callback_ex(BIO *bio, int cmd, const char *argp, size_t len,
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 long BIO_debug_callback(BIO *bio, int cmd, const char *argp,
-                        int argi, long argl, long ret)
+                        int argi, UNUSED_SHIM(long, argl), long ret)
 {
     size_t processed = 0;
 
     if (ret > 0)
         processed = (size_t)ret;
     BIO_debug_callback_ex(bio, cmd, argp, (size_t)argi,
-                          argi, argl, ret > 0 ? 1 : (int)ret, &processed);
+                          argi, 0L, ret > 0 ? 1 : (int)ret, &processed);
     return ret;
 }
 #endif

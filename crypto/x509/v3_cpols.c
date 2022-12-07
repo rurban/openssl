@@ -287,7 +287,7 @@ static int displaytext_str2tag(const char *tagstr, unsigned int *tag_len)
     return V_ASN1_VISIBLESTRING;
 }
 
-static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
+static POLICYQUALINFO *notice_section(UNUSED_SHIM(X509V3_CTX*, ctx),
                                       STACK_OF(CONF_VALUE) *unot, int ia5org)
 {
     int i, ret, len, tag;
@@ -296,7 +296,6 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
     USERNOTICE *not;
     POLICYQUALINFO *qual;
     char *value = NULL;
-    (void)ctx;
 
     if ((qual = POLICYQUALINFO_new()) == NULL) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);

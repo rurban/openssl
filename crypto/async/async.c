@@ -30,7 +30,7 @@
 static CRYPTO_THREAD_LOCAL ctxkey;
 static CRYPTO_THREAD_LOCAL poolkey;
 
-static void async_delete_thread_state(void *arg);
+static void async_delete_thread_state(UNUSED_SHIM(void*, arg));
 
 static async_ctx *async_ctx_new(void)
 {
@@ -404,10 +404,9 @@ err:
     return 0;
 }
 
-static void async_delete_thread_state(void *arg)
+static void async_delete_thread_state(UNUSED_SHIM(void*, arg))
 {
     async_pool *pool = (async_pool *)CRYPTO_THREAD_get_local(&poolkey);
-    (void)arg;
 
     if (pool != NULL) {
         async_empty_pool(pool);

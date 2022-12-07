@@ -39,9 +39,8 @@ static int stbl_module_init(CONF_IMODULE *md, const CONF *cnf)
     return 1;
 }
 
-static void stbl_module_finish(CONF_IMODULE *md)
+static void stbl_module_finish(UNUSED_SHIM(CONF_IMODULE*, md))
 {
-    (void)md;
     ASN1_STRING_TABLE_cleanup();
 }
 

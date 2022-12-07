@@ -16,7 +16,7 @@ void *ossl_property_defns_new(OSSL_LIB_CTX *);
 void *ossl_ctx_global_properties_new(OSSL_LIB_CTX *);
 void *ossl_rand_ctx_new(OSSL_LIB_CTX *);
 void *ossl_prov_conf_ctx_new(OSSL_LIB_CTX *);
-void *ossl_bio_core_globals_new(OSSL_LIB_CTX *);
+void *ossl_bio_core_globals_new(UNUSED_SHIM(OSSL_LIB_CTX*, ctx));
 void *ossl_child_prov_ctx_new(OSSL_LIB_CTX *);
 void *ossl_prov_drbg_nonce_ctx_new(OSSL_LIB_CTX *);
 void *ossl_self_test_set_callback_new(OSSL_LIB_CTX *);

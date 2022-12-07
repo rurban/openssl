@@ -21,9 +21,11 @@
 
 #define DEFAULT_BUFFER_SIZE     4096
 
-static int readbuffer_write(BIO *h, const char *buf, int num);
+static int readbuffer_write(UNUSED_SHIM(BIO *, b),
+                            UNUSED_SHIM(const char*, str),
+                            UNUSED_SHIM(int, num));
 static int readbuffer_read(BIO *h, char *buf, int size);
-static int readbuffer_puts(BIO *h, const char *str);
+static int readbuffer_puts(UNUSED_SHIM(BIO *, b), UNUSED_SHIM(const char*, str));
 static int readbuffer_gets(BIO *h, char *str, int size);
 static long readbuffer_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int readbuffer_new(BIO *h);
@@ -152,17 +154,14 @@ static int readbuffer_read(BIO *b, char *out, int outl)
     }
 }
 
-static int readbuffer_write(BIO *b, const char *in, int inl)
+static int readbuffer_write(UNUSED_SHIM(BIO *, b),
+                            UNUSED_SHIM(const char*, str),
+                            UNUSED_SHIM(int, num))
 {
-    (void)b;
-    (void)in;
-    (void)inl;
     return 0;
 }
-static int readbuffer_puts(BIO *b, const char *str)
+static int readbuffer_puts(UNUSED_SHIM(BIO *, b), UNUSED_SHIM(const char*, str))
 {
-    (void)b;
-    (void)str;
     return 0;
 }
 

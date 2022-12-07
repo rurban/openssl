@@ -27,15 +27,14 @@ void ossl_bio_core_globals_free(void *vbcg)
     OPENSSL_free(vbcg);
 }
 
-void *ossl_bio_core_globals_new(OSSL_LIB_CTX *ctx)
+void *ossl_bio_core_globals_new(UNUSED_SHIM(OSSL_LIB_CTX*, ctx))
 {
-    (void)ctx;
     return OPENSSL_zalloc(sizeof(BIO_CORE_GLOBALS));
 }
 
-static ossl_inline BIO_CORE_GLOBALS *get_globals(OSSL_LIB_CTX *libctx)
+static ossl_inline BIO_CORE_GLOBALS *get_globals(OSSL_LIB_CTX *ctx)
 {
-    return ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_BIO_CORE_INDEX);
+    return ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_BIO_CORE_INDEX);
 }
 
 static int bio_core_read_ex(BIO *bio, char *data, size_t data_len,

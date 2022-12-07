@@ -238,13 +238,12 @@ static int asn1_write_micalg(BIO *out, STACK_OF(X509_ALGOR) *mdalgs)
 int SMIME_write_ASN1_ex(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
                         int ctype_nid, int econt_nid,
                         STACK_OF(X509_ALGOR) *mdalgs, const ASN1_ITEM *it,
-                        OSSL_LIB_CTX *libctx, const char *propq)
+                        OSSL_LIB_CTX *libctx, UNUSED_SHIM(const char*, propq))
 {
     char bound[33], c;
     int i;
     const char *mime_prefix, *mime_eol, *cname = "smime.p7m";
     const char *msg_type = NULL;
-    (void)propq;
 
     if (flags & SMIME_OLDMIME)
         mime_prefix = "application/x-pkcs7-";

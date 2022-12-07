@@ -43,13 +43,12 @@ int ASN1_buf_print(BIO *bp, const unsigned char *buf, size_t buflen, int indent)
 }
 
 int ASN1_bn_print(BIO *bp, const char *number, const BIGNUM *num,
-                  unsigned char *ign, int indent)
+                  UNUSED_SHIM(unsigned char*, buf), int indent)
 {
     int n, rv = 0;
     const char *neg;
     unsigned char *buf = NULL, *tmp = NULL;
     int buflen;
-    (void)ign;
 
     if (num == NULL)
         return 1;

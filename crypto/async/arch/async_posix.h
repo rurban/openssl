@@ -67,7 +67,7 @@ void async_local_deinit(void);
 static ossl_inline int async_fibre_swapcontext(async_fibre *o, async_fibre *n, int r)
 {
 #  ifdef USE_SWAPCONTEXT
-    (void)r;
+    UNUSED(r);
     swapcontext(&o->fibre, &n->fibre);
 #  else
     o->env_init = 1;

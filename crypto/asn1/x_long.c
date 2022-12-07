@@ -21,12 +21,16 @@
 static int long_new(ASN1_VALUE **pval, const ASN1_ITEM *it);
 static void long_free(ASN1_VALUE **pval, const ASN1_ITEM *it);
 
-static int long_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
+static int long_i2c(const ASN1_VALUE **pval, unsigned char *cont,
+                    UNUSED_SHIM(int*, putype),
                     const ASN1_ITEM *it);
 static int long_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
-                    int utype, char *free_cont, const ASN1_ITEM *it);
-static int long_print(BIO *out, const ASN1_VALUE **pval, const ASN1_ITEM *it,
-                      int indent, const ASN1_PCTX *pctx);
+                    UNUSED_SHIM(int, utype), UNUSED_SHIM(char*, free_cont),
+                    const ASN1_ITEM *it);
+static int long_print(BIO *out, const ASN1_VALUE **pval,
+                      UNUSED_SHIM(const ASN1_ITEM*, it),
+                      UNUSED_SHIM(int, indent),
+                      UNUSED_SHIM(const ASN1_PCTX*, pctx));
 
 static ASN1_PRIMITIVE_FUNCS long_pf = {
     NULL, 0,
@@ -82,13 +86,13 @@ static int num_bits_ulong(unsigned long value)
     return (int)ret;
 }
 
-static int long_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
+static int long_i2c(const ASN1_VALUE **pval, unsigned char *cont,
+                    UNUSED_SHIM(int*, putype),
                     const ASN1_ITEM *it)
 {
     long ltmp;
     unsigned long utmp, sign;
     int clen, pad, i;
-    (void)putype;
 
     memcpy(&ltmp, pval, COPY_SIZE(*pval, ltmp));
     if (ltmp == it->size)
@@ -127,13 +131,12 @@ static int long_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
 }
 
 static int long_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
-                    int utype, char *free_cont, const ASN1_ITEM *it)
+                    UNUSED_SHIM(int, utype), UNUSED_SHIM(char*, free_cont),
+                    const ASN1_ITEM *it)
 {
     int i;
     long ltmp;
     unsigned long utmp = 0, sign = 0x100;
-    (void)utype;
-    (void)free_cont;
 
     if (len > 1) {
         /*
@@ -189,13 +192,12 @@ static int long_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
     return 1;
 }
 
-static int long_print(BIO *out, const ASN1_VALUE **pval, const ASN1_ITEM *it,
-                      int indent, const ASN1_PCTX *pctx)
+static int long_print(BIO *out, const ASN1_VALUE **pval,
+                      UNUSED_SHIM(const ASN1_ITEM*, it),
+                      UNUSED_SHIM(int, indent),
+                      UNUSED_SHIM(const ASN1_PCTX*, pctx))
 {
     long l;
-    (void)it;
-    (void)indent;
-    (void)pctx;
 
     memcpy(&l, pval, COPY_SIZE(*pval, l));
     return BIO_printf(out, "%ld\n", l);

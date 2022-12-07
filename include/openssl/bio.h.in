@@ -308,7 +308,7 @@ OSSL_DEPRECATEDIN_3_0 BIO_callback_fn BIO_get_callback(const BIO *b);
 OSSL_DEPRECATEDIN_3_0 void BIO_set_callback(BIO *b, BIO_callback_fn callback);
 OSSL_DEPRECATEDIN_3_0 long BIO_debug_callback(BIO *bio, int cmd,
                                                const char *argp, int argi,
-                                               long argl, long ret);
+                                               UNUSED_SHIM(long, argl), long ret);
 # endif
 
 typedef long (*BIO_callback_fn_ex)(BIO *b, int oper, const char *argp,
@@ -317,7 +317,8 @@ typedef long (*BIO_callback_fn_ex)(BIO *b, int oper, const char *argp,
 BIO_callback_fn_ex BIO_get_callback_ex(const BIO *b);
 void BIO_set_callback_ex(BIO *b, BIO_callback_fn_ex callback);
 long BIO_debug_callback_ex(BIO *bio, int oper, const char *argp, size_t len,
-                           int argi, long argl, int ret, size_t *processed);
+                           int argi, UNUSED_SHIM(long, argl), int ret,
+                           size_t *processed);
 
 char *BIO_get_callback_arg(const BIO *b);
 void BIO_set_callback_arg(BIO *b, char *arg);

@@ -56,14 +56,13 @@ STACK_OF(CONF_VALUE) *i2v_ASN1_BIT_STRING(X509V3_EXT_METHOD *method,
 }
 
 ASN1_BIT_STRING *v2i_ASN1_BIT_STRING(X509V3_EXT_METHOD *method,
-                                     X509V3_CTX *ctx,
+                                     UNUSED_SHIM(X509V3_CTX*, ctx),
                                      STACK_OF(CONF_VALUE) *nval)
 {
     CONF_VALUE *val;
     ASN1_BIT_STRING *bs;
     int i;
     BIT_STRING_BITNAME *bnam;
-    (void)ctx;
 
     if ((bs = ASN1_BIT_STRING_new()) == NULL) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);

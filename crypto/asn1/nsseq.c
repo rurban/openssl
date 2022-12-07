@@ -13,11 +13,10 @@
 #include <openssl/x509.h>
 #include <openssl/objects.h>
 
-static int nsseq_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                    void *exarg)
+static int nsseq_cb(int operation, ASN1_VALUE **pval,
+                    UNUSED_SHIM(const ASN1_ITEM*, it),
+                    UNUSED_SHIM(void*, exarg))
 {
-    (void)it;
-    (void)exarg;
     if (operation == ASN1_OP_NEW_POST) {
         NETSCAPE_CERT_SEQUENCE *nsseq;
         nsseq = (NETSCAPE_CERT_SEQUENCE *)*pval;

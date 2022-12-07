@@ -1283,8 +1283,8 @@ static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
  * in a particular circumstance. Currently no flags are defined.
  */
 # if M_METHOD != M_METHOD_NONE
-static int translate_flags(uint64_t flags) {
-    (void)flags;
+static ossl_inline int translate_flags(UNUSED_SHIM(uint64_t, flags))
+{
     return 0;
 }
 # endif
@@ -1333,7 +1333,7 @@ static int dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
         num_msg = OSSL_SSIZE_MAX;
 
 # if M_METHOD != M_METHOD_NONE
-    sysflags = translate_flags(flags);
+    sysflags = translate_flags(flags /*currently UNUSED*/);
 # endif
 
 # if M_METHOD == M_METHOD_RECVMMSG
@@ -1535,7 +1535,7 @@ static int dgram_recvmmsg(BIO *b, BIO_MSG *msg,
         num_msg = OSSL_SSIZE_MAX;
 
 # if M_METHOD != M_METHOD_NONE
-    sysflags = translate_flags(flags);
+    sysflags = translate_flags(flags /*currently UNUSED*/);
 # endif
 
 # if M_METHOD == M_METHOD_RECVMMSG

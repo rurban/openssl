@@ -185,7 +185,7 @@ void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
 
 void AES_bi_ige_encrypt(const unsigned char *in, unsigned char *out,
                         size_t length, const AES_KEY *key,
-                        const AES_KEY *key2, const unsigned char *ivec,
+                        UNUSED_SHIM(const AES_KEY *,key2), const unsigned char *ivec,
                         const int enc)
 {
     size_t n;
@@ -196,7 +196,6 @@ void AES_bi_ige_encrypt(const unsigned char *in, unsigned char *out,
     unsigned char prev[AES_BLOCK_SIZE];
     const unsigned char *iv;
     const unsigned char *iv2;
-    (void)key2;
 
     OPENSSL_assert(in && out && key && ivec);
     OPENSSL_assert((AES_ENCRYPT == enc) || (AES_DECRYPT == enc));
