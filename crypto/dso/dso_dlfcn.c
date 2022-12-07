@@ -196,7 +196,6 @@ static char *dlfcn_merger(UNUSED_SHIM(DSO*, dso), const char *filespec1,
                           const char *filespec2)
 {
     char *merged;
-    (void)dso;
 
     if (!filespec1 && !filespec2) {
         ERR_raise(ERR_LIB_DSO, ERR_R_PASSED_NULL_PARAMETER);
