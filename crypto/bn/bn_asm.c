@@ -944,16 +944,13 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
  * performed to signal the caller to fall down to alternative/original
  * code-path.
  */
-int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
-                const BN_ULONG *np, const BN_ULONG *n0, int num)
+int bn_mul_mont(UNUSED_SHIM(BN_ULONG*, rp),
+                UNUSED_SHIM(const BN_ULONG*, ap),
+                UNUSED_SHIM(const BN_ULONG*, bp),
+                UNUSED_SHIM(const BN_ULONG*, np),
+                UNUSED_SHIM(const BN_ULONG*, n0),
+                UNUSED_SHIM(int, num))
 {
-    (void)rp;
-    (void)ap;
-    (void)bp;
-    (void)np;
-    (void)n0;
-    (void)num;
-
     return 0;
 }
 #  endif                        /* OPENSSL_BN_ASM_MONT */
