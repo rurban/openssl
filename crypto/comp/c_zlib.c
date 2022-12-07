@@ -39,7 +39,6 @@ static ossl_ssize_t zlib_stateful_expand_block(COMP_CTX *ctx, unsigned char *out
 static void *zlib_zalloc(UNUSED_SHIM(void*, opaque), unsigned int no, unsigned int size)
 {
     void *p;
-    (void)opaque;
 
     p = OPENSSL_zalloc(no * size);
     return p;
@@ -47,7 +46,6 @@ static void *zlib_zalloc(UNUSED_SHIM(void*, opaque), unsigned int no, unsigned i
 
 static void zlib_zfree(UNUSED_SHIM(void*, opaque), void *address)
 {
-    (void)opaque;
     OPENSSL_free(address);
 }
 
@@ -209,13 +207,11 @@ static ossl_ssize_t zlib_stateful_expand_block(COMP_CTX *ctx, unsigned char *out
 
 static int zlib_oneshot_init(UNUSED_SHIM(COMP_CTX*, ctx))
 {
-    (void)ctx;
     return 1;
 }
 
 static void zlib_oneshot_finish(UNUSED_SHIM(COMP_CTX*, ctx))
 {
-    (void)ctx;
 }
 
 static ossl_ssize_t zlib_oneshot_compress_block(UNUSED_SHIM(COMP_CTX*, ctx),
@@ -224,7 +220,6 @@ static ossl_ssize_t zlib_oneshot_compress_block(UNUSED_SHIM(COMP_CTX*, ctx),
                                                 size_t ilen)
 {
     uLongf out_size;
-    (void)ctx;
 
     if (ilen == 0)
         return 0;
@@ -248,7 +243,6 @@ static ossl_ssize_t zlib_oneshot_expand_block(UNUSED_SHIM(COMP_CTX*, ctx),
                                               size_t ilen)
 {
     uLongf out_size;
-    (void)ctx;
 
     if (ilen == 0)
         return 0;

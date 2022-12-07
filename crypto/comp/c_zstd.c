@@ -295,13 +295,11 @@ static COMP_METHOD zstd_stateful_method = {
 
 static int zstd_oneshot_init(UNUSED_SHIM(COMP_CTX*, ctx))
 {
-    (void)ctx;
     return 1;
 }
 
 static void zstd_oneshot_finish(UNUSED_SHIM(COMP_CTX*, ctx))
 {
-    (void)ctx;
 }
 
 static ossl_ssize_t zstd_oneshot_compress_block(UNUSED_SHIM(COMP_CTX*, ctx),
@@ -311,7 +309,6 @@ static ossl_ssize_t zstd_oneshot_compress_block(UNUSED_SHIM(COMP_CTX*, ctx),
 {
     size_t out_size;
     ossl_ssize_t ret;
-    (void)ctx;
 
     if (ilen == 0)
         return 0;
@@ -336,7 +333,6 @@ static ossl_ssize_t zstd_oneshot_expand_block(UNUSED_SHIM(COMP_CTX*, ctx),
 {
     size_t out_size;
     ossl_ssize_t ret;
-    (void)ctx;
 
     if (ilen == 0)
         return 0;
