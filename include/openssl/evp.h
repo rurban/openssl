@@ -1515,10 +1515,12 @@ int EVP_PBE_scrypt_ex(const char *pass, size_t passlen,
 
 int PKCS5_v2_scrypt_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
                              int passlen, ASN1_TYPE *param,
-                             const EVP_CIPHER *c, const EVP_MD *md, int en_de);
+                             UNUSED_SHIM(const EVP_CIPHER*, c),
+                             UNUSED_SHIM(const EVP_MD*, md), int en_de);
 int PKCS5_v2_scrypt_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass,
                                 int passlen, ASN1_TYPE *param,
-                                const EVP_CIPHER *c, const EVP_MD *md, int en_de,
+                                UNUSED_SHIM(const EVP_CIPHER*, c),
+                                UNUSED_SHIM(const EVP_MD*, md), int en_de,
                                 OSSL_LIB_CTX *libctx, const char *propq);
 #endif
 

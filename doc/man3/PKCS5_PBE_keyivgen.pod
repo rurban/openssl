@@ -39,10 +39,12 @@ PKCS5_pbkdf2_set, PKCS5_pbkdf2_set_ex, EVP_PBE_scrypt, EVP_PBE_scrypt_ex
                        OSSL_LIB_CTX *ctx, const char *propq);
  int PKCS5_v2_scrypt_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
                               int passlen, ASN1_TYPE *param,
-                              const EVP_CIPHER *c, const EVP_MD *md, int en_de);
+                              UNUSED(const EVP_CIPHER *c),
+                              UNUSED(const EVP_MD *md), int en_de);
  int PKCS5_v2_scrypt_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass,
                                  int passlen, ASN1_TYPE *param,
-                                 const EVP_CIPHER *c, const EVP_MD *md, int en_de,
+                                 UNUSED(const EVP_CIPHER *c), UNUSED(const EVP_MD *md),
+                                 int en_de,
                                  OSSL_LIB_CTX *libctx, const char *propq);
 
  #include <openssl/x509.h>

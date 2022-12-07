@@ -235,7 +235,9 @@ static X509_ALGOR *pkcs5_scrypt_set(const unsigned char *salt, size_t saltlen,
 
 int PKCS5_v2_scrypt_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass,
                                 int passlen, ASN1_TYPE *param,
-                                const EVP_CIPHER *c, const EVP_MD *md, int en_de,
+                                UNUSED_SHIM(const EVP_CIPHER*, c),
+                                UNUSED_SHIM(const EVP_MD*, md),
+                                int en_de,
                                 OSSL_LIB_CTX *libctx, const char *propq)
 {
     unsigned char *salt, key[EVP_MAX_KEY_LENGTH];
@@ -244,8 +246,6 @@ int PKCS5_v2_scrypt_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass,
     size_t keylen = 0;
     int t, rv = 0;
     SCRYPT_PARAMS *sparam = NULL;
-    (void)c;
-    (void)md;
 
     if (EVP_CIPHER_CTX_get0_cipher(ctx) == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_NO_CIPHER_SET);
@@ -305,9 +305,12 @@ int PKCS5_v2_scrypt_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass,
 
 int PKCS5_v2_scrypt_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
                              int passlen, ASN1_TYPE *param,
-                             const EVP_CIPHER *c, const EVP_MD *md, int en_de)
+                             UNUSED_SHIM(const EVP_CIPHER*, c),
+                             UNUSED_SHIM(const EVP_MD*, md),
+                             int en_de)
 {
-    return PKCS5_v2_scrypt_keyivgen_ex(ctx, pass, passlen, param, c, md, en_de, NULL, NULL);
+    return PKCS5_v2_scrypt_keyivgen_ex(ctx, pass, passlen, param, NULL, NULL,
+                                       en_de, NULL, NULL);
 }
 
 #endif /* OPENSSL_NO_SCRYPT */
