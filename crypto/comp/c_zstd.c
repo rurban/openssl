@@ -293,20 +293,21 @@ static COMP_METHOD zstd_stateful_method = {
     zstd_stateful_expand_block
 };
 
-static int zstd_oneshot_init(COMP_CTX *ctx)
+static int zstd_oneshot_init(UNUSED_SHIM(COMP_CTX*, ctx))
 {
     (void)ctx;
     return 1;
 }
 
-static void zstd_oneshot_finish(COMP_CTX *ctx)
+static void zstd_oneshot_finish(UNUSED_SHIM(COMP_CTX*, ctx))
 {
     (void)ctx;
 }
 
-static ossl_ssize_t zstd_oneshot_compress_block(COMP_CTX *ctx, unsigned char *out,
-                                               size_t olen, unsigned char *in,
-                                               size_t ilen)
+static ossl_ssize_t zstd_oneshot_compress_block(UNUSED_SHIM(COMP_CTX*, ctx),
+                                                unsigned char *out,
+                                                size_t olen, unsigned char *in,
+                                                size_t ilen)
 {
     size_t out_size;
     ossl_ssize_t ret;
@@ -328,7 +329,8 @@ static ossl_ssize_t zstd_oneshot_compress_block(COMP_CTX *ctx, unsigned char *ou
     return ret;
 }
 
-static ossl_ssize_t zstd_oneshot_expand_block(COMP_CTX *ctx, unsigned char *out,
+static ossl_ssize_t zstd_oneshot_expand_block(UNUSED_SHIM(COMP_CTX*, ctx),
+                                              unsigned char *out,
                                               size_t olen, unsigned char *in,
                                               size_t ilen)
 {
