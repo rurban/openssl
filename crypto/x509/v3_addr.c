@@ -202,12 +202,11 @@ static int i2r_IPAddressOrRanges(BIO *out,
 /*
  * i2r handler for an IPAddrBlocks extension.
  */
-static int i2r_IPAddrBlocks(const X509V3_EXT_METHOD *method,
+static int i2r_IPAddrBlocks(UNUSED_SHIM(const X509V3_EXT_METHOD*, method),
                             void *ext, BIO *out, int indent)
 {
     const IPAddrBlocks *addr = ext;
     int i;
-    (void)method;
 
     for (i = 0; i < sk_IPAddressFamily_num(addr); i++) {
         IPAddressFamily *f = sk_IPAddressFamily_value(addr, i);

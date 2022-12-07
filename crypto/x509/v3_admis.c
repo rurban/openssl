@@ -68,11 +68,10 @@ const X509V3_EXT_METHOD ossl_v3_ext_admission = {
 };
 
 
-static int i2r_NAMING_AUTHORITY(const struct v3_ext_method *method, void *in,
-                                BIO *bp, int ind)
+static int i2r_NAMING_AUTHORITY(UNUSED_SHIM(const X509V3_EXT_METHOD*, method),
+                                void *in, BIO *bp, int ind)
 {
-    NAMING_AUTHORITY *namingAuthority = (NAMING_AUTHORITY*) in;
-    (void)method;
+    NAMING_AUTHORITY * namingAuthority = (NAMING_AUTHORITY*) in;
 
     if (namingAuthority == NULL)
         return 0;

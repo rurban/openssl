@@ -16,11 +16,12 @@
 #include "ext_dat.h"
 #include "x509_local.h"
 
-static STACK_OF(CONF_VALUE) *i2v_TLS_FEATURE(const X509V3_EXT_METHOD *method,
-                                             TLS_FEATURE *tls_feature,
-                                             STACK_OF(CONF_VALUE) *ext_list);
-static TLS_FEATURE *v2i_TLS_FEATURE(const X509V3_EXT_METHOD *method,
-                                    X509V3_CTX *ctx,
+static STACK_OF(CONF_VALUE) *i2v_TLS_FEATURE
+     (UNUSED_SHIM(const X509V3_EXT_METHOD*, method),
+      TLS_FEATURE *tls_feature,
+      STACK_OF(CONF_VALUE) *ext_list);
+static TLS_FEATURE *v2i_TLS_FEATURE(UNUSED_SHIM(const X509V3_EXT_METHOD*, method),
+                                    UNUSED_SHIM(X509V3_CTX*, ctx),
                                     STACK_OF(CONF_VALUE) *nval);
 
 ASN1_ITEM_TEMPLATE(TLS_FEATURE) =
@@ -57,15 +58,15 @@ static TLS_FEATURE_NAME tls_feature_tbl[] = {
  * used by the CONF library to represent a multi-valued extension.  ext_list is
  * returned.
  */
-static STACK_OF(CONF_VALUE) *i2v_TLS_FEATURE(const X509V3_EXT_METHOD *method,
-                                             TLS_FEATURE *tls_feature,
-                                             STACK_OF(CONF_VALUE) *ext_list)
+static STACK_OF(CONF_VALUE) *i2v_TLS_FEATURE
+     (UNUSED_SHIM(const X509V3_EXT_METHOD*, method),
+      TLS_FEATURE *tls_feature,
+      STACK_OF(CONF_VALUE) *ext_list)
 {
     int i;
     size_t j;
     ASN1_INTEGER *ai;
     long tlsextid;
-    (void)method;
 
     for (i = 0; i < sk_ASN1_INTEGER_num(tls_feature); i++) {
         ai = sk_ASN1_INTEGER_value(tls_feature, i);
@@ -86,8 +87,9 @@ static STACK_OF(CONF_VALUE) *i2v_TLS_FEATURE(const X509V3_EXT_METHOD *method,
  * structure, which is returned if the conversion is successful.  In case of
  * error, NULL is returned.
  */
-static TLS_FEATURE *v2i_TLS_FEATURE(const X509V3_EXT_METHOD *method,
-                                    X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval)
+static TLS_FEATURE *v2i_TLS_FEATURE(UNUSED_SHIM(const X509V3_EXT_METHOD*, method),
+                                    UNUSED_SHIM(X509V3_CTX*, ctx),
+                                    STACK_OF(CONF_VALUE) *nval)
 {
     TLS_FEATURE *tlsf;
     char *extval, *endptr;
@@ -96,8 +98,6 @@ static TLS_FEATURE *v2i_TLS_FEATURE(const X509V3_EXT_METHOD *method,
     int i;
     size_t j;
     long tlsextid;
-    (void)method;
-    (void)ctx;
 
     if ((tlsf = sk_ASN1_INTEGER_new_null()) == NULL) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);

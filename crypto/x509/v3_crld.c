@@ -371,14 +371,14 @@ const X509V3_EXT_METHOD ossl_v3_idp = {
     NULL
 };
 
-static void *v2i_idp(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
+static void *v2i_idp(UNUSED_SHIM(const X509V3_EXT_METHOD*, method),
+                     X509V3_CTX *ctx,
                      STACK_OF(CONF_VALUE) *nval)
 {
     ISSUING_DIST_POINT *idp;
     CONF_VALUE *cnf;
     char *name, *val;
     int i, ret;
-    (void)method;
 
     idp = ISSUING_DIST_POINT_new();
     if (idp == NULL) {
@@ -449,11 +449,10 @@ static int print_distpoint(BIO *out, DIST_POINT_NAME *dpn, int indent)
     return 1;
 }
 
-static int i2r_idp(const X509V3_EXT_METHOD *method, void *pidp, BIO *out,
-                   int indent)
+static int i2r_idp(UNUSED_SHIM(const X509V3_EXT_METHOD*, method),
+                   void *pidp, BIO *out, int indent)
 {
     ISSUING_DIST_POINT *idp = pidp;
-    (void)method;
 
     if (idp->distpoint)
         print_distpoint(out, idp->distpoint, indent);
@@ -475,13 +474,12 @@ static int i2r_idp(const X509V3_EXT_METHOD *method, void *pidp, BIO *out,
     return 1;
 }
 
-static int i2r_crldp(const X509V3_EXT_METHOD *method, void *pcrldp, BIO *out,
-                     int indent)
+static int i2r_crldp(UNUSED_SHIM(const X509V3_EXT_METHOD*, method),
+                     void *pcrldp, BIO *out, int indent)
 {
     STACK_OF(DIST_POINT) *crld = pcrldp;
     DIST_POINT *point;
     int i;
-    (void)method;
 
     for (i = 0; i < sk_DIST_POINT_num(crld); i++) {
         if (i > 0)

@@ -32,13 +32,12 @@ ASN1_SEQUENCE(ISSUER_SIGN_TOOL) = {
 IMPLEMENT_ASN1_FUNCTIONS(ISSUER_SIGN_TOOL)
 
 
-static ISSUER_SIGN_TOOL *v2i_issuer_sign_tool(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
-                        STACK_OF(CONF_VALUE) *nval)
+static ISSUER_SIGN_TOOL *v2i_issuer_sign_tool(UNUSED_SHIM(X509V3_EXT_METHOD*, method),
+                                              UNUSED_SHIM(X509V3_CTX*, ctx),
+                                              STACK_OF(CONF_VALUE) *nval)
 {
     ISSUER_SIGN_TOOL *ist = ISSUER_SIGN_TOOL_new();
     int i;
-    (void)method;
-    (void)ctx;
 
     if (ist == NULL) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);

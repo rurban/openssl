@@ -26,11 +26,10 @@ const X509V3_EXT_METHOD ossl_v3_utf8_list[1] = {
     EXT_UTF8STRING(NID_subjectSignTool),
 };
 
-char *i2s_ASN1_UTF8STRING(X509V3_EXT_METHOD *method,
+char *i2s_ASN1_UTF8STRING(UNUSED_SHIM(X509V3_EXT_METHOD*, method),
                           ASN1_UTF8STRING *utf8)
 {
     char *tmp;
-    (void)method;
 
     if (utf8 == NULL || utf8->length == 0) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_PASSED_NULL_PARAMETER);
@@ -43,12 +42,11 @@ char *i2s_ASN1_UTF8STRING(X509V3_EXT_METHOD *method,
     return tmp;
 }
 
-ASN1_UTF8STRING *s2i_ASN1_UTF8STRING(X509V3_EXT_METHOD *method,
-                                     X509V3_CTX *ctx, const char *str)
+ASN1_UTF8STRING *s2i_ASN1_UTF8STRING(UNUSED_SHIM(X509V3_EXT_METHOD*, method),
+                                     UNUSED_SHIM(X509V3_CTX*, ctx),
+                                     const char *str)
 {
     ASN1_UTF8STRING *utf8;
-    (void)method;
-    (void)ctx;
 
     if (str == NULL) {
         ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_NULL_ARGUMENT);
