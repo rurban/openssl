@@ -446,7 +446,6 @@ BN_MONT_CTX *EC_GROUP_get_mont_data(const EC_GROUP *group)
 int EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order,
                        UNUSED_SHIM(BN_CTX*, ctx))
 {
-    (void)ctx;
     if (group->order == NULL)
         return 0;
     if (!BN_copy(order, group->order))
