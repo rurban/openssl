@@ -1009,6 +1009,5 @@ static int def_is_number(const CONF *conf, char c)
 
 static int def_to_int(UNUSED_SHIM(const CONF*, conf), char c)
 {
-    (void)conf;
     return c - '0';
 }

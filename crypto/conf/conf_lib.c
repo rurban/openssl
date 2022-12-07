@@ -319,13 +319,11 @@ char *NCONF_get_string(const CONF *conf, const char *group, const char *name)
 
 static int default_is_number(UNUSED_SHIM(const CONF*, conf), char c)
 {
-    (void)conf;
     return ossl_isdigit(c);
 }
 
 static int default_to_int(UNUSED_SHIM(const CONF*, conf), char c)
 {
-    (void)conf;
     return (int)(c - '0');
 }
 
