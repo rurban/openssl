@@ -182,7 +182,7 @@ DECLARE_ASN1_ITEM(DHparams)
 #   define i2d_DHparams_fp(fp, x) \
         ASN1_i2d_fp(i2d_DHparams,(fp), (unsigned char *)(x))
 #   define d2i_DHparams_bio(bp, x) \
-        ASN1_d2i_bio_of(DH, DH_new, d2i_DHparams, bp, x)
+        ASN1_d2i_bio_of(DH, /*unused*/DH_new, d2i_DHparams, bp, x)
 #   define i2d_DHparams_bio(bp, x) \
         ASN1_i2d_bio_of(DH, i2d_DHparams, bp, x)
 
@@ -194,7 +194,7 @@ DECLARE_ASN1_ITEM(DHparams)
 #   define i2d_DHxparams_fp(fp, x) \
         ASN1_i2d_fp(i2d_DHxparams,(fp), (unsigned char *)(x))
 #   define d2i_DHxparams_bio(bp, x) \
-        ASN1_d2i_bio_of(DH, DH_new, d2i_DHxparams, bp, x)
+        ASN1_d2i_bio_of(DH, /*unused*/DH_new, d2i_DHxparams, bp, x)
 #   define i2d_DHxparams_bio(bp, x) \
         ASN1_i2d_bio_of(DH, i2d_DHxparams, bp, x)
 

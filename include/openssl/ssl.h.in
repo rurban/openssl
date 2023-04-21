@@ -1148,7 +1148,7 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
 # define SSL_get_timeout(a)      SSL_SESSION_get_timeout(a)
 # define SSL_set_timeout(a,b)    SSL_SESSION_set_timeout((a),(b))
 
-# define d2i_SSL_SESSION_bio(bp,s_id) ASN1_d2i_bio_of(SSL_SESSION,SSL_SESSION_new,d2i_SSL_SESSION,bp,s_id)
+# define d2i_SSL_SESSION_bio(bp,s_id) ASN1_d2i_bio_of(SSL_SESSION,/*unused*/SSL_SESSION_new,d2i_SSL_SESSION,bp,s_id)
 # define i2d_SSL_SESSION_bio(bp,s_id) ASN1_i2d_bio_of(SSL_SESSION,i2d_SSL_SESSION,bp,s_id)
 
 DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)

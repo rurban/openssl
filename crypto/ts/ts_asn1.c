@@ -21,7 +21,7 @@ IMPLEMENT_ASN1_FUNCTIONS(TS_MSG_IMPRINT)
 IMPLEMENT_ASN1_DUP_FUNCTION(TS_MSG_IMPRINT)
 TS_MSG_IMPRINT *d2i_TS_MSG_IMPRINT_bio(BIO *bp, TS_MSG_IMPRINT **a)
 {
-    return ASN1_d2i_bio_of(TS_MSG_IMPRINT, TS_MSG_IMPRINT_new,
+    return ASN1_d2i_bio_of(TS_MSG_IMPRINT, /*unused*/TS_MSG_IMPRINT_new,
                            d2i_TS_MSG_IMPRINT, bp, a);
 }
 
@@ -55,7 +55,7 @@ IMPLEMENT_ASN1_FUNCTIONS(TS_REQ)
 IMPLEMENT_ASN1_DUP_FUNCTION(TS_REQ)
 TS_REQ *d2i_TS_REQ_bio(BIO *bp, TS_REQ **a)
 {
-    return ASN1_d2i_bio_of(TS_REQ, TS_REQ_new, d2i_TS_REQ, bp, a);
+    return ASN1_d2i_bio_of(TS_REQ, /*unused*/TS_REQ_new, d2i_TS_REQ, bp, a);
 }
 
 int i2d_TS_REQ_bio(BIO *bp, const TS_REQ *a)
@@ -100,8 +100,8 @@ IMPLEMENT_ASN1_FUNCTIONS(TS_TST_INFO)
 IMPLEMENT_ASN1_DUP_FUNCTION(TS_TST_INFO)
 TS_TST_INFO *d2i_TS_TST_INFO_bio(BIO *bp, TS_TST_INFO **a)
 {
-    return ASN1_d2i_bio_of(TS_TST_INFO, TS_TST_INFO_new, d2i_TS_TST_INFO, bp,
-                           a);
+    return ASN1_d2i_bio_of(TS_TST_INFO, /*unused*/TS_TST_INFO_new, d2i_TS_TST_INFO,
+                           bp, a);
 }
 
 int i2d_TS_TST_INFO_bio(BIO *bp, const TS_TST_INFO *a)
@@ -184,7 +184,7 @@ IMPLEMENT_ASN1_DUP_FUNCTION(TS_RESP)
 
 TS_RESP *d2i_TS_RESP_bio(BIO *bp, TS_RESP **a)
 {
-    return ASN1_d2i_bio_of(TS_RESP, TS_RESP_new, d2i_TS_RESP, bp, a);
+    return ASN1_d2i_bio_of(TS_RESP, /*unused*/TS_RESP_new, d2i_TS_RESP, bp, a);
 }
 
 int i2d_TS_RESP_bio(BIO *bp, const TS_RESP *a)

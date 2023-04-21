@@ -110,7 +110,7 @@ int DSA_SIG_set0(DSA_SIG *sig, BIGNUM *r, BIGNUM *s);
 #   define i2d_DSAparams_fp(fp, x) \
         ASN1_i2d_fp(i2d_DSAparams, (fp), (unsigned char *)(x))
 #   define d2i_DSAparams_bio(bp, x) \
-        ASN1_d2i_bio_of(DSA, DSA_new, d2i_DSAparams, bp, x)
+        ASN1_d2i_bio_of(DSA, /*unused*/DSA_new, d2i_DSAparams, bp, x)
 #   define i2d_DSAparams_bio(bp, x) \
         ASN1_i2d_bio_of(DSA, i2d_DSAparams, bp, x)
 

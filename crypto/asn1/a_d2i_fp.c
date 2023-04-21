@@ -29,13 +29,13 @@ void *ASN1_d2i_fp(void *(*xnew) (void), d2i_of_void *d2i, FILE *in, void **x)
         return NULL;
     }
     BIO_set_fp(b, in, BIO_NOCLOSE);
-    ret = ASN1_d2i_bio(xnew, d2i, b, x);
+    ret = ASN1_d2i_bio(/*unused*/xnew, d2i, b, x);
     BIO_free(b);
     return ret;
 }
 # endif
 
-void *ASN1_d2i_bio(void *(*xnew) (void), d2i_of_void *d2i, BIO *in,
+void *ASN1_d2i_bio(ossl_unused void *(*xnew) (void), d2i_of_void *d2i, BIO *in,
                    void **x)
 {
     BUF_MEM *b = NULL;

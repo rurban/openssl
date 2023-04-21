@@ -786,10 +786,11 @@ int ASN1_STRING_print_ex_fp(FILE *fp, const ASN1_STRING *str, unsigned long flag
 
 int ASN1_STRING_to_UTF8(unsigned char **out, const ASN1_STRING *in);
 
-void *ASN1_d2i_bio(void *(*xnew) (void), d2i_of_void *d2i, BIO *in, void **x);
+void *ASN1_d2i_bio(ossl_unused void *(*xnew) (void), d2i_of_void *d2i, BIO *in,
+                   void **x);
 
-#  define ASN1_d2i_bio_of(type,xnew,d2i,in,x) \
-    ((type*)ASN1_d2i_bio( CHECKED_NEW_OF(type, xnew), \
+#  define ASN1_d2i_bio_of(type,/*unused*/xnew,d2i,in,x) \
+    ((type*)ASN1_d2i_bio( /*unused*/CHECKED_NEW_OF(type, xnew), \
                           CHECKED_D2I_OF(type, d2i), \
                           in, \
                           CHECKED_PPTR_OF(type, x)))

@@ -932,7 +932,7 @@ EC_GROUP *d2i_ECPKParameters(EC_GROUP **, const unsigned char **in, long len);
 int i2d_ECPKParameters(const EC_GROUP *, unsigned char **out);
 
 #  define d2i_ECPKParameters_bio(bp,x) \
-    ASN1_d2i_bio_of(EC_GROUP, NULL, d2i_ECPKParameters, bp, x)
+    ASN1_d2i_bio_of(EC_GROUP, /*unused*/NULL, d2i_ECPKParameters, bp, x)
 #  define i2d_ECPKParameters_bio(bp,x) \
     ASN1_i2d_bio_of(EC_GROUP, i2d_ECPKParameters, bp, x)
 #  define d2i_ECPKParameters_fp(fp,x) \
