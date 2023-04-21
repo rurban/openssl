@@ -410,13 +410,12 @@ err:
  * protocols, or the server doesn't advertise any, it SHOULD select the first
  * protocol that it supports.
  */
-static int client_npn_cb(SSL *s, unsigned char **out, unsigned char *outlen,
+static int client_npn_cb(ossl_unused SSL *s, unsigned char **out, unsigned char *outlen,
                          const unsigned char *in, unsigned int inlen,
                          void *arg)
 {
     CTX_DATA *ctx_data = (CTX_DATA*)(arg);
     int ret;
-    (void)s;
 
     ret = SSL_select_next_proto(out, outlen, in, inlen,
                                 ctx_data->npn_protocols,

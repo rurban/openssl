@@ -292,12 +292,11 @@ typedef struct tlsextnextprotoctx_st {
 
 static tlsextnextprotoctx next_proto;
 
-static int next_proto_cb(SSL *s, unsigned char **out, unsigned char *outlen,
+static int next_proto_cb(ossl_unused SSL *s, unsigned char **out, unsigned char *outlen,
                          const unsigned char *in, unsigned int inlen,
                          void *arg)
 {
     tlsextnextprotoctx *ctx = arg;
-    (void)s;
 
     if (!c_quiet) {
         /* We can assume that |in| is syntactically valid. */

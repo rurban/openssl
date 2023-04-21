@@ -112,14 +112,10 @@ static int npn_client = 0;
 static int npn_server = 0;
 static int npn_server_reject = 0;
 
-static int cb_client_npn(SSL *s, unsigned char **out, unsigned char *outlen,
-                         const unsigned char *in, unsigned int inlen,
-                         void *arg)
+static int cb_client_npn(ossl_unused SSL *s, unsigned char **out, unsigned char *outlen,
+                         ossl_unused const unsigned char *in, ossl_unused unsigned int inlen,
+                         ossl_unused void *arg)
 {
-    (void)s;
-    (void)in;
-    (void)inlen;
-    (void)arg;
     /*
      * This callback only returns the protocol string, rather than a length
      * prefixed set. We assume that NEXT_PROTO_STRING is a one element list

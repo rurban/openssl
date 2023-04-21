@@ -786,7 +786,7 @@ void SSL_CTX_set_next_protos_advertised_cb(SSL_CTX *s,
                                            void *arg);
 #  define SSL_CTX_set_npn_advertised_cb SSL_CTX_set_next_protos_advertised_cb
 
-typedef int (*SSL_CTX_npn_select_cb_func)(SSL *s,
+typedef int (*SSL_CTX_npn_select_cb_func)(ossl_unused SSL *s,
                                           unsigned char **out,
                                           unsigned char *outlen,
                                           const unsigned char *in,
