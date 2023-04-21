@@ -944,16 +944,11 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
  * performed to signal the caller to fall down to alternative/original
  * code-path.
  */
-int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
-                const BN_ULONG *np, const BN_ULONG *n0, int num)
+int bn_mul_mont(ossl_unused BN_ULONG *rp, ossl_unused const BN_ULONG *ap,
+                ossl_unused const BN_ULONG *bp,
+                ossl_unused const BN_ULONG *np,
+                ossl_unused const BN_ULONG *n0, ossl_unused int num)
 {
-    (void)rp;
-    (void)ap;
-    (void)bp;
-    (void)np;
-    (void)n0;
-    (void)num;
-
     return 0;
 }
 #  endif                        /* OPENSSL_BN_ASM_MONT */

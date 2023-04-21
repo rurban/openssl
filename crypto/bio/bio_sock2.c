@@ -39,10 +39,9 @@
  * Returns the file descriptor on success or INVALID_SOCKET on failure.  On
  * failure errno is set, and a status is added to the OpenSSL error stack.
  */
-int BIO_socket(int domain, int socktype, int protocol, int options)
+int BIO_socket(int domain, int socktype, int protocol, ossl_unused int options)
 {
     int sock = -1;
-    (void)options;
 
     if (BIO_sock_init() != 1)
         return INVALID_SOCKET;

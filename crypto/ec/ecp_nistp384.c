@@ -1628,7 +1628,7 @@ int ossl_ec_GFp_nistp384_group_set_curve(EC_GROUP *group, const BIGNUM *p,
 int ossl_ec_GFp_nistp384_point_get_affine_coordinates(const EC_GROUP *group,
                                                       const EC_POINT *point,
                                                       BIGNUM *x, BIGNUM *y,
-                                                      BN_CTX *ctx)
+                                                      ossl_unused BN_CTX *ctx)
 {
     felem z1, z2, x_in, y_in, x_out, y_out;
     widefelem tmp;

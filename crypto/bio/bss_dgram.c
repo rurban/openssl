@@ -1288,8 +1288,7 @@ static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
  * in a particular circumstance. Currently no flags are defined.
  */
 # if M_METHOD != M_METHOD_NONE
-static int translate_flags(uint64_t flags) {
-    (void)flags;
+static int translate_flags(ossl_unused uint64_t flags) {
     return 0;
 }
 # endif

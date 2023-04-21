@@ -17,7 +17,8 @@
 #include <openssl/err.h>
 
 long BIO_debug_callback_ex(BIO *bio, int cmd, const char *argp, size_t len,
-                           int argi, long argl, int ret, size_t *processed)
+                           int argi, ossl_unused long argl, int ret,
+                           size_t *processed)
 {
     BIO *b;
     char buf[256];
@@ -26,7 +27,6 @@ long BIO_debug_callback_ex(BIO *bio, int cmd, const char *argp, size_t len,
     size_t l = 0;
     BIO_MMSG_CB_ARGS *args;
     long ret_ = ret;
-    (void)argl;
 
     if (processed != NULL)
         l = *processed;

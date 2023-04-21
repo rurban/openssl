@@ -13,12 +13,11 @@
 #include <openssl/buffer.h>
 #include <openssl/asn1.h>
 
-int i2a_ASN1_STRING(BIO *bp, const ASN1_STRING *a, int type)
+int i2a_ASN1_STRING(BIO *bp, const ASN1_STRING *a, ossl_unused int type)
 {
     int i, n = 0;
     static const char *h = "0123456789ABCDEF";
     char buf[2];
-    (void)type;
 
     if (a == NULL)
         return 0;

@@ -2753,7 +2753,9 @@ void ossl_quic_channel_on_remote_conn_close(QUIC_CHANNEL *ch,
     ch_start_terminating(ch, &tcause, 0);
 }
 
-static void free_frame_data(unsigned char *buf, size_t buf_len, void *arg)
+static void free_frame_data(ossl_unused unsigned char *buf,
+                            ossl_unused size_t buf_len,
+                            ossl_unused void *arg)
 {
     (void)buf_len;
     (void)arg;

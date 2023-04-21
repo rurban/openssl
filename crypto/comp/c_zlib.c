@@ -36,18 +36,16 @@ static ossl_ssize_t zlib_stateful_expand_block(COMP_CTX *ctx, unsigned char *out
                                                size_t ilen);
 
 /* memory allocations functions for zlib initialisation */
-static void *zlib_zalloc(void *opaque, unsigned int no, unsigned int size)
+static void *zlib_zalloc(ossl_unused void *opaque, unsigned int no,
+                         unsigned int size)
 {
     void *p;
-    (void)opaque;
-
     p = OPENSSL_zalloc(no * size);
     return p;
 }
 
-static void zlib_zfree(void *opaque, void *address)
+static void zlib_zfree(ossl_unused void *opaque, void *address)
 {
-    (void)opaque;
     OPENSSL_free(address);
 }
 
@@ -207,23 +205,21 @@ static ossl_ssize_t zlib_stateful_expand_block(COMP_CTX *ctx, unsigned char *out
 
 /* ONESHOT COMPRESSION/DECOMPRESSION */
 
-static int zlib_oneshot_init(COMP_CTX *ctx)
+static int zlib_oneshot_init(ossl_unused COMP_CTX *ctx)
 {
-    (void)ctx;
     return 1;
 }
 
-static void zlib_oneshot_finish(COMP_CTX *ctx)
+static void zlib_oneshot_finish(ossl_unused COMP_CTX *ctx)
 {
-    (void)ctx;
 }
 
-static ossl_ssize_t zlib_oneshot_compress_block(COMP_CTX *ctx, unsigned char *out,
+static ossl_ssize_t zlib_oneshot_compress_block(ossl_unused COMP_CTX *ctx,
+                                                unsigned char *out,
                                                 size_t olen, unsigned char *in,
                                                 size_t ilen)
 {
     uLongf out_size;
-    (void)ctx;
 
     if (ilen == 0)
         return 0;
@@ -241,12 +237,12 @@ static ossl_ssize_t zlib_oneshot_compress_block(COMP_CTX *ctx, unsigned char *ou
     return (ossl_ssize_t)out_size;
 }
 
-static ossl_ssize_t zlib_oneshot_expand_block(COMP_CTX *ctx, unsigned char *out,
+static ossl_ssize_t zlib_oneshot_expand_block(ossl_unused COMP_CTX *ctx,
+                                              unsigned char *out,
                                               size_t olen, unsigned char *in,
                                               size_t ilen)
 {
     uLongf out_size;
-    (void)ctx;
 
     if (ilen == 0)
         return 0;

@@ -27,7 +27,7 @@ struct conf_method_st {
     int (*load_bio) (CONF *conf, BIO *bp, long *eline);
     int (*dump) (const CONF *conf, BIO *bp);
     int (*is_number) (const CONF *conf, char c);
-    int (*to_int) (const CONF *conf, char c);
+    int (*to_int) (ossl_unused const CONF *conf, char c);
     int (*load) (CONF *conf, const char *name, long *eline);
 };
 

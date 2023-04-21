@@ -39,26 +39,19 @@ const BIO_METHOD *BIO_s_null(void)
     return &null_method;
 }
 
-static int null_read(BIO *b, char *out, int outl)
+static int null_read(ossl_unused BIO *b, ossl_unused char *out, ossl_unused int outl)
 {
-    (void)b;
-    (void)out;
-    (void)outl;
     return 0;
 }
 
-static int null_write(BIO *b, const char *in, int inl)
+static int null_write(ossl_unused BIO *b, ossl_unused const char *in, int inl)
 {
-    (void)b;
-    (void)in;
     return inl;
 }
 
-static long null_ctrl(BIO *b, int cmd, long num, void *ptr)
+static long null_ctrl(ossl_unused BIO *b, int cmd, ossl_unused long num,
+                      ossl_unused void *ptr)
 {
-    (void)b;
-    (void)num;
-    (void)ptr;
     long ret = 1;
 
     switch (cmd) {
@@ -82,17 +75,14 @@ static long null_ctrl(BIO *b, int cmd, long num, void *ptr)
     return ret;
 }
 
-static int null_gets(BIO *bp, char *buf, int size)
+static int null_gets(ossl_unused BIO *bp, ossl_unused char *buf,
+                     ossl_unused int size)
 {
-    (void)bp;
-    (void)buf;
-    (void)size;
     return 0;
 }
 
-static int null_puts(BIO *bp, const char *str)
+static int null_puts(ossl_unused BIO *bp, const char *str)
 {
-    (void)bp;
     if (str == NULL)
         return 0;
     return strlen(str);

@@ -62,9 +62,8 @@ ASN1_ITEM_start(CBIGNUM)
         ASN1_ITYPE_PRIMITIVE, V_ASN1_INTEGER, NULL, 0, &cbignum_pf, BN_SENSITIVE, "CBIGNUM"
 ASN1_ITEM_end(CBIGNUM)
 
-static int bn_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
+static int bn_new(ASN1_VALUE **pval, ossl_unused const ASN1_ITEM *it)
 {
-    (void)it;
     *pval = (ASN1_VALUE *)BN_new();
     if (*pval != NULL)
         return 1;
@@ -72,9 +71,8 @@ static int bn_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
         return 0;
 }
 
-static int bn_secure_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
+static int bn_secure_new(ASN1_VALUE **pval, ossl_unused const ASN1_ITEM *it)
 {
-    (void)it;
     *pval = (ASN1_VALUE *)BN_secure_new();
     if (*pval != NULL)
         return 1;
@@ -93,13 +91,11 @@ static void bn_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
     *pval = NULL;
 }
 
-static int bn_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
-                  const ASN1_ITEM *it)
+static int bn_i2c(const ASN1_VALUE **pval, unsigned char *cont,
+                  ossl_unused int *putype, ossl_unused const ASN1_ITEM *it)
 {
     BIGNUM *bn;
     int pad;
-    (void)putype;
-    (void)it;
 
     if (*pval == NULL)
         return -1;
@@ -118,11 +114,10 @@ static int bn_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
 }
 
 static int bn_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
-                  int utype, char *free_cont, const ASN1_ITEM *it)
+                  ossl_unused int utype, ossl_unused char *free_cont,
+                  const ASN1_ITEM *it)
 {
     BIGNUM *bn;
-    (void)utype;
-    (void)free_cont;
 
     if (*pval == NULL && !bn_new(pval, it))
         return 0;
@@ -153,12 +148,10 @@ static int bn_secure_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
     return ret;
 }
 
-static int bn_print(BIO *out, const ASN1_VALUE **pval, const ASN1_ITEM *it,
-                    int indent, const ASN1_PCTX *pctx)
+static int bn_print(BIO *out, const ASN1_VALUE **pval,
+                    ossl_unused const ASN1_ITEM *it,
+                    ossl_unused int indent, ossl_unused const ASN1_PCTX *pctx)
 {
-    (void)it;
-    (void)indent;
-    (void)pctx;
     if (!BN_print(out, *(BIGNUM **)pval))
         return 0;
     if (BIO_puts(out, "\n") <= 0)

@@ -30,15 +30,13 @@ COMP_METHOD *COMP_brotli(void);
 # include <brotli/encode.h>
 
 /* memory allocations functions for brotli initialisation */
-static void *brotli_alloc(void *opaque, size_t size)
+static void *brotli_alloc(ossl_unused void *opaque, size_t size)
 {
-    (void)opaque;
     return OPENSSL_zalloc(size);
 }
 
-static void brotli_free(void *opaque, void *address)
+static void brotli_free(ossl_unused void *opaque, void *address)
 {
-    (void)opaque;
     OPENSSL_free(address);
 }
 
@@ -220,24 +218,22 @@ static COMP_METHOD brotli_stateful_method = {
     brotli_stateful_expand_block
 };
 
-static int brotli_oneshot_init(COMP_CTX *ctx)
+static int brotli_oneshot_init(ossl_unused COMP_CTX *ctx)
 {
-    (void)ctx;
     return 1;
 }
 
-static void brotli_oneshot_finish(COMP_CTX *ctx)
+static void brotli_oneshot_finish(ossl_unused COMP_CTX *ctx)
 {
-    (void)ctx;
 }
 
-static ossl_ssize_t brotli_oneshot_compress_block(COMP_CTX *ctx, unsigned char *out,
+static ossl_ssize_t brotli_oneshot_compress_block(ossl_unused COMP_CTX *ctx,
+                                                  unsigned char *out,
                                                   size_t olen, unsigned char *in,
                                                   size_t ilen)
 {
     size_t out_size = olen;
     ossl_ssize_t ret;
-    (void)ctx;
 
     if (ilen == 0)
         return 0;
@@ -255,13 +251,13 @@ static ossl_ssize_t brotli_oneshot_compress_block(COMP_CTX *ctx, unsigned char *
     return ret;
 }
 
-static ossl_ssize_t brotli_oneshot_expand_block(COMP_CTX *ctx, unsigned char *out,
+static ossl_ssize_t brotli_oneshot_expand_block(ossl_unused COMP_CTX *ctx,
+                                                unsigned char *out,
                                                 size_t olen, unsigned char *in,
                                                 size_t ilen)
 {
     size_t out_size = olen;
     ossl_ssize_t ret;
-    (void)ctx;
 
     if (ilen == 0)
         return 0;

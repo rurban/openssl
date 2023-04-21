@@ -68,7 +68,7 @@ static int def_load(CONF *conf, const char *name, long *eline);
 static int def_load_bio(CONF *conf, BIO *bp, long *eline);
 static int def_dump(const CONF *conf, BIO *bp);
 static int def_is_number(const CONF *conf, char c);
-static int def_to_int(const CONF *conf, char c);
+static int def_to_int(ossl_unused const CONF *conf, char c);
 
 static CONF_METHOD default_method = {
     "OpenSSL default",
@@ -1007,8 +1007,7 @@ static int def_is_number(const CONF *conf, char c)
     return IS_NUMBER(conf, c);
 }
 
-static int def_to_int(const CONF *conf, char c)
+static int def_to_int(ossl_unused const CONF *conf, char c)
 {
-    (void)conf;
     return c - '0';
 }

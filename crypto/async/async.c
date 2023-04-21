@@ -404,10 +404,9 @@ err:
     return 0;
 }
 
-static void async_delete_thread_state(void *arg)
+static void async_delete_thread_state(ossl_unused void *arg)
 {
     async_pool *pool = (async_pool *)CRYPTO_THREAD_get_local(&poolkey);
-    (void)arg;
 
     if (pool != NULL) {
         async_empty_pool(pool);

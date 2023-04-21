@@ -307,7 +307,7 @@ DEFINE_OSSL_get(OSSL_CMP_CTX, certConf_cb_arg, void *, NULL)
 
 #ifndef OPENSSL_NO_TRACE
 static size_t ossl_cmp_log_trace_cb(const char *buf, size_t cnt,
-                                    int category, int cmd, void *vdata)
+                                    ossl_unused int category, int cmd, void *vdata)
 {
     OSSL_CMP_CTX *ctx = vdata;
     const char *msg;
@@ -315,7 +315,6 @@ static size_t ossl_cmp_log_trace_cb(const char *buf, size_t cnt,
     char *func = NULL;
     char *file = NULL;
     int line = 0;
-    (void)category;
 
     if (buf == NULL || cnt == 0 || cmd != OSSL_TRACE_CTRL_WRITE || ctx == NULL)
         return 0;

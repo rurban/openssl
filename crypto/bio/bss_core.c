@@ -27,9 +27,8 @@ void ossl_bio_core_globals_free(void *vbcg)
     OPENSSL_free(vbcg);
 }
 
-void *ossl_bio_core_globals_new(OSSL_LIB_CTX *ctx)
+void *ossl_bio_core_globals_new(ossl_unused OSSL_LIB_CTX *ctx)
 {
-    (void)ctx;
     return OPENSSL_zalloc(sizeof(BIO_CORE_GLOBALS));
 }
 

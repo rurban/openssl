@@ -635,11 +635,10 @@ static int dgram_pair_ctrl_set_mtu(BIO *bio, size_t mtu)
 }
 
 /* Partially threadsafe (some commands) */
-static long dgram_mem_ctrl(BIO *bio, int cmd, long num, void *ptr)
+static long dgram_mem_ctrl(BIO *bio, int cmd, long num, ossl_unused void *ptr)
 {
     long ret = 1;
     struct bio_dgram_pair_st *b = bio->ptr;
-    (void)ptr;
 
     if (!ossl_assert(b != NULL))
         return 0;
@@ -1033,7 +1032,7 @@ static int dgram_pair_read(BIO *bio, char *buf, int sz_)
 /* Threadsafe */
 static int dgram_pair_recvmmsg(BIO *bio, BIO_MSG *msg,
                                size_t stride, size_t num_msg,
-                               uint64_t flags,
+                               ossl_unused uint64_t flags,
                                size_t *num_processed)
 {
     int ret;
@@ -1041,7 +1040,6 @@ static int dgram_pair_recvmmsg(BIO *bio, BIO_MSG *msg,
     BIO_MSG *m;
     size_t i;
     struct bio_dgram_pair_st *b = bio->ptr, *readb;
-    (void)flags;
 
     if (num_msg == 0) {
         *num_processed = 0;
@@ -1284,13 +1282,13 @@ static int dgram_pair_write(BIO *bio, const char *buf, int sz_)
 /* Threadsafe */
 static int dgram_pair_sendmmsg(BIO *bio, BIO_MSG *msg,
                                size_t stride, size_t num_msg,
-                               uint64_t flags, size_t *num_processed)
+                               ossl_unused uint64_t flags,
+                               size_t *num_processed)
 {
     ossl_ssize_t ret, l;
     BIO_MSG *m;
     size_t i;
     struct bio_dgram_pair_st *b = bio->ptr;
-    (void)flags;
 
     if (num_msg == 0) {
         *num_processed = 0;

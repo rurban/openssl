@@ -367,7 +367,8 @@ int PEM_write_bio_PrivateKey_traditional(BIO *bp, const EVP_PKEY *x,
     return ret;
 }
 
-static int no_password_cb(char *buf, int num, int rwflag, void *userdata)
+static int no_password_cb(ossl_unused char *buf, ossl_unused int num,
+                          ossl_unused int rwflag, ossl_unused void *userdata)
 {
     (void)buf;
     (void)num;

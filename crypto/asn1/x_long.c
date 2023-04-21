@@ -82,13 +82,12 @@ static int num_bits_ulong(unsigned long value)
     return (int)ret;
 }
 
-static int long_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
-                    const ASN1_ITEM *it)
+static int long_i2c(const ASN1_VALUE **pval, unsigned char *cont,
+                    ossl_unused int *putype, const ASN1_ITEM *it)
 {
     long ltmp;
     unsigned long utmp, sign;
     int clen, pad, i;
-    (void)putype;
 
     memcpy(&ltmp, pval, COPY_SIZE(*pval, ltmp));
     if (ltmp == it->size)
@@ -127,13 +126,12 @@ static int long_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
 }
 
 static int long_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
-                    int utype, char *free_cont, const ASN1_ITEM *it)
+                    ossl_unused int utype, ossl_unused char *free_cont,
+                    const ASN1_ITEM *it)
 {
     int i;
     long ltmp;
     unsigned long utmp = 0, sign = 0x100;
-    (void)utype;
-    (void)free_cont;
 
     if (len > 1) {
         /*
@@ -189,13 +187,11 @@ static int long_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
     return 1;
 }
 
-static int long_print(BIO *out, const ASN1_VALUE **pval, const ASN1_ITEM *it,
-                      int indent, const ASN1_PCTX *pctx)
+static int long_print(BIO *out, const ASN1_VALUE **pval,
+                      ossl_unused const ASN1_ITEM *it,
+                      ossl_unused int indent, ossl_unused const ASN1_PCTX *pctx)
 {
     long l;
-    (void)it;
-    (void)indent;
-    (void)pctx;
 
     memcpy(&l, pval, COPY_SIZE(*pval, l));
     return BIO_printf(out, "%ld\n", l);

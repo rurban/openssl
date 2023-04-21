@@ -152,17 +152,14 @@ static int readbuffer_read(BIO *b, char *out, int outl)
     }
 }
 
-static int readbuffer_write(BIO *b, const char *in, int inl)
+static int readbuffer_write(ossl_unused BIO *b, ossl_unused const char *in,
+                            ossl_unused int inl)
 {
-    (void)b;
-    (void)in;
-    (void)inl;
     return 0;
 }
-static int readbuffer_puts(BIO *b, const char *str)
+
+static int readbuffer_puts(ossl_unused BIO *b, ossl_unused const char *str)
 {
-    (void)b;
-    (void)str;
     return 0;
 }
 

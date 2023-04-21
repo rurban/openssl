@@ -16,11 +16,9 @@ int ASYNC_is_capable(void)
     return 0;
 }
 
-int ASYNC_set_mem_functions(ASYNC_stack_alloc_fn alloc_fn,
-                            ASYNC_stack_free_fn free_fn)
+int ASYNC_set_mem_functions(ossl_unused ASYNC_stack_alloc_fn alloc_fn,
+                            ossl_unused ASYNC_stack_free_fn free_fn)
 {
-    (void)alloc_fn;
-    (void)free_fn;
     return 0;
 }
 
