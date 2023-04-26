@@ -205,9 +205,8 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
 int ossl_cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
                                    const EVP_CIPHER *cipher,
                                    const unsigned char *key, size_t keylen,
-                                   const CMS_CTX *cms_ctx)
+                                   ossl_unused const CMS_CTX *cms_ctx)
 {
-    (void)cms_ctx;
     ec->cipher = cipher;
     if (key) {
         if ((ec->key = OPENSSL_malloc(keylen)) == NULL)
@@ -242,8 +241,7 @@ int CMS_EncryptedData_set1_key(CMS_ContentInfo *cms, const EVP_CIPHER *ciph,
         return 0;
     }
     ec = cms->d.encryptedData->encryptedContentInfo;
-    return ossl_cms_EncryptedContent_init(ec, ciph, key, keylen,
-                                          ossl_cms_get0_cmsctx(cms));
+    return ossl_cms_EncryptedContent_init(ec, ciph, key, keylen, NULL);
 }
 
 BIO *ossl_cms_EncryptedData_init_bio(const CMS_ContentInfo *cms)

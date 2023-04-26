@@ -437,7 +437,7 @@ BIO *ossl_cms_EncryptedData_init_bio(const CMS_ContentInfo *cms);
 int ossl_cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
                                    const EVP_CIPHER *cipher,
                                    const unsigned char *key, size_t keylen,
-                                   const CMS_CTX *ctx);
+                                   ossl_unused const CMS_CTX *ctx);
 
 int ossl_cms_Receipt_verify(CMS_ContentInfo *cms, CMS_ContentInfo *req_cms);
 int ossl_cms_msgSigDigest_add1(CMS_SignerInfo *dest, CMS_SignerInfo *src);
