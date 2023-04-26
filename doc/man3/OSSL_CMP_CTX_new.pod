@@ -152,9 +152,9 @@ OSSL_CMP_CTX_set1_senderNonce
 
  /* certificate confirmation: */
  typedef int (*OSSL_CMP_certConf_cb_t)(OSSL_CMP_CTX *ctx, X509 *cert,
-                                       int fail_info, const char **txt);
+                                       int fail_info, ossl_unused const char **txt);
  int OSSL_CMP_certConf_cb(OSSL_CMP_CTX *ctx, X509 *cert, int fail_info,
-                          const char **text);
+                          ossl_unused const char **text);
  int OSSL_CMP_CTX_set_certConf_cb(OSSL_CMP_CTX *ctx, OSSL_CMP_certConf_cb_t cb);
  int OSSL_CMP_CTX_set_certConf_cb_arg(OSSL_CMP_CTX *ctx, void *arg);
  void *OSSL_CMP_CTX_get_certConf_cb_arg(const OSSL_CMP_CTX *ctx);
@@ -648,7 +648,8 @@ enrolled certificate before the library sends, depending on its result,
 a positive or negative certConf message to the server. The callback has type
 
  typedef int (*OSSL_CMP_certConf_cb_t) (OSSL_CMP_CTX *ctx, X509 *cert,
-                                        int fail_info, const char **txt);
+                                        int fail_info,
+                                        ossl_unused const char **txt);
 
 and should inspect the certificate it obtains via the I<cert> parameter and may
 overrule the pre-decision given in the I<fail_info> and I<*txt> parameters.

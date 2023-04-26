@@ -575,12 +575,10 @@ static X509 *get1_cert_status(OSSL_CMP_CTX *ctx, int bodytype,
  * an EE must be able to validate the certificates it gets enrolled.
  */
 int OSSL_CMP_certConf_cb(OSSL_CMP_CTX *ctx, X509 *cert, int fail_info,
-                         const char **text)
+                         ossl_unused const char **text)
 {
     X509_STORE *out_trusted = OSSL_CMP_CTX_get_certConf_cb_arg(ctx);
     STACK_OF(X509) *chain = NULL;
-
-    (void)text; /* make (artificial) use of var to prevent compiler warning */
 
     if (fail_info != 0) /* accept any error flagged by CMP core library */
         return fail_info;
