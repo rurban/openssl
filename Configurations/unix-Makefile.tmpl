@@ -344,6 +344,7 @@ ECHO = echo
 
 CROSS_COMPILE={- $config{CROSS_COMPILE} -}
 CC=$(CROSS_COMPILE){- $config{CC} -}
+ASMCC=gcc
 CXX={- $config{CXX} ? "\$(CROSS_COMPILE)$config{CXX}" : '' -}
 CPPFLAGS={- our $cppflags1 = join(" ",
                                   (map { "-D".$_} @{$config{CPPDEFINES}}),
@@ -1612,7 +1613,7 @@ EOF
 
           my $generator;
           if ($gen0 =~ /\.pl$/) {
-              $generator = 'CC="$(CC)" $(PERL)'.$gen_incs.' '.$gen0.$gen_args
+              $generator = 'CC="$(ASMCC)" $(PERL)'.$gen_incs.' '.$gen0.$gen_args
                   .' "$(PERLASM_SCHEME)"'.$incs.' '.$cppflags.$defs.' $(PROCESSOR)';
           } elsif ($gen0 =~ /\.m4$/) {
               $generator = 'm4 -B 8192'.$gen_incs.' '.$gen0.$gen_args.' >'
@@ -1630,7 +1631,7 @@ EOF
           }
           return <<"EOF";
 $args{src}: $gen0 $deps
-	\$(CC) $incs $cppflags $defs -E $gen0 | \\
+	\$(ASMCC) $incs $cppflags $defs -E $gen0 | \\
 	\$(PERL) -ne '/^#(line)?\\s*[0-9]+/ or print' > \$@
 EOF
       } elsif ($gen0 =~ m|^.*\.in$|) {
@@ -1703,7 +1704,7 @@ EOF
               bin => '$(BIN_CXXFLAGS) $(BIN_CPPFLAGS)'
           } -> {$args{intent}};
       } else {
-          $cmd = '$(CC)';
+          $cmd = platform->isasm($srcs) ? '$(ASMCC)' : '$(CC)';
           $cmdcompile = ' -c';
           $cmdflags = {
               shlib => '$(LIB_CFLAGS) $(LIB_CPPFLAGS)',
