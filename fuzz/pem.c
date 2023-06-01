@@ -12,7 +12,7 @@
 #include <openssl/err.h>
 #include "fuzzer.h"
 
-int FuzzerInitialize(int *argc, char ***argv)
+int FuzzerInitialize(ossl_unused int *argc, ossl_unused char ***argv)
 {
     (void)argc;
     (void)argv;
