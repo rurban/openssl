@@ -20,8 +20,9 @@ static char *privkey = NULL;
  * Inject NEW_CONNECTION_ID frame
  */
 static size_t ncid_injected;
-static int add_ncid_frame_cb(QTEST_FAULT *fault, QUIC_PKT_HDR *hdr,
-                             unsigned char *buf, size_t len, void *cbarg)
+static int add_ncid_frame_cb(QTEST_FAULT *fault, ossl_unused QUIC_PKT_HDR *hdr,
+                             ossl_unused unsigned char *buf, ossl_unused size_t len,
+                             ossl_unused void *cbarg)
 {
     (void)hdr;
     (void)buf;

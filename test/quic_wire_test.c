@@ -829,7 +829,7 @@ static int encode_case_16b_enc(WPACKET *pkt)
     return 1;
 }
 
-static int encode_case_16b_dec(PACKET *pkt, ossl_ssize_t fail)
+static int encode_case_16b_dec(PACKET *pkt, ossl_unused ossl_ssize_t fail)
 {
     OSSL_QUIC_FRAME_NEW_CONN_ID f = {0};
     (void)fail;

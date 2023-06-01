@@ -41,20 +41,14 @@ static void regen_frame(uint64_t frame_type, uint64_t stream_id,
     regen_frame_p(frame_type, stream_id, pkt, arg);
 }
 
-static void confirm_frame(uint64_t frame_type, uint64_t stream_id,
-                          QUIC_TXPIM_PKT *pkt, void *arg)
-{
-    (void)frame_type;
-    (void)stream_id;
-    (void)pkt;
-    (void)arg;
-}
+static void confirm_frame(ossl_unused uint64_t frame_type,
+                          ossl_unused uint64_t stream_id,
+                          ossl_unused QUIC_TXPIM_PKT *pkt,
+                          ossl_unused void *arg)
+{}
 
-static void sstream_updated(uint64_t stream_id, void *arg)
-{
-    (void)stream_id;
-    (void)arg;
-}
+static void sstream_updated(ossl_unused uint64_t stream_id, ossl_unused void *arg)
+{}
 
 typedef struct info_st {
     QUIC_FIFD fifd;

@@ -1672,7 +1672,7 @@ static int txp_pkt_postgen_update_pkt_overhead(struct txp_pkt *pkt,
 }
 
 static void on_confirm_notify(uint64_t frame_type, uint64_t stream_id,
-                              QUIC_TXPIM_PKT *pkt, void *arg)
+                              ossl_unused QUIC_TXPIM_PKT *pkt, void *arg)
 {
     OSSL_QUIC_TX_PACKETISER *txp = arg;
     (void)pkt;

@@ -39,7 +39,8 @@ const OPTIONS *test_get_options(void)
     return test_options;
 }
 
-static int passcb(char *buf, int size, int rwflag, void *userdata)
+static int passcb(char *buf, ossl_unused int size,
+                  ossl_unused int rwflag, ossl_unused void *userdata)
 {
     (void)rwflag;
     (void)userdata;

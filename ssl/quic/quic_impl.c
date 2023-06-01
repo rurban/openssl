@@ -3293,7 +3293,7 @@ size_t ossl_quic_get_accept_stream_queue_len(SSL *s)
  */
 int ossl_quic_stream_reset(SSL *ssl,
                            const SSL_STREAM_RESET_ARGS *args,
-                           size_t args_len)
+                           ossl_unused size_t args_len)
 {
     QCTX ctx;
     QUIC_STREAM_MAP *qsm;
@@ -3416,7 +3416,7 @@ int ossl_quic_get_stream_write_state(SSL *ssl)
  * SSL_get_stream_read_error_code
  * ------------------------------
  */
-static int quic_get_stream_error_code(SSL *ssl, int is_write,
+static int quic_get_stream_error_code(SSL *ssl, ossl_unused int is_write,
                                       uint64_t *app_error_code)
 {
     QCTX ctx;
@@ -3500,7 +3500,7 @@ out:
  */
 int ossl_quic_get_conn_close_info(SSL *ssl,
                                   SSL_CONN_CLOSE_INFO *info,
-                                  size_t info_len)
+                                  ossl_unused size_t info_len)
 {
     QCTX ctx;
     const QUIC_TERMINATE_CAUSE *tc;

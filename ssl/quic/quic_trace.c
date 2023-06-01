@@ -553,8 +553,9 @@ static int trace_frame_data(BIO *bio, PACKET *pkt)
     return 1;
 }
 
-int ossl_quic_trace(int write_p, int version, int content_type,
-                    const void *buf, size_t msglen, SSL *ssl, void *arg)
+int ossl_quic_trace(int write_p, ossl_unused int version, int content_type,
+                    const void *buf, size_t msglen, ossl_unused SSL *ssl,
+                    void *arg)
 {
     BIO *bio = arg;
     PACKET pkt;
