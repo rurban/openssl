@@ -105,9 +105,8 @@ static int pvk2key_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static int pvk2key_does_selection(void *provctx, int selection)
+static int pvk2key_does_selection(ossl_unused void *provctx, int selection)
 {
-    (void)provctx;
     if (selection == 0)
         return 1;
 

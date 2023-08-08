@@ -79,7 +79,7 @@ static void msblob2key_freectx(void *vctx)
     OPENSSL_free(ctx);
 }
 
-static int msblob2key_does_selection(void *provctx, int selection)
+static int msblob2key_does_selection(ossl_unused void *provctx, int selection)
 {
     (void)provctx;
     if (selection == 0)
